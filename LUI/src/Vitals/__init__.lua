@@ -1,0 +1,28 @@
+-- This Source Code Form is subject to the terms of the Mozilla Public
+-- License, v. 2.0. If a copy of the MPL was not distributed with this
+-- file, You can obtain one at https://mozilla.org/MPL/2.0/.
+
+import "LUI.src.Vitals.effect_icon"
+import "LUI.src.Vitals.effects_area"
+import "LUI.src.Vitals.buff_area"
+import "LUI.src.Vitals.debuff_area"
+import "LUI.src.Vitals.vitals_base"
+import "LUI.src.Vitals.self_vitals"
+import "LUI.src.Vitals.target_vitals"
+import "LUI.src.Vitals.companion_vitals"
+import "LUI.src.Vitals.boss_vitals"
+import "LUI.src.Vitals.group_snapshot"
+import "LUI.src.Vitals.raid_share_codec"
+import "LUI.src.Vitals.raid_config"
+import "LUI.src.Vitals.group_ordering"
+import "LUI.src.Vitals.group_layout"
+import "LUI.src.Vitals.group_highlight"
+import "LUI.src.Vitals.group_member_vitals"
+import "LUI.src.Vitals.raid_group_vitals"
+import "LUI.src.Vitals.fellowship_vitals"
+import "LUI.src.Vitals.raid_vitals"
+import "LUI.src.Vitals.group_roster_watcher"
+import "LUI.src.Vitals.raid_share_listener"
+import "LUI.src.Vitals.raid_config_window"
+import "LUI.src.Vitals.target_effect_manager_cache"
+import "LUI.src.Vitals.target_effect_manager"

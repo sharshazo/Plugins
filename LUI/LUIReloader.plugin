@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Plugin>
+	<Information>
+		<Name>LUIReloader</Name>
+		<Author>Geldahr</Author>
+		<Version>0.1.0</Version>
+		<Description>LUI helper plugin</Description>
+		<Image>LUI/assets/logo2.tga</Image>
+	</Information>
+	<Package>LUI.reloader.main</Package>
+	<Configuration Apartment="LUIReloader" />
+</Plugin>

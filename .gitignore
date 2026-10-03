@@ -1,0 +1,12 @@
+*.bak*
+*_BACKUP*
+*.rar
+*.zip
+Thumbs.db
+desktop.ini
+*.plugindata
+respaldo_*/
+__MACOSX/
+narration_export*.lua
+extract_for_narration.lua
+*-1.lua

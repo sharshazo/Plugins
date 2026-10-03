@@ -1,0 +1,48 @@
+PAGINA "POR ZONA" (agregada al Deed Tracker)
+=============================================
+
+Deed Tracker tiene ahora un boton mas en la fila de abajo: "Por zona".
+
+Cada pestaña de esa pagina es una zona (las mismas zonas y en el mismo
+orden que las paginas Eriador, Rhovanion, Gondor, Mordor y Haradwaith) y
+junta TODO lo de esa zona:
+  1) las hazañas propias de la zona (iguales a su pestaña de siempre)
+  2) "== Instancias de la zona ==": las hazañas de las instancias e
+     incursiones que estan en esa zona (sacadas de la pagina Instancias)
+  3) "== Reputacion de la zona ==": las hazañas de las facciones de esa
+     zona (sacadas de Clase/Raza/Epica > Reputacion)
+
+No se movio ni se borro nada: las 10 paginas de siempre siguen igual. Son
+las mismas hazañas (mismo guardado): marcar una en "Por zona" la marca
+tambien en su pagina original, y la deteccion automatica por el chat
+funciona igual. Los totales generales no cambian (no se cuentan dos veces).
+
+Quedan solo en su pagina original (zona no confirmada): Ost Dunhoth,
+Iorbar's Peak, las instancias de Kingdoms of Harad y algunas facciones
+repartidas por varias zonas. Escaramuzas, Pasatiempos y La Guerra no son
+de una zona, asi que no entran.
+
+Archivos: DataFiles/DeedsByZone.lua (nuevo), Main.lua (1 import) y
+MainWin.lua (el boton nuevo y 2 lineas para que la deteccion por chat
+actualice tambien esta pagina). Copias de seguridad: *.bak_pre_porzona.
+Si algun dia vuelves a los archivos originales, antes elige otra pagina
+que no sea "Por zona" (el plugin recuerda la ultima pagina abierta).
+
+MAPA DEL MUNDO (2026-09-26)
+---------------------------
+La ventana de cada zona del Mapa del Mundo tiene una pestaña "Hazañas" con
+las mismas hazañas de esta pagina "Por zona". Marcar una alla la marca aca
+(archivo nuevo RemoteRequests.lua: Deed Tracker revisa cada 1 segundo los
+pedidos que deja el mapa en DeedTracker_MapRequests y confirma en
+DeedTracker_MapAck). Clic en el nombre de una hazaña en el mapa abre esta
+ventana filtrada a esa hazaña y su descripcion en una ventanita aparte.
+
+ARREGLO (2026-09-27): los errores "DeedTracker_MapRequests ... The data load
+event handler must be specified" que llenaban el chat venian de leer los
+pedidos del mapa cada segundo sin funcion de aviso (el juego solo lo permite
+mientras el plugin carga). RemoteRequests.lua ahora lee de forma
+asincronica (como el resto de los addons) y no escribe nada en el chat.
+
+MEJORA (2026-09-27): comando /dtmapa abrir <id>. El Mapa del Mundo lo usa
+(atajo invisible sobre el nombre de la hazaña) para abrir Deed Tracker en
+esa hazaña al instante, sin esperar el pedido por archivo.

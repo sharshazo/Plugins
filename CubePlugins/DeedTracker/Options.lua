@@ -1,0 +1,489 @@
+OPTION_HEIGHT = 40;
+
+OptionControls = {};
+IconRadioButtons = {};
+
+OrderedIcons = {
+    [1] = {
+        ["KEY"] = "DEED_LOG_ICON_CIRCLE_LARGE";
+        ["X"] = 0;
+        ["Y"] = 0;
+    };
+    [2] = {
+        ["KEY"] = "DEED_LOG_ICON_CIRCLE_MEDIUM";
+        ["X"] = 0;
+        ["Y"] = 1;
+    };
+    [3] = {
+        ["KEY"] = "DEED_LOG_ICON_CIRCLE_SMALL";
+        ["X"] = 0;
+        ["Y"] = 2;
+    };
+    [4] = {
+        ["KEY"] = "DEED_LOG_ICON_SQUARE_MEDIUM";
+        ["X"] = 1;
+        ["Y"] = 1;
+    };
+    [5] = {
+        ["KEY"] = "DEED_LOG_ICON_SQUARE_SMALL";
+        ["X"] = 1;
+        ["Y"] = 2;
+    };
+};
+
+function AddIconOpacityOptions(options, y)
+    local leftMargin = 10;
+    local labelMargin = 5;
+    local labelHeight = 20;
+    local scrollbarHeight = 10;
+    local controlWidth = options:GetWidth() - leftMargin;
+
+    local controlY = 0;
+
+    local iconOpacityControl = Turbine.UI.Control();
+    iconOpacityControl:SetParent(options);
+    iconOpacityControl:SetWidth(options:GetWidth());
+    iconOpacityControl:SetTop(y);
+    --iconOpacityControl:SetBackColor(Turbine.UI.Color.DarkRed);
+
+    -- Mini Icon Opacity:
+    local controlLabel = Turbine.UI.Label();
+    controlLabel:SetParent(iconOpacityControl);
+    controlLabel:SetText(GetString(_LANG.OPTIONS.ICON_OPACITY_LABEL));
+    controlLabel:SetSize(controlWidth, labelHeight);
+    controlLabel:SetLeft(labelMargin);
+    --controlLabel:SetBackColor(Turbine.UI.Color.Brown)
+    controlY = controlY + controlLabel:GetHeight();
+
+    -- [ ] Enable transparency when mouse is over icon
+    local enableTransparencyCheckbox = Turbine.UI.Lotro.CheckBox();
+    enableTransparencyCheckbox:SetParent(iconOpacityControl);
+    enableTransparencyCheckbox:SetText(GetString(_LANG.OPTIONS.ICON_ENABLE_TRANSPARENCY_DURING_MOUSEOVER));
+    enableTransparencyCheckbox:SetSize(controlWidth, labelHeight * 1.5);
+    enableTransparencyCheckbox:SetPosition(leftMargin, controlY);
+    --enableTransparencyCheckbox:SetBackColor(Turbine.UI.Color.Red);
+    enableTransparencyCheckbox.CheckedChanged = function(sender, args)
+        SETTINGS.MINIMIZED_ICON.ICON_ENABLE_TRANSPARENCY_DURING_MOUSEOVER = sender:IsChecked();
+    end
+    RegisterForStringTooltip(enableTransparencyCheckbox, GetString(_LANG.OPTIONS.ICON_ENABLE_TRANSPARENCY_DURING_MOUSEOVER_TOOLTIP));
+    controlY = controlY + enableTransparencyCheckbox:GetHeight();
+
+    -- [25 to 100] - Tooltip: "Changing the slider value will change the opacity of the mini icon"
+    -- add a label for the scrollbar
+    local opacityLabel = Turbine.UI.Label();
+    opacityLabel:SetParent(iconOpacityControl);
+    opacityLabel:SetSize(controlWidth, labelHeight);
+    opacityLabel:SetText(string.format(GetString(_LANG.OPTIONS.ICON_OPACITY), SETTINGS.MINIMIZED_ICON.OPACITY));
+    opacityLabel:SetPosition(leftMargin, controlY);
+    RegisterForStringTooltip(opacityLabel, "Changing the slider value will change the opacity of the mini icon");
+    controlY = controlY + opacityLabel:GetHeight();
+
+    -- add a scrollbar to control opacity
+    local opacityScrollBar = Turbine.UI.Lotro.ScrollBar();
+    opacityScrollBar:SetParent(iconOpacityControl);
+    opacityScrollBar:SetSize(controlWidth, scrollbarHeight);
+    opacityScrollBar:SetOrientation(Turbine.UI.Orientation.Horizontal);
+    opacityScrollBar:SetPosition(leftMargin, controlY);
+    opacityScrollBar:SetMinimum(25);
+    opacityScrollBar:SetValue(SETTINGS.MINIMIZED_ICON.OPACITY);
+    opacityScrollBar.ValueChanged = function(sender, args)
+        local value = sender:GetValue(); -- [0, 100]
+        SETTINGS.MINIMIZED_ICON.OPACITY = value;
+        opacityLabel:SetText(string.format(GetString(_LANG.OPTIONS.ICON_OPACITY), value));
+        MinimizedIcon.GetInstance():LoadOpacitySettings();
+    end
+
+    controlY = controlY + opacityScrollBar:GetHeight() + 10;
+
+    iconOpacityControl:SetHeight(controlY);
+    return y + controlY;
+end
+
+---Adds the possible icons for the mini button.
+---@param option Control
+---@param y number
+---@return number
+function AddIconSizeShapeOptions(options, y)
+    local leftMargin = 10;
+    local labelMargin = 5;
+    local radioButtonHeight = 20;
+    local radioButtonWidth = 125;
+
+    local labelHeight = 20;
+
+    local iconControl = Turbine.UI.Control();
+    iconControl:SetParent(options);
+    iconControl:SetWidth(options:GetWidth());
+    iconControl:SetTop(y);
+
+    local controlLabel = Turbine.UI.Label();
+    controlLabel:SetParent(iconControl);
+    controlLabel:SetText(GetString(_LANG.OPTIONS.ICON_SIZE_SHAPE));
+    controlLabel:SetSize(250, labelHeight);
+    controlLabel:SetLeft(labelMargin);
+
+    local handlingCheckedChanged = false;
+    local iconKeyToUse = SETTINGS.MINIMIZED_ICON.ICON or "DEED_LOG_ICON_CIRCLE_LARGE";
+
+    local maxIconY = 0;
+
+    for i, orderedIcon in ipairs(OrderedIcons) do
+        local iconKey, iconX, iconY = orderedIcon["KEY"], orderedIcon["X"], orderedIcon["Y"];
+        local iconValues = _IMAGES.ICONS[iconKey];
+
+        local radioButton = Turbine.UI.Lotro.CheckBox();
+        radioButton:SetParent(iconControl);
+        radioButton:SetPosition(
+            leftMargin + iconX * radioButtonWidth,
+            labelHeight + iconY * radioButtonHeight);
+        radioButton:SetSize(radioButtonWidth, radioButtonHeight);
+        radioButton:SetText(GetString(_LANG.OPTIONS.ICONS[iconKey]));
+        radioButton:SetCheckAlignment(Turbine.UI.ContentAlignment.MiddleLeft);
+        if (iconKey == iconKeyToUse) then
+            radioButton:SetChecked(true);
+        end
+        if (iconY > maxIconY) then maxIconY = iconY; end
+
+        radioButton.CheckedChanged = function(sender, args)
+            -- don't allow recursion
+            if (handlingCheckedChanged) then return; end
+
+            handlingCheckedChanged = true;
+
+            if (sender:IsChecked()) then
+                -- Simulate a radio button, uncheck the rest
+                for _, otherRadioButton in ipairs(IconRadioButtons) do
+                    if (sender ~= otherRadioButton) then
+                        otherRadioButton:SetChecked(false);
+                    end
+                end
+                SETTINGS.MINIMIZED_ICON.ICON = iconKey;
+                MinimizedIcon.GetInstance():LoadIconSettings();
+
+            else
+                -- Simulate a radio button, don't uncheck
+                sender:SetChecked(true);
+            end
+
+
+
+            handlingCheckedChanged = false;
+        end
+
+        IconRadioButtons[i] = radioButton;
+    end
+
+    local controlHeight = labelHeight + (maxIconY + 1) * radioButtonHeight;
+    iconControl:SetHeight(controlHeight);
+
+    return y + controlHeight;
+end
+
+
+---Add the given control to the lookup table.
+---@param optionName string
+---@param controlType string
+---@param control Control
+function AddOptionsCotrol(optionName, controlType, control)
+    if (not OptionControls[optionName]) then
+        OptionControls[optionName] = {};
+    end
+
+    OptionControls[optionName][controlType] = control;
+end
+
+---Get the requested control if any, otherwise returns nil
+---@param optionsName string
+---@param controlType string
+---@return TextBox|CheckBox|nil
+function GetOptionsControl(optionsName, controlType)
+    if (OptionControls[optionsName] and OptionControls[optionsName][controlType]) then
+        return OptionControls[optionsName][controlType];
+    end
+    return nil;
+end
+
+function AddOptionCheckbox(options, y, text)
+    local checkbox = Turbine.UI.Lotro.CheckBox();
+    checkbox:SetParent(options);
+    checkbox:SetSize(300, OPTION_HEIGHT);
+    checkbox:SetPosition(10, y);
+    if (LANGUAGE == "RU") then
+        checkbox:SetFont(Turbine.UI.Lotro.Font.Verdana14);
+    end
+    checkbox:SetText(text);
+    --checkbox:SetBackColor(Turbine.UI.Color.Violet);
+    return checkbox;
+end
+
+---Add a horizontal rule (hr) at y.
+---@param options Control
+---@param y number
+---@return number
+function AddDivider(options, y)
+    local divider = Turbine.UI.Control();
+    divider:SetParent(options);
+    divider:SetSize(500, 2);
+    divider:SetBackColor(Turbine.UI.Color.Gray);
+    divider:SetPosition(5, y + 5);
+    return y + 10;
+end
+
+---Adds an option to the control at the specified height.
+---@param options Control The control that the option will be added to.
+---@param y number The starting height of this option.
+---@param optionName string The Option to AddDebugField
+---@param isServer boolean Is the option per-character or per-server?
+---@param callback function? What function that takes no parameters should be called when the value changes?
+---@param doNotRefreshDeeds boolean? Skip the deed refresh for options that don't impact the main window
+---@return number #The next Y coordinate.
+function AddOption(options, y, optionName, isServer, callback, doNotRefreshDeeds)
+    local checkbox = AddOptionCheckbox(options, y, GetString(_LANG.OPTIONS[optionName]));
+    local height = AutoFitLabelHeight(checkbox, 200);
+
+    AddOptionsCotrol(optionName, "CheckBox", checkbox);
+
+    local startingValue = false;
+    if (isServer) then
+        startingValue = LoadServerField(optionName);
+    else
+        startingValue = SETTINGS[optionName];
+    end
+    checkbox:SetChecked(startingValue);
+    checkbox.CheckedChanged = function(sender, args)
+        if (isServer) then
+            SaveServerField(optionName, sender:IsChecked());
+        else
+            SETTINGS[optionName] = sender:IsChecked();
+        end
+
+        if (callback ~= nil) then
+            callback();
+        end
+
+        if (not doNotRefreshDeeds) then
+            local mainWin = DeedTrackerWin.GetInstance();
+            CheckDeedData(mainWin:GetUiCharacter());
+            mainWin:RefreshDeeds();
+        end
+    end
+    return y + height;
+end
+
+function AddButton(options, y, buttonText, clickCallback)
+    local button = Turbine.UI.Lotro.Button();
+    button:SetParent(options);
+    button:SetSize(200, OPTION_HEIGHT);
+    button:SetPosition(10, y);
+    button:SetText(buttonText);
+    button.Click = clickCallback;
+    return y + OPTION_HEIGHT;
+end
+
+function AddServerField(options, y, fieldName, buttonText, callback)
+    local height = OPTION_HEIGHT;
+    local extraY = 0;
+
+    local label = Turbine.UI.Label();
+    label:SetParent(options);
+    label:SetSize(150, OPTION_HEIGHT);
+    label:SetPosition(10, y + 5);
+    if (LANGUAGE == "RU") then
+        label:SetFont(Turbine.UI.Lotro.Font.Verdana14);
+    end
+    label:SetText(GetString(_LANG.OPTIONS[fieldName]));
+    AutoFitLabelHeight(label, 500);
+    if (label:GetHeight() > OPTION_HEIGHT) then
+        height = label:GetHeight();
+        extraY = height - OPTION_HEIGHT;
+    end
+
+    local textBox = Turbine.UI.Lotro.TextBox();
+    textBox:SetParent(options);
+    textBox:SetSize(75, 30);
+    textBox:SetPosition(160, y + extraY);
+    textBox:SetText(LoadServerField(fieldName));
+    local button = Turbine.UI.Lotro.Button();
+    button:SetParent(options);
+    button:SetSize(75, 30);
+    button:SetPosition(250, y + 5 + extraY);
+    if (LANGUAGE == "RU") then
+        button:SetFont(Turbine.UI.Lotro.Font.Verdana14);
+    end
+    button:SetText(buttonText);
+    button.Click = function()
+        local value = textBox:GetText();
+        SaveServerField(fieldName, value)
+        if (callback ~= nil) then
+            callback(value);
+        end
+    end
+
+    AddOptionsCotrol(fieldName, "TextBox", textBox)
+
+    return height;
+end
+
+function UpdateOptionTextBox(fieldName, updatedText)
+    local textBox = GetOptionsControl(fieldName, "TextBox");
+    if (textBox) then
+        textBox:SetText(updatedText);
+    end
+end
+
+function AddDebugField(options, y, label, callback)
+    local textBox = Turbine.UI.Lotro.TextBox();
+    textBox:SetParent(options);
+    textBox:SetSize(200, 30);
+    textBox:SetPosition(10, y);
+    textBox:SetText(LoadDebugField(label));
+    local button = Turbine.UI.Lotro.Button();
+    button:SetParent(options);
+    button:SetSize(80, 30);
+    button:SetPosition(220, y);
+    button:SetText(label);
+    button.Click = function()
+        local value = textBox:GetText();
+        SaveDebugField(label, value)
+        callback(value);
+    end
+    return y + OPTION_HEIGHT;
+end
+
+function DebugOptionComplete(deedName)
+    local character = GetStartingCharacterName();
+    FilterQuest(character, chatComplete .. deedName)
+end
+
+function DebugAnnounceText(text)
+    PREVIOUS_QUEST_CHAT = text;
+    DataFiles.CheckForDelayedText(text);
+end
+
+function AddDeedButton(options, y, deedName)
+    local clickCallback = function()
+        local character = GetStartingCharacterName();
+        FilterQuest(character, chatComplete .. deedName)
+    end
+
+    return AddButton(options, y, deedName, clickCallback);
+end
+
+function AddReloadButton(options, y)
+    local clickCallback = function()
+        Turbine.PluginManager.LoadPlugin( '~Deed Tracker Reloader' ); --workaround
+    end
+    return AddButton(options, y, "Reload plugin", clickCallback);
+end
+
+function SaveServerField(fieldName, fieldValue)
+    if _CHARDATA[":SERVER"] == nil then _CHARDATA[":SERVER"] = {} end;
+    _CHARDATA[":SERVER"][fieldName] = fieldValue;
+
+    UpdateOptionTextBox(fieldName, fieldValue);
+    if (fieldName == "LEGENDARY_SERVER_LEVEL_CAP" or
+        fieldName == "SERVER_LEVEL_CAP") then
+        SetServerLevelCap();
+    end
+end
+
+function LoadServerField(fieldName)
+    local value = DEFAULT_SERVER_SETTINGS[fieldName];
+    if (_CHARDATA[":SERVER"] ~= nil and
+        _CHARDATA[":SERVER"][fieldName] ~= nil) then 
+        value = _CHARDATA[":SERVER"][fieldName];
+    end
+    return value;
+end
+
+function SaveDebugField(fieldName, fieldValue)
+    local character = GetStartingCharacterName();
+
+    if _CHARDATA[character]["DEBUG"] == nil then _CHARDATA[character]["DEBUG"] = {} end;
+    _CHARDATA[character]["DEBUG"][fieldName] = fieldValue;
+end
+
+function LoadDebugField(fieldName)
+    local character = GetStartingCharacterName();
+
+    if _CHARDATA[character]["DEBUG"] == nil then return ""; end
+    if _CHARDATA[character]["DEBUG"][fieldName] == nil then return ""; end
+    return _CHARDATA[character]["DEBUG"][fieldName];
+end
+
+function CreateOptionsContent()
+    local mainWin = DeedTrackerWin.GetInstance();
+    local options = Turbine.UI.Control();
+    options:SetBackColor(Turbine.UI.Color(0.1, 0.1, 0.1));
+    options:SetWidth(300);
+    plugin.GetOptionsPanel = function(self) return options; end
+
+    local topMargin = 10;
+    local bottomMargin = 20;
+
+    local serverSetting = true;
+    local notServerSetting = false;
+    local nilCallback = nil;
+
+    local y = topMargin;
+
+    local doNotRefreshDeeds = true;
+
+    -- Icon options
+    y = AddOption(options, y, "SHOW_MINI_ICON", notServerSetting, function() MinimizedIcon.GetInstance():SetVisible(SETTINGS.SHOW_MINI_ICON); end, doNotRefreshDeeds);
+    y = AddOption(options, y, "MOVE_ICON_REQUIRES_SHIFT", notServerSetting, nilCallback, doNotRefreshDeeds);
+    y = AddIconOpacityOptions(options, y);
+    y = AddIconSizeShapeOptions(options, y);
+    y = AddOption(options, y, "MINI_ICON_ALWAYS_ON_TOP", notServerSetting, function() MinimizedIcon.GetInstance():LoadIconSettings(); end, doNotRefreshDeeds);
+    y = AddDivider(options, y);
+
+    -- Deed category options:
+    y = AddOption(options, y, "LEGENDARY_SERVER", serverSetting, function()
+        SetServerLevelCap();
+    end);
+    y = AddOption(options, y, "VEIL_OF_THE_NINE", serverSetting, nilCallback);
+    y = y + AddServerField(options, y, "LEGENDARY_SERVER_LEVEL_CAP", GetString(_LANG.OPTIONS.SAVE), function(text)
+        mainWin:RefreshDeeds();
+    end);
+    y = y + AddServerField(options, y, "SERVER_LEVEL_CAP", GetString(_LANG.OPTIONS.SAVE), function(text)
+        mainWin:RefreshDeeds();
+    end);
+
+    y = AddOption(options, y, "DIFFICULTY", notServerSetting, nilCallback);
+    y = AddDivider(options, y);
+    y = AddOption(options, y, "HIDE_COMPLETED_DEEDS", notServerSetting, nilCallback);
+    y = AddOption(options, y, "HIDE_COMPLETED_PROGRESS_BAR", notServerSetting, nilCallback);
+    y = AddOption(options, y, "HIDE_DEEDS_ABOVE_LEVEL", notServerSetting, nilCallback);
+    y = AddOption(options, y, "HIDE_NOT_ACTIVELY_ACHIEVABLE_DEEDS", notServerSetting, nilCallback);
+    y = AddOption(options, y, "CASCADE_COMPLETION", notServerSetting, nilCallback);
+    y = AddOption(options, y, "DO_NOT_SHOW_COMPLETION_WINDOW", notServerSetting, nilCallback, doNotRefreshDeeds);
+    y = AddOption(options, y, "DO_NOT_SHOW_COMPLETION_WINDOW_IN_COMBAT", notServerSetting, nilCallback, doNotRefreshDeeds);
+    y = AddOption(options, y, "DEED_LOG_PAGE_TABS_SCROLLBARS", notServerSetting, nilCallback);
+    y = AddOption(options, y, "OBJECTIVES_SHOW_FULL_OBJECTIVES", notServerSetting, nilCallback, doNotRefreshDeeds);
+    y = AddOption(options, y, "OBJECTIVES_SHOW_COORDINATES", notServerSetting, nilCallback, doNotRefreshDeeds);
+    y = AddOption(options, y, "VERBOSE_OUTPUT", notServerSetting, nilCallback, doNotRefreshDeeds);
+
+    if (SHOW_DEBUG_OPTIONS) then
+        local debugYStart = y;
+        y = AddDebugField(options, y, "Complete", DebugOptionComplete);
+        y = AddDebugField(options, y, "Location", ChangeLocation);
+        y = AddDebugField(options, y, "Level", LevelChanged);
+        y = AddDebugField(options, y, "Announcement", DebugAnnounceText);
+--        y = AddDeedButton(options, y, "The Old Forest");
+--        y = AddDeedButton(options, y, "The Barrow-downs");
+--        y = AddDeedButton(options, y, "Explorer of Bree-land");
+--        y = AddDeedButton(options, y, "Deeds of Bree-land");
+--        y = AddDeedButton(options, y, "Eyes of the Enemy");
+
+        y = AddReloadButton(options, y);
+        
+        local background = Turbine.UI.Control();
+        background:SetParent(options);
+        background:SetSize(options:GetWidth(), y - debugYStart);
+        background:SetBackColor(Turbine.UI.Color.DarkBlue);
+        background:SetTop(debugYStart);
+        background:SetZOrder(-1);
+    end
+
+    options:SetHeight(y + bottomMargin);
+end

@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<Plugin>
+	<Information>
+		<Name>Deed Tracker</Name>
+		<Author>Cube</Author>
+		<Version>3.3.0</Version>
+		<Description>
+Welcome to Deed Tracker!
+
+This plugin is designed to help you keep track of your completed deeds. (Or, if you're like me, which deeds you haven't done yet.) For an overview of the plugin, see https://deedtracker.lifebeyondtheshire.com/.
+
+Due to limitations in the LOTRO scripting interface, Deed Tracker recognizes deeds by matching the name of completed items against a list of known deeds. If our list has a misspelled deed name, or if the deed is missing altogether, Deed Tracker won't recognize it. 
+
+Please feel free to report any deeds that aren't recognized, bugs, feature requests, etc. to LotroDeedTracker@gmail.com. You can also join the CubePlugins discord server at https://discord.gg/Vj2ERg3ZHJ.
+
+If you are reporting a deed that is missing from the tracker, or is misspelled in the tracker, please highlight the deed's name in your chat log, copy it (by pressing Control-C on Windows), and paste it into the email. You can also attach a screenshot. If you are reporting missing lore, you can find it in-game by hovering over the entry on the left side of your deed log.
+
+Thank you!
+</Description>
+		<Image>CubePlugins/DeedTracker/Resources/Icons/PluginIcon_32x32.tga</Image>
+	</Information>
+	<Package>CubePlugins.DeedTracker.Main</Package>
+	<Configuration Apartment="DeedTracker" />
+</Plugin>

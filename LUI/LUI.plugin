@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Plugin>
+	<Information>
+		<Name>LUI</Name>
+		<Author>Geldahr</Author>
+		<Version>2.3.0</Version>
+		<Description>Interfaz personalizable de LotRO: marcos de combate m&#225;s limpios, herramientas, inventario, barra de estado y efecto de puntero, con control flexible del dise&#241;o. Configuraci&#243;n en espa&#241;ol: /lui config.</Description>
+		<Image>LUI/assets/logo2.tga</Image>
+	</Information>
+	<Package>LUI.src.main</Package>
+	<Configuration Apartment="LUI" />
+</Plugin>

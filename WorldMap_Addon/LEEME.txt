@@ -1,0 +1,502 @@
+ADDON DEL MAPA DEL MUNDO - paquete consolidado
+=================================================
+
+Esta carpeta es el addon completo. Ya deberia funcionar en el juego: el
+icono del mapa aparece en pantalla, se puede arrastrar/bloquear, y clickeado
+abre la ventana con las 59 zonas, sus nombres/niveles siempre visibles, y
+la ventana flotante con info al pasar el mouse.
+
+MEJORA v2.7.2: la hazaña se abre en Deed Tracker AL INSTANTE
+-----------------------------------------------------------------------------------
+- Antes, clic en el nombre de una hazaña = pedido por archivo, que Deed
+  Tracker revisaba cada segundo (y la lectura del archivo tarda): podia
+  demorar varios segundos. Ahora, con Deed Tracker cargado, sobre el nombre
+  hay un atajo invisible con el comando "/dtmapa abrir <id>" (comando nuevo
+  de Deed Tracker) que el juego ejecuta en el acto al hacer clic.
+- Si Deed Tracker no esta cargado, el clic deja el pedido en el archivo como
+  antes y se abre al cargarlo. Las casillas siguen por archivo (~1-2 s).
+- Hay que actualizar los DOS: Deed Tracker (RemoteRequests.lua) y el mapa.
+
+ARREGLO v2.7.1: errores en el chat "DeedTracker_MapRequests ... The data load
+event handler must be specified"
+-----------------------------------------------------------------------------------
+- El juego solo permite leer PluginData "de una" mientras el plugin carga;
+  despues hay que pedirlo y esperar el aviso. Deed Tracker leia los pedidos
+  del mapa cada segundo de la forma vieja y el juego lo rechazaba (y lo
+  escribia en el chat cada segundo). El mapa hacia lo mismo, sin mostrar
+  error, y por eso tampoco veia las hazañas ya marcadas en Deed Tracker.
+- Ahora las dos partes piden el dato y lo usan cuando llega (un instante
+  despues). Nada se escribe en el chat. Hay que actualizar los DOS:
+  Deed Tracker (RemoteRequests.lua) y este mapa.
+
+NOVEDAD v2.7: nombre de la mazmorra / incursion en español y en ingles
+-----------------------------------------------------------------------------------
+- En la ventana de la zona (pestaña Misiones) y en los resultados del
+  buscador, cada mision de mazmorra, incursion, instancia o escaramuza
+  lleva debajo del titulo una linea con el nombre de la instancia en los
+  dos idiomas, por ejemplo:
+      Mazmorra: La Decimosexta Sala (The Sixteenth Hall)
+  Los nombres en español salen de Quest Assistant (Data/GroupPlaceES.lua,
+  etiquetas reales en español de lotro-data, nada traducido a mano). Los
+  pocos que no tienen nombre en español (batallas epicas, Cortes de
+  Osgiliath) se ven solo en ingles. Misiones normales y de grupo en zona
+  abierta: igual que antes. Necesita Quest Assistant actualizado; con una
+  version vieja simplemente no aparece la linea.
+
+NOVEDAD v2.6: hazañas por zona, X para quitar misiones y buscador de misiones
+-----------------------------------------------------------------------------------
+- Ventana de la zona (clic en una zona): ahora tiene dos pestañas,
+  "Misiones" y "Hazañas". Si la zona no tiene misiones activas abre
+  directo en Hazañas.
+- Hazañas: todas las de la zona, en 3 secciones (de la zona, Instancias,
+  Reputacion), cada una con su %, y una barra de % total arriba. Cada
+  hazaña tiene su casilla para marcarla a mano (LOTRO no avisa el avance
+  de las hazañas). "Ver: pendientes / todas" oculta las ya hechas.
+  Clic en el nombre = se abre Deed Tracker filtrado a esa hazaña, con su
+  descripcion en una ventanita aparte.
+- Las casillas estan SINCRONIZADAS con Deed Tracker: marcar en el mapa la
+  marca en Deed Tracker (con su misma cascada de sub-hazañas) y lo que se
+  marque en Deed Tracker se ve en el mapa en ~2 s. Si Deed Tracker no esta
+  cargado, las marcas quedan guardadas y se aplican al cargarlo. Necesita
+  la version de Deed Tracker con RemoteRequests.lua (incluida).
+- Zonas que Deed Tracker agrupa juntas (Ered Mithrin + Colinas de Hierro;
+  Tierras Asperas + Paso de Rohan + Nan Curunir) muestran la misma lista, y
+  lo avisan. Sin lista: Paramos Etten, Cienagas de los Muertos, Sug Nidar,
+  Pahar Hatokali y las 3 zonas proximas (Deed Tracker no las separa).
+- El cartel de la zona (al pasar el mouse) dice tambien "Hazañas 12/45".
+- Misiones: X al final de cada mision. Primer clic = "Quitar" (confirmar),
+  segundo clic = se desmarca en Quest Assistant (igual que su boton
+  Desmarcar): deja de estar activa en el mapa, el rastreador y el libro.
+- Buscador: ademas de zonas, busca MISIONES por nombre (español o ingles,
+  3 letras o mas, las activas primero). Clic en una = va a su zona, la
+  resalta y pone un pin dorado con "!" sobre el nombre de la zona (clic en
+  el pin = abrirla en Quest Assistant). "Abrir" = abrirla directo. Buscar
+  un numero sigue buscando zonas por nivel, como antes.
+
+NOVEDAD v2.5: iconos en la lista de misiones activas de la zona
+-----------------------------------------------------------------------------------
+En la ventana que se abre al hacer clic en una zona, cada mision de grupo
+lleva a la izquierda del titulo el logo de grupo de Quest Assistant, y
+ademas la calavera de mazmorra o la de incursion si corresponde (las mismas
+del mapa, en chico). Las misiones normales se ven igual que antes.
+
+NOVEDAD v2.4: calaveras de mazmorra e incursion
+-----------------------------------------------------------------------------------
+Junto a la moneda dorada de misiones activas aparecen las calaveras que
+mandaste cuando alguna de esas misiones activas es de grupo (dato oficial
+de Quest Assistant, GroupQuestDB):
+  - calavera con ojos en llamas = mazmorra / instancia de grupo (3 o 6)
+  - calavera de fuego           = incursion (raid, 12+)
+Escaramuzas, batallas epicas y misiones de grupo en zona abierta no ponen
+calavera. Donde hay lugar, moneda y calaveras van en fila pegadas al nombre
+de la zona; en las zonas apretadas (Eriador, Moria...) la moneda queda en
+su lugar de siempre con calaveras chicas encima. No cambia colores, nombres
+ni ninguna otra capa del mapa. Imagenes nuevas en assets/worldmap/icon/:
+calavera_mazmorra_24/16.tga y calavera_incursion_24/16.tga.
+
+NOVEDAD v2.3: un solo icono flotante
+-----------------------------------------------------------------------------------
+En pantalla queda solo el icono redondo del mapa. Un clic lo despliega y
+aparecen a su lado los demas iconos: Mapa del Mundo, y si
+LOTRO_Quest_Assistant esta cargado, su Libro (misiones + rastreador) y su
+Lupa (recoleccion). Al elegir uno, la fila se vuelve a recoger. Si el icono
+esta pegado al borde derecho de la pantalla, la fila se abre hacia la
+izquierda. Arrastrar el icono mueve todo; clic derecho: bloquear posicion.
+Los iconos sueltos de Quest Assistant se ocultan mientras este addon este
+cargado (vuelven solos si se descarga el Mapa del Mundo). El icono de LUI
+no se puede agrupar: LUI corre aparte y no se puede controlar desde aca.
+
+NOVEDAD v2.2: marca dorada con tus misiones activas
+-----------------------------------------------------------------------------------
+Cada zona donde tienes misiones activas en Quest Assistant muestra una
+moneda dorada con el numero de misiones activas, pegada al nombre de la
+zona. Se actualiza sola cada 2 segundos con el mapa abierto (al aceptar o
+terminar una mision el numero cambia o la marca desaparece). Las zonas
+ocultas por el filtro de expansiones no muestran marca. Imagen nueva:
+assets/worldmap/icon/activas_24.tga.
+
+NOVEDAD v2.1.1: solo misiones ACTIVAS
+-----------------------------------------------------------------------------------
+Si LOTRO_Quest_Assistant esta cargado, al pasar el mouse por una zona el
+cartel dice cuantas misiones ACTIVAS tienes en esa zona (o "Sin misiones
+activas en esta zona"). Un clic en la zona (sin arrastrar) abre la lista de
+esas misiones activas, y un clic en una mision la abre en Quest Assistant.
+No se muestran misiones completadas, pendientes ni puntos de recoleccion.
+Solo LEE los datos de Quest Assistant (no cambia ni guarda nada suyo). Sin
+Quest Assistant el mapa funciona igual que antes.
+
+Archivos que ya no se usan y se pueden borrar a mano sin problema:
+worldmap_engine_adapter.lua y, en assets/worldmap/icon/, launcher_icon_35.tga,
+mapa_icon_64.tga, mapicon_32.tga, mapicon_64.tga y mapicon_128.tga (en uso:
+mapa_redondo_35.tga, mapa_icon_35.tga, activas_24.tga, calavera_*.tga y marker_pin.tga).
+
+NOVEDAD v2.0.3: icono flotante al tamaño de Quest Assistant
+-----------------------------------------------------------------------------------
+A 64px el icono redondo quedaba demasiado grande en el juego. Ahora mide
+35px, igual que los iconos flotantes de LOTRO_Quest_Assistant (misma
+imagen redonda, generada a 35x35 exactos).
+
+NOVEDAD v2.0.2: icono flotante nuevo (el que mandaste) y mas grande
+-----------------------------------------------------------------------------------
+El icono flotante ahora es la imagen redonda que mandaste (pergamino de
+mapa con rosa de los vientos y el Arbol Blanco, marco dorado). Se muestra a
+64px -- el tamaño mas grande de icono que usa LOTRO (el mismo de los iconos
+grandes de TravelWindowII) -- para que se vea bien y no se pierda. Como es
+redondo, se quito el cuadro oscuro que habia detras (dejaba esquinas).
+Se recorto al borde del circulo para aprovechar todo el espacio.
+
+NOVEDAD v2.0.1: icono flotante propio de mapa
+-----------------------------------------------------------------------------------
+El icono flotante ya no es la lupa de LOTRO_Quest_Assistant: ahora usa el
+dibujo propio de este addon (pergamino de mapa con rosa de los vientos, en
+marco oscuro), al mismo tamaño de 35px que los iconos flotantes de
+LOTRO_Quest_Assistant y en el mismo formato de imagen que esos iconos (que
+ya se ven bien en el juego). Tambien se corrigio que el boton dibujaba la
+imagen en un cuadro de 29px (recortando el borde derecho/inferior); ahora
+ocupa los 35px completos.
+
+NOVEDAD v2.0: rediseño completo del mapa (como el mapa "Map of LOTRO zones by level")
+-----------------------------------------------------------------------------------
+Siguiendo la imagen de referencia que mandaste (mismo arte de fondo que
+este addon), con los nombres en espanol de siempre:
+
+1. FRONTERAS NUEVAS: las 55 zonas del mapa de referencia se redibujaron a
+   mano siguiendo sus bordes reales (antes eran manchas redondeadas que se
+   pisaban). Zonas vecinas comparten el borde exacto: sin huecos y sin
+   zonas encimadas, asi el mouse siempre cae en UNA sola zona. Las 4 zonas
+   nuevas que no figuran en la referencia (Pahar Hatokali, Heledhris, Parth
+   Rhavas, Nan Ogol) conservan su ubicacion estimada, recortada para no
+   pisar a las demas.
+
+2. COLORES POR VOLUMEN EPICO: rojo = El Legado de Angmar, naranja = Minas
+   de Moria, amarillo = Aliados del Rey, verde = La Fuerza de Sauron,
+   celeste = El Libro Negro de Mordor, azul = El Legado de Durin, violeta =
+   Umbar/Harad, gris = Paramos Etten (JcJ), turquesa = contenido nuevo
+   estimado. Gondor Occidental y Central van rayadas (verde + violeta),
+   igual que en la referencia. Cada zona tiene relleno semitransparente
+   (se ve el terreno) y un borde claro fino.
+
+3. TEXTOS QUE YA NO SE CORTAN (el bug visual): antes cada cartel era una
+   caja fija de 170x38 con letra grande (TrajanPro16) -- dos renglones no
+   entraban y los nombres largos se cortaban. Ahora: nombre en blanco con
+   contorno negro, partido en renglones (ej. "Tierras / Solitarias"), y el
+   nivel debajo en color pergamino. Cada cartel se dimensiona segun su
+   texto, esta ubicado donde lo pone el mapa de referencia, y se acomodaron
+   para que ningun cartel se pise con otro.
+
+4. HOVER MEJORADO: al pasar el mouse, la zona se ilumina con un borde
+   brillante (antes solo se oscurecia un poco) y sigue apareciendo la
+   ventana flotante con la info. El buscador usa el mismo resaltado. Las
+   zonas de TU nivel ahora llevan un marco dorado propio (distinto del
+   hover, para no confundirlas con la zona bajo el mouse).
+
+5. LEYENDA: abajo a la izquierda del mapa (sobre el mar) hay una leyenda
+   con los colores de cada volumen y dos ayudas rapidas.
+
+6. NIVELES CORREGIDOS segun la referencia: Manantiales del Langflood 130
+   (decia 180), Wildermore 85 (decia 56-60), Paso de Rohan 70-75 (decia
+   75-85), Eregion 48-53 (decia 46-53), Los Paramos 105 (decia 100).
+
+Todo lo demas sigue igual: buscador (nombre o nivel), filtro de
+expansiones, marcadores con clic derecho, recordar ventana, /mapa, icono
+flotante.
+
+NOVEDAD v1.9: se arreglo el icono flotante (se veia cortado a la mitad)
+-----------------------------------------------------------------------------------
+Mandaste una captura real: el icono flotante (el cuadrado de cuero con
+marco dorado) se veia CORTADO A LA MITAD en el juego -- solo se dibujaba la
+mitad de abajo a la derecha, el resto quedaba transparente. Revisamos el
+archivo y esta bien armado (no esta corrupto), asi que es un problema de
+como el motor real dibuja ESE TGA en particular -- no vale la pena seguir
+persiguiendolo. Como pediste, en vez de insistir con un icono nuevo se
+reusa directamente la imagen de icono de mapa que ya tenes funcionando sin
+problemas en LOTRO_Quest_Assistant (la lupa que usan para abrir su propia
+ventana de "Recoleccion" -- la misma arquitectura que este addon copio para
+el mapa), copiada tal cual sin volver a procesarla, y al mismo tamaño (35px)
+que usan los iconos flotantes de ese addon. Si en algun momento preferis
+otro dibujo para el icono, avisame.
+
+NOVEDAD v1.8: buscador mejorado + marcadores personalizados
+-----------------------------------------------------------------------------------
+Elegiste 2 de 4 ideas nuevas que te propuse:
+
+1. BUSCADOR MEJORADO: si escribis SOLO numeros (ej. "50") ahora busca por
+   NIVEL en vez de nombre -- resalta todas las zonas cuyo rango de nivel
+   incluye ese numero, en vez de buscar una zona que se llame "50". Ademas
+   el comando "/mapa <texto>" (ej. "/mapa eregion" o "/mapa 50") ahora abre
+   el mapa con esa busqueda ya hecha, sin esperar nada. "/mapa" solo (sin
+   nada despues) sigue abriendo/cerrando como siempre.
+
+2. MARCADORES PERSONALIZADOS: click derecho en cualquier punto del mapa
+   abre un cuadro para escribir tu propia nota (ej. "comprar reactivos
+   aca", "raid pendiente"). Al guardarla aparece un pin dorado en ese punto
+   exacto. Click izquierdo en un pin muestra/oculta tu nota. Click derecho
+   en un pin te deja borrarlo. Se guardan solos, por personaje (cada
+   personaje tuyo tiene sus propios marcadores).
+
+NOVEDAD v1.7: 5 mejoras pedidas (buscador, nivel, filtro de expansiones, recordar ventana, comando /mapa)
+-----------------------------------------------------------------------------------
+Elegiste agregar todas las mejoras propuestas MENOS el toggle de ocultar
+etiquetas/rellenos, y descartaste el marcador de posicion en vivo del
+jugador (no existe una API real para eso, solo el comando manual "/loc").
+Las 5 que quedaron, investigadas de nuevo contra addons reales ya instalados
+(TravelWindowII, CombatAnalysis, WhereToPlayV1.34, LUI):
+
+1. BUSCADOR DE ZONAS: nueva caja de texto arriba del mapa. Escribi parte del
+   nombre de una zona (ej. "moria", "shire") y se resaltan todas las que
+   matcheen, ademas de panear el mapa automaticamente a la primera.
+
+2. RECORDAR VENTANA: posicion, tamaño y hacia donde tenias paneado el mapa
+   se guardan solos (por personaje) y se restauran la proxima vez que lo
+   abras -- ya no arranca siempre en el mismo lugar/tamaño por defecto.
+
+3. RESALTADO POR NIVEL: las zonas cuyo rango de nivel incluye el nivel
+   actual de tu personaje se marcan mas fuerte (relleno mas saturado +
+   borde dorado en el nombre), para ver de un vistazo donde te conviene
+   jugar ahora. Se recalcula cada vez que abris el mapa.
+
+4. FILTRO DE EXPANSIONES: boton "Expansiones..." arriba a la derecha del
+   mapa, abre un menu para tildar que expansiones tenes compradas. El
+   contenido base (gratuito) nunca se oculta. IMPORTANTE: el juego no le
+   da a los addons ninguna forma de saber que expansiones compraste de
+   verdad (se investigo a fondo, ningun addon instalado tuyo lo hace) --
+   por eso esto es un filtro MANUAL, vos decis que tenes. Por defecto
+   arranca con todo tildado (nada oculto) hasta que lo configures. Se
+   guarda por cuenta, no por personaje (lo configuras una vez para todos).
+
+5. COMANDO "/mapa": como no hay forma segura de asignarle una tecla
+   cualquiera directo desde el addon (investigado, solo hay atajos
+   confirmados para teclas especiales como Escape/F12, capturar letras
+   sueltas requiere un truco fragil de robo de foco), se agrego el comando
+   de chat "/mapa" (o "/mapadelmundo") que abre/cierra el mapa. Si queres
+   un atajo de teclado real, crea una macro con ese texto ("/mapa") y
+   arrastrala a una barra de acciones -- eso ya te deja ponerle la tecla
+   que quieras, es una funcion nativa del juego.
+
+NOVEDAD v1.6: ventana flotante -- se saco el nivel repetido y se completo el DLC real de cada zona
+-----------------------------------------------------------------------------------
+1. NIVEL REPETIDO (reporte real): la descripcion de 40 de las 59 zonas
+   terminaba con una frase tipo "Nivel 44-50." que quedaba repetida con la
+   linea de nivel que ya se muestra aparte en la ventana flotante. Se saco
+   esa frase de las descripciones (se dejo el resto del texto intacto); el
+   nivel se sigue mostrando una sola vez, en su propia linea.
+
+2. DLC/expansion REAL de cada zona (pedido explicito, investigado en
+   internet contra fuentes reales: lotro-wiki.com, wikipedia, sitios de
+   noticias del juego): las 59 zonas tenian el campo "dlc" vacio (por eso
+   la ventana flotante siempre decia "DLC requerido: pendiente"). Ahora
+   cada zona muestra la expansion o actualizacion real que la agrego al
+   juego (ej. "Sombras de Angmar (2007)", "Minas de Moria (2008)",
+   "Corsarios de Umbar (2023)"), incluyendo las zonas mas nuevas:
+   Sug Nidar/Mûr Ghala/Paramos de Hatokali/Pahar Hatokali son de "Reinos de
+   Harad" (2025), y Heledhris/Parth Rhavas/Nan Ogol son de "Los Lobos de
+   Mordor", expansion anunciada para otoño de 2026 que todavia no tiene
+   fecha de lanzamiento confirmada -- por eso esas 3 siguen marcadas como
+   "estimado" (contenido que todavia no salio o recien esta saliendo).
+
+NOVEDAD v1.5: se arreglo el area negra al arrastrar el mapa + marco + resaltado de zona
+-----------------------------------------------------------------------------------
+1. AREA NEGRA AL ARRASTRAR EL MAPA (reporte real con captura): la causa era
+   que el "lienzo" interno del mapa (mapContent) seguia midiendo el tamaño
+   del VIEJO marco de cuero completo (1619x1447), que tenia un borde
+   decorativo alrededor -- al arrastrar mucho el mapa, se entraba en esa
+   franja del borde viejo, que ya no tiene ningun dibujo (el marco se saco
+   en la v1.3) y se veia negra. Se corrigio: el lienzo ahora mide EXACTO el
+   tamaño real del arte del mapa (1448x1086, sin ningun borde extra), asi
+   que el mapa cubre siempre TODO lo que se puede arrastrar -- ya no hay
+   ningun area a la que se pueda panear que quede vacia.
+
+2. MARCO CON BORDE alrededor del mapa (pedido explicito): se agrego un
+   borde fino dorado alrededor del visor del mapa, mas un fondo oscuro fijo
+   detras (double seguridad: si alguna vez queda un pixel sin cubrir, se ve
+   como parte del diseño, no como un error). Se redimensiona solo con la
+   ventana.
+
+3. RESALTADO DE ZONA al pasar el mouse (pedido explicito, mejora visual):
+   la zona bajo el mouse ahora se ve mas oscura/saturada que el resto
+   (se dibuja su mismo color de relleno una segunda vez encima), lo que
+   tambien resalta el contorno exacto de esa zona contra las demas.
+
+NOVEDAD v1.4: banner de titulo con el diseño nuevo
+-----------------------------------------------------------------------------------
+Se agrego el banner "MAPA DEL MUNDO" con letra estilo LOTRO (recortado de la
+imagen que mandaste) arriba del mapa, siempre centrado y con tamaño fijo
+(no se estira ni se deforma al agrandar/achicar la ventana -- solo se
+recentra). El visor del mapa se corrio hacia abajo para dejarle lugar.
+Nota: por ahora solo se integro el banner central del nombre; el borde fino
+decorativo de los costados de tu imagen todavia NO esta puesto (si lo
+queres tambien, avisame y lo agrego).
+
+NOVEDAD v1.3: se reemplazo el zoom por el mismo mecanismo de "Recolección"
+-----------------------------------------------------------------------------------
+El zoom de la v1.2 (reescalar todo el mapa) se veia roto en el juego real
+(nombres/colores amontonados) aunque las pruebas automaticas pasaban. Se
+saco por completo y se reemplazo por el MISMO mecanismo, ya probado en
+produccion, que usa la ventana "Recolección" de LOTRO_Quest_Assistant
+(UI/GatherWindow.lua, leido directo de tu carpeta real):
+
+1. El mapa NUNCA se escala -- se dibuja siempre a su tamaño real (nativo),
+   sin excepcion.
+2. La ventana ahora es redimensionable DESDE EL BORDE, como cualquier
+   ventana nativa del juego (arrastra la esquina/borde para agrandarla o
+   achicarla).
+3. Lo que cambia de tamaño es el "visor" (la parte del mapa que se ve, no
+   el mapa en si) -- adentro, el mapa se mueve arrastrandolo con el mouse
+   (clic apretado + mover) para llegar a cualquier zona, arriba, abajo o a
+   los costados, sin perder nitidez ni desarmar ningun texto.
+4. Se saco el marco de cuero decorativo (no tiene sentido con una ventana
+   de tamaño variable) -- el mapa se ve directo dentro del visor.
+
+NOVEDAD v1.2: la ventana ahora se mueve y tiene zoom
+-----------------------------------------------------------------------------------
+1. LA VENTANA NO SE PODIA MOVER: se asumia que una ventana con marco nativo
+   se arrastraba sola (como cualquier ventana del juego), pero en este motor
+   eso no es gratis -- confirmado revisando QuestSyncWindow.lua de
+   LOTRO_Quest_Assistant, que implementa su propio arrastre a mano. Ahora
+   hace lo mismo: CLIC Y ARRASTRE simple (sin ninguna tecla) en cualquier
+   parte del mapa lo mueve.
+
+2. ZOOM: dos botones "+"/"-" arriba a la izquierda del mapa agrandan/achican
+   toda la ventana junto con el mapa, el marco, los rellenos de zona y las
+   etiquetas -- entre 50% y 100% del tamaño original. El escalado redondea
+   por los bordes COMPARTIDOS entre tiles vecinos (no cada tile por su
+   cuenta), que es lo que evita que el arte del titulo se desarme como paso
+   en un intento anterior. El hover/tooltip de cada zona tambien se corrigio
+   para seguir funcionando bien en cualquier nivel de zoom.
+
+NOVEDAD v1.1: correccion de bugs reportados jugando en el juego real
+-----------------------------------------------------------------------------------
+La version anterior llegaba a abrir (el icono aparecia y el mapa se
+mostraba), pero el usuario reporto, jugando en su maquina real, varios
+problemas concretos. Todos se corrigieron en esta version:
+
+1. La ventana no entraba en pantalla (el canvas real es 1619x1447, mas alto
+   que la mayoria de resoluciones) -- se veian los tiles de abajo cortados
+   y la ventana quedaba con parte fuera de la pantalla. Ahora se calcula un
+   factor de escala con Turbine.UI.Display.GetWidth()/GetHeight() (GetHeight
+   confirmado real via el addon publico "TheOneBag", que lo llama exacto
+   igual que Display.GetWidth() ya usado en LOTRO_Quest_Assistant) para que
+   la ventana entera quepa en pantalla, y se centra sola al abrir. El texto
+   (nombres de zona, tooltip) NO se achica con el mapa, para que siga
+   siendo legible.
+
+2. Al cerrar la ventana del mapa con la X nativa, el cuadro flotante de
+   info de zona quedaba huerfano flotando en pantalla (se veia incluso con
+   el mapa cerrado, superpuesto al resto de la interfaz del juego). Se
+   corrigio enganchando self.VisibleChanged (evento real, mismo patron que
+   usa QuestSyncWindow.lua de LOTRO_Quest_Assistant para resolver el mismo
+   problema con su propio popup) para ocultar el tooltip apenas la ventana
+   deja de estar visible.
+
+3. El fondo de la ventana flotante se veia transparente/dificil de leer.
+   La causa real: tooltip_data.lua omite a proposito los 2 tiles centrales
+   que caian enteramente dentro de los huecos de texto/imagen (optimizacion
+   de peso), pero eso dejaba esa zona sin NINGUN arte de fondo. Ahora la
+   ventana tiene un fondo solido casi opaco detras de los 14 tiles reales.
+
+4. Letras mas grandes y con mas contraste: el titulo de cada zona y el
+   titulo del tooltip pasan de TrajanPro14 a TrajanPro16 (unica variante
+   mas grande que se pudo confirmar como real, via el addon publico
+   "Equendil" -- no se inventaron tamaños de fuente que no existan). Ademas
+   cada nombre de zona ahora tiene un fondo oscuro semitransparente
+   SIEMPRE visible (antes solo aparecia al pasar el mouse), para que se lea
+   sobre cualquier color de terreno del mapa.
+
+5. Icono del lanzador agrandado (35px -> 46px) con un fondo oscuro
+   semitransparente detras para que se distinga mejor sobre el fondo del
+   juego.
+
+6. Se agrego una descripcion real de 3 lineas (geografia/lore, investigada)
+   para las 59 zonas, en el campo nuevo "descripcion" de worldmap_data.lua.
+   Reemplaza el placeholder "Info de misiones: pendiente" del tooltip. Para
+   las zonas de contenido mas nuevo (sur de Harad / Corsarios de Umbar) la
+   descripcion es mas general porque todavia hay poca informacion de lore
+   publicada -- no se inventaron detalles de misiones/NPCs no confirmados.
+
+NOVEDAD DE LA VERSION ANTERIOR: integracion real completa
+-----------------------------------------------------
+Hasta la version anterior, worldmap.lua/worldmap_data.lua/tooltip_data.lua
+usaban require() (Lua estandar) y un Adapter.* generico con funciones sin
+completar -- no cargaba en el juego real. Esta version los reescribe contra
+la API REAL de Turbine, confirmada leyendo codigo real y ya probado sin
+incidentes del addon LOTRO_Quest_Assistant de este mismo usuario (no
+adivinada). Cambios principales:
+
+1. worldmap_data.lua y tooltip_data.lua ya NO usan "local X = {} ... return
+   X": ahora escriben en el namespace global _G.WorldMapAddon (mismo patron
+   que _G.LQA de LOTRO_Quest_Assistant) y se cargan con
+   import "WorldMap_Addon.worldmap_data" / import "WorldMap_Addon.tooltip_data".
+
+2. worldmap.lua ya NO tiene un Adapter.* generico sin completar. La ventana
+   del mapa es directamente WorldMapAddon.UI.WorldMap = class(Turbine.UI.
+   Lotro.Window) -- chrome NATIVO de Lotro, no una ventana "pelada" con
+   arte propio como chrome. Esto es DELIBERADO, no un cambio cosmetico:
+   QuestBookWindow.lua de LOTRO_Quest_Assistant documenta 3 CIERRES REALES
+   DEL JUEGO que le costo a este usuario aprender que esa combinacion
+   (ventana sin chrome nativo + botones nativos de Lotro adentro) es
+   insegura. Este addon nunca usa botones nativos de Lotro (todo son
+   Control/Label simples), pero por las dudas se sigue el patron ya
+   probado sin incidentes: Lotro.Window + el marco de cuero/filigrana como
+   Control HIJO (igual que questbook.tga en QuestBookWindow.lua), nunca
+   reemplazando la ventana en si. La ventana flotante de info de zona SI es
+   un Turbine.UI.Window sin chrome (confirmado seguro en
+   QuestInfoTooltip.lua de ese addon, mismo patron, sin incidentes, porque
+   tampoco lleva botones nativos).
+
+3. Se agrego worldmap_launcher.lua: el icono anclable que faltaba,
+   calcado 1 a 1 del boton flotante real y probado de
+   LOTRO_Quest_Assistant/UI/QuestSyncLauncher.lua (arrastrar-vs-clic, menu
+   de click derecho para bloquear posicion, posicion guardada con
+   Turbine.PluginData por personaje). Al clickear crea/muestra la ventana
+   del mapa.
+
+4. El resaltado de la zona bajo el mouse cambio de un "relleno con la
+   forma exacta del poligono" (nunca implementable: no se encontro ninguna
+   API de relleno vectorial en todo el addon real) a un recuadro
+   semitransparente del color de la zona detras de su etiqueta de
+   nombre/nivel. Si mas adelante quieren el relleno con la forma real,
+   avisen -- se puede generar con el mismo pipeline que ya se uso para los
+   tiles (59 mascaras nuevas, una por zona).
+
+5. worldmap_engine_adapter.lua queda en el paquete solo de referencia/
+   historial -- ningun archivo lo importa mas.
+
+IMPORTANTE -- esto se probo con un arnes de prueba en la nube (simula la
+API de Turbine.UI con los mismos nombres de metodo confirmados contra el
+addon real, e instancia la ventana, simula hover sobre una zona real y
+fuera de cualquier zona, y simula clic+arrastre del boton), NO DENTRO DEL
+JUEGO. Encontro y corrigio un bug real en el camino (self.hoveredZone se
+inicializaba en nil, lo cual en un sistema de clases por metatablas como
+este hace que la siguiente lectura caiga al __index heredado en vez de leer
+el campo propio -- se cambio a false). Puede seguir habiendo algun nombre
+de metodo o firma que no sea exactamente igual en el juego real. Si tira un
+error de Lua (aparece en el chat, en rojo) al cargar o al abrir el mapa,
+mandenme el texto exacto y lo corrijo.
+
+Pendiente: nada bloqueante conocido por ahora.
+
+Estructura:
+
+WorldMap_Addon/
+  MapaDelMundo.plugin           <- manifiesto para el Gestor de Plugins
+  Main.lua                      <- punto de entrada: carga los 4 archivos
+                                    de abajo y crea el boton anclable
+  worldmap_data.lua             <- datos: 59 zonas, 36 tiles de mapa, 37
+                                    piezas del marco grande
+  tooltip_data.lua               <- datos de la ventana flotante: tamano,
+                                    huecos de contenido, 14 piezas de marco
+  worldmap.lua                  <- logica real: ventana del mapa, zonas,
+                                    hover, etiquetas, ventana flotante
+  worldmap_launcher.lua         <- boton anclable (arrastrar/bloquear/
+                                    posicion guardada)
+  worldmap_engine_adapter.lua   <- RETIRADO, solo historial, sin uso
+  assets/worldmap/
+    map_r*_c*.tga                <- 36 piezas del mapa de fondo
+    frame_r*_c*.tga               <- 37 piezas del marco grande
+    tooltip_r*_c*.tga              <- 14 piezas del marco de la ventana
+                                    flotante
+    zone_images/<zona>.tga        <- 59 imagenes de referencia por zona
+    icon/mapicon_*.tga            <- icono del boton, 3 tamanos
+
+Si tira un error de Lua al cargar o al usar el mapa, mandenme el texto
+exacto (aparece en rojo en el chat del juego) y lo corrijo desde aca.

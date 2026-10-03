@@ -1,0 +1,42 @@
+-- QuestSync Data/FarmingDB.lua
+-- Misiones de granjeo/oficio repetibles (enemyType=5 en WarbandsSlayer 5.9.1) --
+-- extraido de WarbandsDataEn.lua. La mayoria son entregas a un NPC fijo, no
+-- puntos repartidos por el mapa como cofres/amenazas -- por eso 'coord' viene
+-- vacio en la mayoria (26/34): no tienen una coordenada exacta en la fuente,
+-- solo el nombre del lugar. Se muestran igual, sin mapa, en vez de ocultarlas.
+_G.FarmingDB = {
+  { id = 5009, name = "Craft for Embers", nameES = "Artesanía por Brasas", how = "Craft 7 [Ember-worthy crafts]", pnj = "Mozhek", place = "Skarald", coord = "34.7N, 45.4W" },
+  { id = 5012, name = "Craft for Motes", nameES = "Artesanía por Motas", how = "Craft 7 [Motes-worthy crafts]", pnj = "Motes and Ember Craft Traider", place = "Bree Market Square", coord = "30.3S, 51.2W" },
+  { id = 5057, name = "Silver Coins of Gundabad for Embers", how = "Exchange [100 Silver Coins of Gundabad] for 500 Embers.", pnj = "Quartermaster of Gundabad", place = "Zidir-nesad", coord = nil },
+  { id = 5058, name = "Challenges of Gundabad (Weekly)", how = "Complete 4 instances of Gundabad", pnj = "", place = "", coord = nil },
+  { id = 5059, name = "Reclaiming of the Mountain-hold (Weekly)", how = "Complete 20 Gundabad challenges", pnj = "Zova", place = "Great Hall of Vernozal", coord = nil },
+  { id = 5055, name = "Missions of Gundabad (Weekly)", how = "Complete 20 Gundabad missions", pnj = "Zova", place = "Vernozal", coord = nil },
+  { id = 5056, name = "Missions of Gundabad (Daily)", how = "Complete 20 Gundabad missions", pnj = "Zova", place = "Vernozal", coord = nil },
+  { id = 5050, name = "Clovengap: Terror in the Trees", how = "Crafting instance to collect wood. - Contains another quest to collect Enhancement Runes.", pnj = "Zadock Flint-eye", place = "Zidir-nesad, the Steepset", coord = nil },
+  { id = 5051, name = "Stonejaws: Leader of the Frost", how = "Crafting instance to collect Scholar chests. - Contains another quest to collect Enhancement Runes.", pnj = "Zadock Flint-eye", place = "Zidir-nesad, the Steepset", coord = nil },
+  { id = 5052, name = "Gloomingtarn: Drôk-and-Kharb", how = "Crafting instance to pick up skarn. - Contains another quest to collect Enhancement Runes.", pnj = "Zadock Flint-eye", place = "Zidir-nesad, the Steepset", coord = nil },
+  { id = 5053, name = "Battle of Welkin-lofts", how = "Instance with 5 quests each giving 1 box of Enhancement Runes 131 and 300 of reputation.", pnj = "Agatur the Boastful", place = "Zidir-nesad, the Steepset", coord = nil },
+  { id = 5054, name = "Battle at the forge", how = "Instance with 5 quests each giving 1 box of Enhancement Runes 131 and 300 of reputation.", pnj = "Agatur the Boastful", place = "Zidir-nesad, the Steepset", coord = nil },
+  { id = 5005, name = "Copper Coins of Gundabad for Motes", how = "Exchange 30 [Copper Coins of Gundabad] against 500 motes.", pnj = "Quartermaster (March on Gundabad)", place = "second floor of Annak-khurfu", coord = nil },
+  { id = 5008, name = "On a Mission (Weekly)", how = "Complete 15 missions", pnj = "", place = "", coord = nil },
+  { id = 5021, name = "On a Continuing Mission (Weekly)", how = "Complete 45 missions", pnj = "", place = "", coord = nil },
+  { id = 5006, name = "The War Effort: Missions for the Cause (Weekly)", how = "Complete 4 times \"March on Gundabad: Missions for the Cause\"", pnj = "Elof", place = "second floor of Annak-khurfu", coord = nil },
+  { id = 5020, name = "The War Effort: A Great Leap (Weekly)", how = "Complete 4 times \"March on Gundabad: Additional Steps\"", pnj = "Hlothi", place = "second floor of Annak-khurfu", coord = nil },
+  { id = 5007, name = "March on Gundabad: Missions for the Cause", how = "Complete 3 Gabil'akka Missions", pnj = "Elof", place = "second floor of Annak-khurfu", coord = nil },
+  { id = 5023, name = "March on Gundabad: Assisting the War Effort (Daily)", how = "Complete 3 Gabil'akka Missions", pnj = "Hlothi", place = "second floor of Annak-khurfu", coord = nil },
+  { id = 5022, name = "March on Gundabad: Shakalush, the Stair Battle (Daily)", how = "Complete \"Shakalush, the stair Battle\"", pnj = "Hlothi", place = "second floor of Annak-khurfu", coord = nil },
+  { id = 5004, name = "Protectors of Wilderland: Bounties", how = "Accomplish 5 bounties at Limlok", pnj = "automatically by taking a bounty from the Bounty Board", place = "Limlok at 20.9N, 55.9W", coord = nil },
+  { id = 5000, name = "Sigils of Imlad Ithil for Motes", how = "Exchange [100 Sigils of Imlad Ithil] for [500 Motes of Enchantment].", pnj = "Quartermaster of the White Compagny", place = "Estolad Lân at 64.6S, 2.0W", coord = nil },
+  { id = 5002, name = "Imlad Morgul: The Reclamation", nameES = "Imlad Morgul: La Reclamación", how = "Complete 10 Instance Quests of Imlad Ithil given by Ereblen or Tordoron.", pnj = "automatically by taking an Instance Quest of Imlad Morgul from Ereblen", place = "Estolad Uial at 65.1S, 4.1E", coord = nil },
+  { id = 5003, name = "Imlad Morgul: Vale of Sorcery", how = "Complete 4 instances of Minas Morgul", pnj = "automatically when entering one of the instances of Minas Morgul", place = "Estolad Uial at 65.1S, 4.1E", coord = nil },
+  { id = 5011, name = "Imlad Morgul: Continued Threats", nameES = "Imlad Morgul: Amenazas continuas", how = "Kill 8 of 9 Roving Threats of the Mordor Besieged.", pnj = "automatically when approaching a Roving threat. - This quest is unlocked at level 130, after completing the Minas Morgul quests.", place = "Mordor Besieged", coord = nil },
+  { id = 5017, name = "Gulmarks for Motes", how = "Exchange against 55 Gulmarks", pnj = "Ragnild", place = "Hultvis", coord = "5.0N, 54.9W" },
+  { id = 5013, name = "Protecting the Beornings", how = "Complete twice the quest \"Protecting Shathur-munzu\"", pnj = "Ragnild", place = "Hultvis", coord = "5.0N, 54.9W" },
+  { id = 5015, name = "Protecting the Elves", how = "Complete twice the quest \"Protecting Kidzul-kalah\"", pnj = "Hithril", place = "Hultvis", coord = "5.0N, 54.9W" },
+  { id = 5016, name = "Protecting the Woodmen", how = "Complete twice the quest \"Protecting Avabarg\"", pnj = "Audvak", place = "Hultvis", coord = "5.0N, 54.9W" },
+  { id = 5001, name = "Longbeard Marks for Motes", how = "Exchange [15 Longbeard Marks] against [200 Motes of Enchantment].", pnj = "Quartermaster", place = "Skarald at 34.7N, 45.4W", coord = nil },
+  { id = 5010, name = "Reclaiming the Grey", how = "Complete 10 Gray Mountains instance quests given by Strahek", pnj = "This quest is automatically bestowed upon acceptance of any of the four 'Resource Instance Daily quests' from Strahek the Stout", place = "Skarald at 34.7N, 45.4W", coord = nil },
+  { id = 5014, name = "Restoring the Three Kingdoms", how = "Complete 8 repeatable quests in Dale, Erebor and Felegoth.", pnj = "King Thorin III", place = "Hall Under the Mountain", coord = nil },
+  { id = 5018, name = "Scrolls of Empowerment for Host of the West Silver Pieces (Daily)", how = "Trade for 50 [Host of the West Silver Pieces]", pnj = "Quartermaster of Host of the West", place = "Camp of the Host", coord = "40.9S, 10.3W" },
+  { id = 5019, name = "Scrolls of Empowerment for Host of the West Silver Pieces (Weekly)", how = "Trade for 50 [Host of the West Silver Pieces]", pnj = "Quartermaster of Host of the West", place = "Camp of the Host", coord = "40.9S, 10.3W" },
+}

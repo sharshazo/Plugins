@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<Plugin>
+	<Information>
+		<Name>QuestSync</Name>
+		<Author>AI Agent</Author>
+		<Version>1.0</Version>
+		<Description>Unified Quest Addon for LOTRO. Integrates Compendium data, MoorMap, Waypoint, and Chat Parsing for Spanish clients.</Description>
+	</Information>
+	<Package>LOTRO_Quest_Assistant.Main</Package>
+</Plugin>

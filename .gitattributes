@@ -1,0 +1,3 @@
+# Guardar los archivos tal cual (sin convertir fines de linea), para que el ZIP
+# sea identico a la carpeta del juego.
+* -text
