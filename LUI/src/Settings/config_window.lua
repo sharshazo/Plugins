@@ -638,6 +638,10 @@ function ConfigWindow:refresh_runtime_settings()
     if Apply.pointer_settings ~= nil then
         pcall(Apply.pointer_settings)
     end
+    -- (2026-10-03) aura del minimapa (igual que el puntero)
+    if Apply.minimap_settings ~= nil then
+        pcall(Apply.minimap_settings)
+    end
     Apply.inventory_settings()
     Apply.assets_settings()
     Apply.status_bar_settings()

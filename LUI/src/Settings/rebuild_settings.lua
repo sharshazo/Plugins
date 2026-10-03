@@ -698,6 +698,12 @@ function Settings.rebuild()
     else
         State.settings.pointer = { enabled = false }
     end
+    -- (2026-10-03) aura del minimapa: valores ya validados (minimap_aura.lua)
+    if _G.LUI.Features.MinimapAura ~= nil and _G.LUI.Features.MinimapAura.normalize ~= nil then
+        State.settings.minimap = _G.LUI.Features.MinimapAura.normalize(raw.minimap)
+    else
+        State.settings.minimap = { enabled = false }
+    end
 
     local raw_abbrev = raw.global.number_abbrev
     State.settings.global.number_abbrev.enabled = raw_abbrev.enabled

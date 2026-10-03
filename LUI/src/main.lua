@@ -59,6 +59,8 @@ import "LUI.src.StatusBar.api_chat_bridge"
 import "LUI.src.QuestBanner.quest_banner"
 -- (2026-10-02) efecto del puntero (aura animada pegada al raton)
 import "LUI.src.Pointer.pointer_fx"
+-- (2026-10-03) aura animada alrededor del minimapa (radar) del juego
+import "LUI.src.MinimapAura.minimap_aura"
 
 local function _lui_window_work_area()
     local display_w, display_h = Turbine.UI.Display.GetSize()
@@ -591,6 +593,13 @@ if Apply.pointer_settings ~= nil then
         Turbine.Shell.WriteLine("<rgb=#3399FA>LUI</rgb> puntero: " .. tostring(err_ptr))
     end
 end
+-- (2026-10-03) aura del minimapa: en pcall, nunca corta la carga
+if Apply.minimap_settings ~= nil then
+    local ok_mm, err_mm = pcall(Apply.minimap_settings)
+    if ok_mm ~= true then
+        Turbine.Shell.WriteLine("<rgb=#3399FA>LUI</rgb> minimapa: " .. tostring(err_mm))
+    end
+end
 Windows.first_run_quick_setup = nil
 if State.loaded_settings_was_new == true then
     Windows.first_run_quick_setup = Settings.FirstRunQuickSetup()
@@ -656,6 +665,9 @@ Plugins["LUI"].Unload = function()
     end
     if Features.Pointer ~= nil and Features.Pointer.shutdown ~= nil then
         pcall(Features.Pointer.shutdown)
+    end
+    if Features.MinimapAura ~= nil and Features.MinimapAura.shutdown ~= nil then
+        pcall(Features.MinimapAura.shutdown)
     end
 
     Windows.status_bar = nil

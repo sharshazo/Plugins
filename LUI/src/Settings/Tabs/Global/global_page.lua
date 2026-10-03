@@ -735,6 +735,124 @@ function GlobalPage:Constructor(window)
         end, 2)
     self:add_tab(TR["Pointer"], "pointer", pointer)
 
+    -- (2026-10-03) aura del minimapa (src/MinimapAura/minimap_aura.lua):
+    -- aro animado alrededor del radar del juego. Se aplica al guardar; el
+    -- boton "Colocar" guarda solo esta pestana y deja arrastrar el aro.
+    local function mmc()
+        if type(self._settings.minimap) ~= "table" then
+            self._settings.minimap = {}
+        end
+        return self._settings.minimap
+    end
+    local MinimapAura = _G.LUI.Features.MinimapAura
+    local M_DEF = MinimapAura ~= nil and MinimapAura.DEFAULTS or {}
+    local function nearest(list, v, fallback)
+        v = tonumber(v) or fallback
+        local best, bd = fallback, math.huge
+        for _, c in ipairs(list) do
+            if math.abs(c - v) < bd then
+                best, bd = c, math.abs(c - v)
+            end
+        end
+        return best
+    end
+    local minimap = ConfigContent(window, 4)
+    minimap:add_info(TR["Animated ring around the game minimap (radar). Clicks pass through it and the centre stays clear. Use Place on the minimap once to put it over your radar: drag it, change the size with the mouse wheel or - / +, then OK or right click."], 64)
+    minimap:add_checkbox("minimap_enabled", TR["Show minimap aura"],
+        function(value)
+            mmc().enabled = value == true
+        end,
+        function()
+            return mmc().enabled == true
+        end, 2)
+    minimap:add_button("minimap_place", TR["Place on the minimap"], function()
+        if MinimapAura == nil or MinimapAura.place_from_config == nil then
+            return
+        end
+        -- por si el perfil se recargo desde que se abrio Opciones
+        local St = _G.LUI.Settings.State
+        if St ~= nil and type(St.loaded_settings) == "table" then
+            self._settings = St.loaded_settings
+        end
+        minimap:save()
+        MinimapAura.place_from_config(function()
+            minimap:load()
+        end)
+    end, TR["Saves this tab, turns the aura on and lets you drag it over the radar."], 2)
+    minimap:add_row_break()
+    minimap:add_dropdown("minimap_design", TR["Aura design"],
+        { TR["Calm aura"], TR["Orbiting stars"], TR["Stream of light"], TR["Runes"], TR["Sparkles"], TR["Flames"], TR["Double ring"] },
+        { "sereno", "orbitas", "corriente", "runas", "destellos", "llamas", "doble" },
+        function(value)
+            mmc().design = value
+        end,
+        function()
+            return mmc().design or M_DEF.design or "sereno"
+        end)
+    minimap:add_dropdown("minimap_color", TR["Pointer color"],
+        { TR["Gold"], TR["Blue"], TR["Green"], TR["Red"], TR["Purple"], TR["White"] },
+        { "dorado", "azul", "verde", "rojo", "morado", "blanco" },
+        function(value)
+            mmc().color = value
+        end,
+        function()
+            return mmc().color or M_DEF.color or "dorado"
+        end)
+    minimap:add_row_break()
+    -- el tamano tambien cambia con la rueda al colocar: solo se escribe si
+    -- se eligio otro valor en la lista (si no, se respeta el de la rueda)
+    local size_list = MinimapAura ~= nil and MinimapAura.SIZE_LIST or { 180 }
+    local size_labels = {}
+    for i = 1, #size_list do
+        size_labels[i] = tostring(size_list[i]) .. " px"
+    end
+    local size_loaded = nil
+    minimap:add_dropdown("minimap_size", TR["Ring size"], size_labels, size_list,
+        function(value)
+            if value ~= size_loaded then
+                mmc().diameter = value
+            end
+        end,
+        function()
+            size_loaded = nearest(size_list, mmc().diameter, M_DEF.diameter or 180)
+            return size_loaded
+        end, TR["Fine adjustment: mouse wheel or - / + while placing it."])
+    minimap:add_dropdown("minimap_thickness", TR["Ring thickness"],
+        { TR["Thin"], TR["Normal"], TR["Thick"] }, { "f", "n", "g" },
+        function(value)
+            mmc().thickness = value
+        end,
+        function()
+            return mmc().thickness or M_DEF.thickness or "n"
+        end)
+    minimap:add_row_break()
+    minimap:add_dropdown("minimap_opacity", TR["Pointer opacity"],
+        { "40%", "60%", "75%", "85%", "100%" }, { 0.4, 0.6, 0.75, 0.85, 1 },
+        function(value)
+            mmc().opacity = value
+        end,
+        function()
+            return nearest({ 0.4, 0.6, 0.75, 0.85, 1 }, mmc().opacity, 0.85)
+        end)
+    minimap:add_dropdown("minimap_speed", TR["Animation speed"],
+        { TR["Slow"], TR["Normal"], TR["Fast"] }, { 0.5, 1, 1.8 },
+        function(value)
+            mmc().speed = value
+        end,
+        function()
+            return nearest({ 0.5, 1, 1.8 }, mmc().speed, 1)
+        end)
+    minimap:add_row_break()
+    minimap:add_dropdown("minimap_smooth", TR["Smoothness"],
+        { TR["High (every frame)"], TR["Medium"], TR["Low (lighter)"] }, { "alta", "media", "baja" },
+        function(value)
+            mmc().smooth = value
+        end,
+        function()
+            return mmc().smooth or M_DEF.smooth or "alta"
+        end, TR["How fluid the movement is. Low redraws less often and uses less of the computer."])
+    self:add_tab(TR["Minimap"], "minimap", minimap)
+
     self:add_tab(TR["UI"], "ui", _new_ui_page(window, function()
         return self._settings
     end))

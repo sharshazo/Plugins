@@ -2223,6 +2223,18 @@ _G.LUI.Settings.Defaults.Schema =
 		["show"] = "siempre",
 		["shake"] = true,
 	},
+	-- (2026-10-03) aura del minimapa (src/MinimapAura/minimap_aura.lua);
+	-- el lugar (cx, cy) se guarda al colocarla
+	["minimap"] = {
+		["enabled"] = false,
+		["design"] = "sereno",
+		["color"] = "dorado",
+		["diameter"] = 180.000000,
+		["thickness"] = "n",
+		["opacity"] = 0.850000,
+		["speed"] = 1.000000,
+		["smooth"] = "alta",
+	},
 	["launcher"] = {
 		["enabled"] = true,
 		["setup_menu_v1"] = true,

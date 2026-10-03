@@ -61,6 +61,7 @@ local function display_help()
     _write_help_command("/lui menu", "  /lui menu       - Show the LUI Menu icon again (/lui menu off hides it)")
     _write_help_command("/lui diag", "  /lui diag       - Image check after a game update")
     _write_help_command("/lui puntero", "  /lui puntero    - Pointer effect: on / off / <style> / <color> / prueba")
+    _write_help_command("/lui minimapa", "  /lui minimapa   - Minimap aura: on / off / colocar / <design> / <color> / <size>")
     _write_help_command("/lui cartel", "  /lui cartel     - Quest banner demo (all 11 styles); /lui cartel <quest name> shows that title")
     _write_help_command("/lui botin", "  /lui botin      - Historial de bot\195\173n de la sesi\195\179n (tambi\195\169n /botin)")
     _write_help_command("/lui api sb --add", "  /lui api sb --add -k key -t title -i image -c /command - Register a status bar API button")
@@ -371,6 +372,88 @@ local function _pointer_command(arg)
     end
 end
 
+-- (2026-10-03) "/lui minimapa": aura del minimapa (src/MinimapAura). Sin
+-- nada o "on" la enciende (la primera vez deja colocarla), "off" la
+-- apaga, "colocar" deja moverla sobre el radar, "listo" termina, un diseno
+-- o un color la cambia y un numero cambia el tamano (px). Se guarda en el
+-- perfil.
+local function _minimap_command(arg)
+    local MM = _G.LUI.Features.MinimapAura
+    local State = _G.LUI.Settings.State
+    local Apply = _G.LUI.Runtime.Apply
+    local prefix = "<rgb=#3399FA>LUI</rgb> minimapa: "
+    local loaded = State.loaded_settings
+    if MM == nil or type(loaded) ~= "table" or Apply.minimap_settings == nil then
+        Turbine.Shell.WriteLine(prefix .. "no disponible")
+        return
+    end
+    if type(loaded.minimap) ~= "table" then
+        loaded.minimap = {}
+    end
+    local m = loaded.minimap
+    local a = string.lower(arg or "")
+    local function has(list, v)
+        for i = 1, #list do
+            if list[i] == v then
+                return true
+            end
+        end
+        return false
+    end
+    local place = false
+    if a == "colocar" or a == "mover" or a == "place" then
+        if Windows.minimap_aura ~= nil then
+            MM.start_placement(nil)
+            Turbine.Shell.WriteLine(prefix .. "arrastra el aro sobre el radar; rueda o - / + para el tama\195\177o; clic derecho u OK para terminar")
+            return
+        end
+        m.enabled = true
+        place = true
+    elseif a == "listo" or a == "ok" or a == "done" then
+        if MM.is_placing() == true then
+            MM.finish_placement(true)
+        else
+            Turbine.Shell.WriteLine(prefix .. "no se est\195\161 colocando (/lui minimapa colocar)")
+        end
+        return
+    elseif a == "off" or a == "no" then
+        m.enabled = false
+    elseif a == "" or a == "on" or a == "si" then
+        m.enabled = true
+        place = m.cx == nil
+    elseif has(MM.DESIGNS, a) then
+        m.enabled = true
+        m.design = a
+    elseif has(MM.COLORS, a) then
+        m.enabled = true
+        m.color = a
+    elseif tonumber(a) ~= nil then
+        m.enabled = true
+        m.diameter = tonumber(a)
+    else
+        Turbine.Shell.WriteLine(prefix .. "dise\195\177os: " .. table.concat(MM.DESIGNS, ", ") ..
+            " | colores: " .. table.concat(MM.COLORS, ", ") ..
+            " | tama\195\177o: un n\195\186mero (" .. MM.MIN_D .. "-" .. MM.MAX_D .. ") | on, off, colocar, listo")
+        return
+    end
+    pcall(_G.LUI.Settings.rebuild)
+    Apply.minimap_settings()
+    pcall(_G.LUI.Settings.Persistence.save_settings)
+    local cfg = MM.normalize(m)
+    if cfg.enabled == true and Windows.minimap_aura ~= nil then
+        Turbine.Shell.WriteLine(prefix .. "activado (" .. cfg.design .. ", " .. cfg.color .. ", " ..
+            tostring(cfg.diameter) .. " px)")
+        if place == true then
+            MM.start_placement(nil)
+            Turbine.Shell.WriteLine(prefix .. "arrastra el aro sobre el radar; rueda o - / + para el tama\195\177o; clic derecho u OK para terminar")
+        end
+    elseif cfg.enabled == true then
+        Turbine.Shell.WriteLine(prefix .. "no se pudo crear (revisa el chat)")
+    else
+        Turbine.Shell.WriteLine(prefix .. "desactivado")
+    end
+end
+
 -- (2026-09-30) "/lui cartel": cartel de misiones (src/QuestBanner)
 local function _banner_command(arg)
     local QuestBanner = _G.LUI.Features.QuestBanner
@@ -463,6 +546,8 @@ function command:Execute(_, str)
         _open_imgtest()
     elseif cmd == "puntero" or cmd == "pointer" or cmd == "cursor" then
         _pointer_command(str:match("^%s*%S+%s+(.-)%s*$"))
+    elseif cmd == "minimapa" or cmd == "minimap" or cmd == "radar" then
+        _minimap_command(str:match("^%s*%S+%s+(.-)%s*$"))
     elseif cmd == "cartel" or cmd == "banner" then
         _banner_command(str:match("^%s*%S+%s+(.-)%s*$"))
     elseif cmd == "botin" or cmd == "loot" then
