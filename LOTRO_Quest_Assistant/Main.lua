@@ -370,9 +370,13 @@ end
 local function OnGatherChatReceived(sender, args)
     if not args then return end
     local message = tostring(args.Message)
-    if string.find(message, "QuestSync:") or string.find(message, "GatherSync:") or string.find(message, "<rgb=") then return end
-
+    if string.find(message, "QuestSync:") or string.find(message, "GatherSync:") then return end
+    -- (2026-10-04) la respuesta de /loc se prueba ANTES del filtro "<rgb=":
+    -- si algun cliente/parche la manda con color, antes se tiraba sin leerla
+    -- y el punto de recoleccion no se guardaba.
     if LocationAdapter.ParseLocationMessage(message) then return end
+    if string.find(message, "<rgb=") then return end
+
     GatherEventParser.ParseMessage(sender, message)
 end
 

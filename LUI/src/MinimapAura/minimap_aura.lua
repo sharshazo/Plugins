@@ -106,7 +106,8 @@ function MM.normalize(raw)
     out.speed = _clamp(sp, 0.25, 3)
     out.smooth = MM.SMOOTH_DT[raw.smooth] ~= nil and raw.smooth or DEFAULTS.smooth
     local cx, cy = tonumber(raw.cx), tonumber(raw.cy)
-    if cx ~= nil and cy ~= nil and cx == cx and cy == cy then
+    -- -1 (valor de fabrica) = todavia sin colocar
+    if cx ~= nil and cy ~= nil and cx == cx and cy == cy and cx >= 0 and cy >= 0 then
         out.cx, out.cy = _round(cx), _round(cy)
     end
     return out

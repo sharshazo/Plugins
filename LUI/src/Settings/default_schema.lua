@@ -2234,6 +2234,11 @@ _G.LUI.Settings.Defaults.Schema =
 		["opacity"] = 0.850000,
 		["speed"] = 1.000000,
 		["smooth"] = "alta",
+		-- lugar del aro; -1 = sin colocar. TIENE que estar aca: el guardado
+		-- de LUI (plugin_data_types) falla entero con claves fuera del
+		-- esquema, y se perdia toda la configuracion (2026-10-04)
+		["cx"] = -1.000000,
+		["cy"] = -1.000000,
 	},
 	["launcher"] = {
 		["enabled"] = true,

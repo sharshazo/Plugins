@@ -420,7 +420,7 @@ local function _minimap_command(arg)
         m.enabled = false
     elseif a == "" or a == "on" or a == "si" then
         m.enabled = true
-        place = m.cx == nil
+        place = MM.normalize(m).cx == nil
     elseif has(MM.DESIGNS, a) then
         m.enabled = true
         m.design = a

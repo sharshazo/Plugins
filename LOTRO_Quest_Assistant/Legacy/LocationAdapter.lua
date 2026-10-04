@@ -52,6 +52,32 @@ local PATTERNS = {
     "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) ox(.-%d+%.?%d*) oy(.-%d+%.?%d*) oz(.-%d+%.?%d*)",
 }
 
+-- (2026-10-04) Respaldo SIN depender del idioma. Reporte del jugador: la
+-- ventanita "Guardar ubicacion de recoleccion" aparecia, pero al pulsarla
+-- no se guardaba nada. Los 4 patrones de arriba exigen el texto en espanol
+-- "Estás en el servidor ... en r<N> ...", pero el parche de traduccion de
+-- este cliente deja varias plantillas del juego en ingles (el registro
+-- QuestSync_Diag muestra "New Quest:", "Collected ...", "Defeated the ...")
+-- -- si /loc responde "You are on Glamdring server 12 at r2 lx... ly...
+-- ox... oy... oz...", ningun patron coincidia y el punto se perdia en
+-- silencio. Esta busqueda solo mira los datos (r, lx, ly, ox, oy, oz), que
+-- son iguales en cualquier idioma. Se usa SOLO si los 4 patrones de arriba
+-- no coinciden, asi que el caso que ya funcionaba sigue exactamente igual.
+-- Acepta coma decimal por si el cliente la usara ("ox105,15").
+local NUM = "(%-?[%d]+[%.,]?%d*)"
+local function _num(text)
+    if text == nil then return nil end
+    return tonumber((string.gsub(text, ",", ".")))
+end
+
+local function _GenericMatch(message)
+    local region, lx, ly = string.match(message, "r(%d+)%s+lx" .. NUM .. "%s+ly" .. NUM)
+    if region == nil then return nil end
+    local ox, oy, oz = string.match(message, "ox" .. NUM .. "%s+oy" .. NUM .. "%s+oz" .. NUM)
+    if ox == nil then return nil end
+    return region, lx, ly, ox, oy, oz
+end
+
 local function ToNSEW(lx, ly, ox, oy)
     local ew = ((math.floor(lx / 8) * 160 + ox) - 29360) / 200
     local ns = ((math.floor(ly / 8) * 160 + oy) - 24880) / 200
@@ -62,13 +88,21 @@ end
 -- (region, ns, ew) cuando una respuesta de /loc termina de parsearse.
 LocationAdapter.OnLocationResolved = nil
 
+-- Aviso visible (una vez por sesion) si llega algo con forma de /loc que
+-- ninguna busqueda entiende -- antes eso fallaba sin decir nada.
+local unparsedWarned = false
+
 function LocationAdapter.ParseLocationMessage(message)
     if not message then return false end
+    local candidates = {}
     for _, pattern in ipairs(PATTERNS) do
-        local region, lx, ly, ox, oy, oz = string.match(message, pattern)
-        if region ~= nil then
-            region, lx, ly, ox, oy, oz = tonumber(region), tonumber(lx), tonumber(ly),
-                tonumber(ox), tonumber(oy), tonumber(oz)
+        candidates[#candidates + 1] = { string.match(message, pattern) }
+    end
+    candidates[#candidates + 1] = { _GenericMatch(message) }
+    for _, found in ipairs(candidates) do
+        local region, lx, ly, ox, oy, oz = _num(found[1]), _num(found[2]), _num(found[3]),
+            _num(found[4]), _num(found[5]), _num(found[6])
+        if region ~= nil and lx ~= nil and ly ~= nil and ox ~= nil and oy ~= nil then
             local ns, ew = ToNSEW(lx, ly, ox, oy)
             -- Ya no es "siempre visible" (2026-09-07, pedido del usuario:
             -- "sacar los ruidos del chat") -- esto se disparaba con
@@ -85,6 +119,11 @@ function LocationAdapter.ParseLocationMessage(message)
             end
             return true
         end
+    end
+    if not unparsedWarned and string.find(message, "lx%d") ~= nil and string.find(message, "ly%d") ~= nil then
+        unparsedWarned = true
+        Turbine.Shell.WriteLine("<rgb=#FF0000>GatherSync: no pude leer la respuesta de /loc, el punto NO se guardo. " ..
+            "Texto recibido: " .. string.sub(message, 1, 160) .. "</rgb>")
     end
     return false
 end
