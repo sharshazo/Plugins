@@ -69,6 +69,16 @@ local KIND = {
 -- orden de dibujo: lo primero queda debajo (las ciudades arriba de todo)
 local KIND_ORDER = { "t", "s", "e", "d", "r", "c" }
 
+-- v3.1.3 (pedido del jugador): flecha dorada animada encima de cada
+-- mazmorra / incursion donde tiene misiones activas, con el numero. Mismas
+-- imagenes que las flechas del mapa del mundo (flecha_mision + su aura).
+local QARROW = { img = "flecha_mision.tga", w = 24, h = 30, aura = "flecha_aura_", aw = 40, ah = 46, adx = -8, ady = -14 }
+local QARROW_KINDS = { d = true, r = true }
+local QARROW_GAP = 6        -- px entre la flecha y el icono
+local QARROW_BOB = 4        -- px que sube y baja
+local QARROW_PERIOD = 1.2   -- s por subida y bajada
+local QARROW_REFRESH = 3    -- s entre recuentos de misiones
+
 local DIFF_ES = {
     ["Elite"] = "\195\137lite", ["Great Elite"] = "Gran \195\169lite", ["Signature"] = "Distintivo",
     ["Nemesis"] = "N\195\169mesis", ["Supreme Nemesis"] = "N\195\169mesis supremo",
@@ -474,6 +484,24 @@ function ZV:_buildPools()
             if spec.eyes ~= nil then
                 item.eyes = layer(spec.w, spec.h, spec.eyes)
             end
+            if QARROW_KINDS[k] then
+                item.qaura = layer(QARROW.aw, QARROW.ah, QARROW.aura .. "1.tga")
+                item.qarrow = layer(QARROW.w, QARROW.h, QARROW.img)
+                local num = Turbine.UI.Label()
+                num:SetParent(item.qarrow)
+                num:SetPosition(0, 10)
+                num:SetSize(QARROW.w, 16)
+                num:SetFont(Turbine.UI.Lotro.Font.Verdana12)
+                num:SetForeColor(HexToColor("#2A1A04"))
+                num:SetFontStyle(Turbine.UI.FontStyle.Outline)
+                num:SetOutlineColor(HexToColor("#FFE9A8"))
+                num:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
+                num:SetMouseVisible(false)
+                num:SetSelectable(false)
+                item.qnum = num
+                item.qcount = 0
+                item.qframe = 1
+            end
             item.icon:SetMouseVisible(true)
             item.icon.MouseEnter = function()
                 this:_enterItem(item)
@@ -522,6 +550,11 @@ end
 function ZV:_hideItem(item)
     item.vis = false
     item.poi = false
+    if item.qarrow ~= nil then
+        item.qcount = 0
+        item.qarrow:SetVisible(false)
+        item.qaura:SetVisible(false)
+    end
     item.aura:SetVisible(false)
     item.icon:SetVisible(false)
     item.hl:SetVisible(false)
@@ -592,6 +625,71 @@ function ZV:_fillIcons()
                 lk.vis = true
             end
         end
+    end
+    self:_refreshQuestArrows()
+end
+
+-- cuantas misiones activas tiene cada mazmorra / incursion del mapa; la
+-- flecha solo se ve si hay al menos una. Sin Quest Assistant, ninguna.
+function ZV:_refreshQuestArrows()
+    self.qarrowAt = Turbine.Engine.GetGameTime()
+    local Q = WorldMapAddon.Quests
+    local can = Q ~= nil and Q.InstanceQuests ~= nil and Q.Available ~= nil
+    for k in pairs(QARROW_KINDS) do
+        for _, item in ipairs(self.pool[k] or {}) do
+            if item.qarrow ~= nil then
+                local n = 0
+                if can and item.vis and item.poi ~= false then
+                    local ok, list = pcall(function()
+                        if not Q.Available() then
+                            return {}
+                        end
+                        return Q.InstanceQuests(Split(item.poi[4]), Split(item.poi[5]))
+                    end)
+                    if ok and type(list) == "table" then
+                        n = #list
+                    end
+                end
+                if n ~= item.qcount then
+                    item.qcount = n
+                    item.qnum:SetText(n > 0 and tostring(n) or "")
+                end
+                item.qarrow:SetVisible(n > 0)
+                item.qaura:SetVisible(n > 0)
+            end
+        end
+    end
+end
+
+-- la flecha sube y baja suave (cada cuadro) y su aura cambia de cuadro
+function ZV:_animateQuestArrows(now)
+    if self.qarrowBroken == true then
+        return
+    end
+    local ok = pcall(function()
+        if self.qarrowAt == nil or now - self.qarrowAt >= QARROW_REFRESH then
+            self:_refreshQuestArrows()
+        end
+        local bob = math.floor(QARROW_BOB * math.sin(2 * math.pi * now / QARROW_PERIOD) + 0.5)
+        local tick = math.floor(now * FX_FPS)
+        for k in pairs(QARROW_KINDS) do
+            for _, item in ipairs(self.pool[k] or {}) do
+                if item.qarrow ~= nil and item.vis and item.qcount > 0 then
+                    local x = math.floor(item.poi[2] - QARROW.w / 2)
+                    local y = item.y - QARROW.h - QARROW_GAP + bob
+                    item.qarrow:SetPosition(x, y)
+                    item.qaura:SetPosition(x + QARROW.adx, y + QARROW.ady)
+                    local f = ((tick + item.phase) % FX_FRAMES) + 1
+                    if f ~= item.qframe then
+                        item.qframe = f
+                        item.qaura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
+                    end
+                end
+            end
+        end
+    end)
+    if not ok then
+        self.qarrowBroken = true
     end
 end
 
@@ -1143,6 +1241,7 @@ function ZV:Tick()
         end
     end
     self:_animate()
+    self:_animateQuestArrows(Turbine.Engine.GetGameTime())
     self:_checkLanguage()
 end
 
@@ -1158,7 +1257,7 @@ function ZV:_questLines(p)
         if not Q.Available() then
             return
         end
-        local list = Q.InstanceQuests(Split(p[4]))
+        local list = Q.InstanceQuests(Split(p[4]), Split(p[5]))
         local es = self.lang
         if #list == 0 then
             out[1] = es and "Sin misiones activas aqu\195\173." or "No active quests here."

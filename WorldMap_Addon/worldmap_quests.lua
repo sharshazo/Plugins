@@ -903,7 +903,56 @@ local function PlaceMatches(a, b)
 end
 Q.PlaceMatches = PlaceMatches
 
-function Q.InstanceQuests(names)
+-- v3.1.3 (reporte del jugador, Moria: "Profanadores Sombrios", "Cristales
+-- agotados", "Reliquias y monedas" y "Skum y Urauth" se hacen DENTRO del
+-- Tesoro Olvidado, pero el icono decia "Sin misiones activas aqui"). Quest
+-- Assistant las tiene como misiones de comunidad de ZONA ABIERTA (k="open",
+-- lugar "Silvertine Lodes, Moria"), asi que el nombre del lugar nunca
+-- coincidia. Ahora una mision de grupo tambien cuenta si el texto de sus
+-- objetivos nombra la mazmorra / incursion ("...dentro del Tesoro
+-- Olvidado..."). Solo nombres de 6+ letras y palabras enteras, para no
+-- confundir lugares cortos.
+local ES_ARTICLES = { "el ", "la ", "los ", "las " }
+local function TextPlaceKey(text)
+    local k = PlaceKey(text)
+    if k == nil then
+        return nil
+    end
+    for _, a in ipairs(ES_ARTICLES) do
+        if k:sub(1, #a) == a then
+            k = k:sub(#a + 1)
+            break
+        end
+    end
+    if #k < 6 then
+        return nil
+    end
+    return k
+end
+
+local questTextCache = {}
+local function QuestTextKey(ndx)
+    local c = questTextCache[ndx]
+    if c ~= nil then
+        return c
+    end
+    local parts = {}
+    local L = _G.QuestLocES
+    local loc = type(L) == "table" and (L[ndx] or L[tonumber(ndx) or -1]) or nil
+    if type(loc) == "table" and type(loc.objectivesES) == "table" then
+        for _, t in ipairs(loc.objectivesES) do
+            if type(t) == "string" then
+                parts[#parts + 1] = t
+            end
+        end
+    end
+    c = " " .. (PlaceKey(table.concat(parts, " ")) or "") .. " "
+    questTextCache[ndx] = c
+    return c
+end
+
+-- names = nombres en ingles del icono; namesES (opcional) = en español
+function Q.InstanceQuests(names, namesES)
     local out = {}
     if type(names) ~= "table" or not Q.Available() then
         return out
@@ -913,26 +962,52 @@ function Q.InstanceQuests(names)
         return out
     end
     local keys = {}
+    local textKeys = {}
     for _, n in ipairs(names) do
         local k = PlaceKey(n)
         if k ~= nil then
             keys[#keys + 1] = k
         end
+        local tk = TextPlaceKey(n)
+        if tk ~= nil then
+            textKeys[#textKeys + 1] = tk
+        end
     end
-    if #keys == 0 then
+    if type(namesES) == "table" then
+        for _, n in ipairs(namesES) do
+            local tk = TextPlaceKey(n)
+            if tk ~= nil then
+                textKeys[#textKeys + 1] = tk
+            end
+        end
+    end
+    if #keys == 0 and #textKeys == 0 then
         return out
     end
     for _, ndx in ipairs(ActiveNdxList()) do
         local quest = QuestByNdx(ndx)
         if quest ~= nil then
             local ok, g = pcall(GQ.Get, quest)
-            if ok and type(g) == "table" and g.k ~= "open" and type(g.p) == "string" then
-                local pk = PlaceKey(g.p)
+            if ok and type(g) == "table" then
                 local hit = false
-                for _, k in ipairs(keys) do
-                    if PlaceMatches(pk, k) then
-                        hit = true
-                        break
+                if g.k ~= "open" and type(g.p) == "string" then
+                    local pk = PlaceKey(g.p)
+                    for _, k in ipairs(keys) do
+                        if PlaceMatches(pk, k) then
+                            hit = true
+                            break
+                        end
+                    end
+                end
+                if not hit and #textKeys > 0 then
+                    local okT, text = pcall(QuestTextKey, ndx)
+                    if okT and type(text) == "string" then
+                        for _, tk in ipairs(textKeys) do
+                            if text:find(" " .. tk .. " ", 1, true) ~= nil then
+                                hit = true
+                                break
+                            end
+                        end
                     end
                 end
                 if hit then
