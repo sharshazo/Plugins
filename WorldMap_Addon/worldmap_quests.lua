@@ -393,6 +393,38 @@ function Q.ActiveInfo()
     return info
 end
 
+-- v3.3 (pedido del usuario): misiones ACTIVAS de una zona del mapa con sus
+-- lugares (los mismos de Quest Assistant: QuestStagesCoords = todos los
+-- lugares de la mision; si no hay, QuestLocCoords = uno). Solo las activas
+-- del jugador, nunca todas las del juego.
+-- { { ndx, quest, stages = { { name, nameES, loc }, ... } }, ... }
+function Q.ActiveInZone(zoneName)
+    local out = {}
+    if zoneName == nil or not Q.Available() then
+        return out
+    end
+    for _, ndx in ipairs(ActiveNdxList()) do
+        local quest = QuestByNdx(ndx)
+        if quest ~= nil and Q.ZoneOfQuest(quest) == zoneName then
+            local key = tonumber(ndx) or ndx
+            local stages = {}
+            local list = type(_G.QuestStagesCoords) == "table" and _G.QuestStagesCoords[key] or nil
+            if type(list) == "table" then
+                for _, st in ipairs(list) do
+                    if type(st) == "table" and type(st.loc) == "string" then
+                        stages[#stages + 1] = { name = st.name or "", nameES = st.nameES or "", loc = st.loc }
+                    end
+                end
+            end
+            if #stages == 0 and type(_G.QuestLocCoords) == "table" and type(_G.QuestLocCoords[key]) == "string" then
+                stages[1] = { name = quest.poiName or "", nameES = "", loc = _G.QuestLocCoords[key] }
+            end
+            out[#out + 1] = { ndx = ndx, quest = quest, stages = stages }
+        end
+    end
+    return out
+end
+
 function Q.Stats(zone)
     if zone == nil then
         return nil

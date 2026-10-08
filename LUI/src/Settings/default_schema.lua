@@ -2240,6 +2240,25 @@ _G.LUI.Settings.Defaults.Schema =
 		["cx"] = -1.000000,
 		["cy"] = -1.000000,
 	},
+	-- (2026-10-08) el aura/llamas de la barra se QUITO de LUI. Esta tabla se
+	-- deja SOLO para que los perfiles que ya la guardaron se sigan pudiendo
+	-- guardar (el guardado falla con claves fuera del esquema). No se usa.
+	-- (2026-10-07) llamas de la barra (src/BarFlames/bar_flames.lua). TODAS
+	-- las claves aca (x, y, width: -1 = sin colocar / ancho de pantalla).
+	["barflames"] = {
+		["enabled"] = false,
+		["design"] = "llamas",
+		["color"] = "dorado",
+		["size"] = "m",
+		["aura"] = "suave",
+		["sparks"] = true,
+		["opacity"] = 0.900000,
+		["speed"] = 1.000000,
+		["x"] = -1.000000,
+		["y"] = -1.000000,
+		["width"] = -1.000000,
+		["height"] = -1.000000,
+	},
 	["launcher"] = {
 		["enabled"] = true,
 		["setup_menu_v1"] = true,

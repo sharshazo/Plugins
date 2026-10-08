@@ -38,9 +38,18 @@ import "WorldMap_Addon.worldmap_quests"
 -- v2.6: hazañas por zona (datos generados + sincronizacion con Deed Tracker)
 import "WorldMap_Addon.worldmap_deeds_data"
 import "WorldMap_Addon.worldmap_deeds"
+-- v3.3: hazañas con progreso (chat compartido) / completadas, para el mapa de zona
+import "WorldMap_Addon.worldmap_deedactive"
 -- v3.1: mapas de zona (datos generados + ventana); van antes de
 -- worldmap.lua, que abre esa ventana al hacer clic en una zona.
 import "WorldMap_Addon.worldmap_zonemaps_data"
+-- v3.2: capas del panel "Filtros del Mapa" (datos generados) y el panel
+import "WorldMap_Addon.worldmap_layers_data"
+import "WorldMap_Addon.worldmap_filters"
+-- v3.5: mapas interiores y ficha de incursiones / mazmorras
+import "WorldMap_Addon.worldmap_instances_data"
+-- v3.5: nombres en español que faltaban
+import "WorldMap_Addon.worldmap_names_es"
 import "WorldMap_Addon.worldmap_zonemap"
 import "WorldMap_Addon.worldmap"
 import "WorldMap_Addon.worldmap_launcher"

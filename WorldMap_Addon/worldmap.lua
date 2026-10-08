@@ -806,6 +806,26 @@ function WorldMapAddon.UI.WorldMap:_layoutSearchRow(w)
     end
     self.filterBtn:SetPosition(filterX, SEARCH_ROW_TOP)
     self.filterBtn:SetSize(FILTER_BTN_W, SEARCH_H)
+    -- v3.3 (pedido del usuario): dentro de una zona esta fila muestra los
+    -- filtros del mapa (iconos) y, a la derecha, Hombre / Mujer. El buscador,
+    -- Actualizar y Expansiones son del mapa del mundo: vuelven al salir.
+    local strip = self.filterStrip
+    local zone = self.zoneMode == true and strip ~= nil
+    pcall(function()
+        self.searchBox:SetVisible(not zone)
+        if self.refreshBtn ~= nil then self.refreshBtn:SetVisible(not zone) end
+        self.filterBtn:SetVisible(not zone)
+        if strip ~= nil then strip:SetVisible(zone) end
+    end)
+    if zone then
+        local figX = x0 + rowW - (2 * FIGURE_BTN_W) - 2
+        if self.figureBtns ~= nil then
+            local fy = SEARCH_ROW_TOP - math.floor((FIGURE_BTN_H - SEARCH_H) / 2)
+            self.figureBtns.hombre:SetPosition(figX, fy)
+            self.figureBtns.mujer:SetPosition(figX + FIGURE_BTN_W + 2, fy)
+        end
+        pcall(function() strip:Layout(x0, SEARCH_ROW_TOP, math.max(120, figX - ROW_GAP - x0), SEARCH_H) end)
+    end
 end
 
 -- v2.9: logo centrado, con su aura, destello y estrellas
@@ -1855,6 +1875,14 @@ function WorldMapAddon.UI.WorldMap:_buildDlcFilter()
     -- figura en la zona donde estas; clic otra vez en el mismo = se oculta.
     -- Se guarda por personaje (junto con la ventana, ver _saveWindowState).
     pcall(function() self:_buildFigureButtons() end)
+    -- v3.3: fila de filtros del mapa de zona (worldmap_filters.lua): va en
+    -- esta misma fila mientras se ve una zona
+    pcall(function()
+        local F = WorldMapAddon.Filters
+        if F ~= nil and F.NewStrip ~= nil then
+            self.filterStrip = F.NewStrip(self)
+        end
+    end)
 
     Turbine.PluginData.Load(Turbine.DataScope.Account, DLC_SAVE_KEY, function(data)
         if type(data) == "table" then
@@ -2559,6 +2587,8 @@ function WorldMapAddon.UI.WorldMap:_showZoneView(zone)
     end
     self.mapContent:SetVisible(false)
     self.zoneView:ShowZone(zone)
+    -- v3.3: la fila pasa a mostrar los filtros
+    pcall(function() self:_layoutSearchRow(self:GetWidth()) end)
 end
 
 -- volver al mapa del mundo (boton "Volver al mundo" o clic derecho)
@@ -2572,6 +2602,8 @@ function WorldMapAddon.UI.WorldMap:_exitZoneMap()
         self:SetText("Mapa del Mundo")
         self.badgesAt = nil
         self.figAt = nil
+        -- v3.3: vuelven el buscador, Actualizar y Expansiones
+        pcall(function() self:_layoutSearchRow(self:GetWidth()) end)
     end
 end
 
@@ -2847,12 +2879,14 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
             local okG, g = pcall(GQ.Get, row.quest)
             isGroup = okG and type(g) == "table"
         end
+        -- v3.3.1: cada icono con SU tamaño (el de grupo es de 16 px; en un
+        -- cuadro de 20 el juego lo repetia y se veia cortado / duplicado)
         if isGroup and type(GQ.ICON_16) == "string" then
-            icons[#icons + 1] = GQ.ICON_16
+            icons[#icons + 1] = { img = GQ.ICON_16, size = 16 }
         end
         local kind = Quests.GroupKind and Quests.GroupKind(row.quest) or nil
         if kind ~= nil and MINI_IMAGES[kind] ~= nil then
-            icons[#icons + 1] = RES_BASE .. MINI_IMAGES[kind]
+            icons[#icons + 1] = { img = RES_BASE .. MINI_IMAGES[kind], size = MINI }
         end
 
         -- v2.7: mision de mazmorra/incursion = segunda linea con el nombre
@@ -2862,15 +2896,15 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         item:SetSize(rowW, QP_ROW_H)
         item:SetMouseVisible(false)
         local iconsW = 0
-        for _, image in ipairs(icons) do
+        for _, icon in ipairs(icons) do
             local ic = Turbine.UI.Control()
             ic:SetParent(item)
-            ic:SetSize(MINI, MINI)
-            ic:SetPosition(iconsW, math.floor((QP_ROW_H - MINI) / 2))
-            ic:SetBackground(image)
+            ic:SetSize(icon.size, icon.size)
+            ic:SetPosition(iconsW, math.floor((QP_ROW_H - icon.size) / 2))
+            ic:SetBackground(icon.img)
             ic:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
             ic:SetMouseVisible(false)
-            iconsW = iconsW + MINI + 2
+            iconsW = iconsW + icon.size + 2
         end
         if iconsW > 0 then
             iconsW = iconsW + 2
@@ -3091,7 +3125,21 @@ function WorldMapAddon.UI.WorldMap:_addDeedRow(rowW, id, name, done)
     lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
     lbl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
     lbl:SetSelectable(false)
-    lbl:SetText(name)
+    -- v3.4: progreso de la hazaña (lugares / objetos ya hechos), si se sabe
+    local text = name
+    if not done then
+        pcall(function()
+            local DA = WorldMapAddon.DeedActive
+            local n, tot = nil, nil
+            if DA ~= nil and DA.Progress ~= nil then
+                n, tot = DA.Progress(id)
+            end
+            if n ~= nil and n > 0 then
+                text = name .. "  (" .. n .. "/" .. tot .. ")"
+            end
+        end)
+    end
+    lbl:SetText(text)
     lbl:SetForeColor(HexToColor(done and QP_DONE_HEX or QP_PENDING_HEX))
     lbl:SetMouseVisible(true)
     lbl.MouseClick = function()

@@ -10,3 +10,4 @@ __MACOSX/
 narration_export*.lua
 extract_for_narration.lua
 *-1.lua
+bak_*/

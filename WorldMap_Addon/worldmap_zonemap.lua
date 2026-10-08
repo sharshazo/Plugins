@@ -29,6 +29,13 @@
 -- se cambian; cartel = Window sin chrome + Control solido; hover por poll.
 -- Todo lo que toca la API va en pcall: si algo fallara, el mapa del mundo
 -- sigue funcionando igual.
+--
+-- v3.2 (pedido del usuario): boton "Filtros" en la barra de arriba -> panel
+-- "Filtros del Mapa" (worldmap_filters.lua). Iconos nuevos del usuario y
+-- capas nuevas (worldmap_layers_data.lua): exploracion, hazanas, matar
+-- monstruos, campamentos, puntos de viaje, NPC, mineria, pesca, fauna,
+-- historia y saber, tablones de tareas. Cada icono nuevo tiene una punta
+-- abajo: la punta queda en el lugar exacto.
 
 import "Turbine"
 import "Turbine.UI"
@@ -58,12 +65,19 @@ local DRAG_SLOP = 4
 
 -- dibujo de cada tipo: icono (w x h, centrado en el punto), aura (cuadros
 -- animados) y resaltado (mismo tamaño y lugar que el aura)
+-- v3.2 (pedido del usuario): incursion, mazmorra, establo, cofre y elite
+-- usan los iconos NUEVOS del usuario (carpeta datos/Iconos), con su aura de
+-- siempre detras. Esos iconos tienen una punta abajo: la PUNTA (tx, ty)
+-- queda exactamente en el lugar (antes el centro del icono). hlIcon = el
+-- resaltado es el mismo icono iluminado (mismo tamano y lugar que el
+-- icono). filter = cuadro del panel "Filtros del Mapa" que lo muestra.
 local KIND = {
-    t = { img = "zm_cofre.tga", w = 22, h = 17, aura = "zm_cofre_aura_", aw = 36, ah = 31, ax = -7, ay = -9, hl = "zm_cofre_hl.tga" },
-    s = { img = "zm_establo.tga", w = 26, h = 24, aura = "zm_establo_aura_", aw = 40, ah = 38, ax = -7, ay = -9, hl = "zm_establo_hl.tga" },
-    e = { img = "zm_elite.tga", w = 30, h = 28, aura = "zm_elite_aura_", aw = 44, ah = 42, ax = -7, ay = -9, hl = "zm_elite_hl.tga" },
-    d = { img = "puerta_mazmorra_28.tga", w = 28, h = 28, aura = "puerta_aura_", aw = 44, ah = 44, ax = -8, ay = -8, hl = "zm_puerta_hl.tga" },
-    r = { img = "calavera_raid_30.tga", w = 30, h = 28, aura = "calavera_fuego_", aw = 46, ah = 52, ax = -8, ay = -18, hl = "zm_calavera_hl.tga", eyes = "calavera_ojos.tga" },
+    t = { img = "fl_cofre_24.tga", w = 24, h = 24, tx = 12, ty = 22, aura = "zm_cofre_aura_", aw = 36, ah = 31, ax = -6, ay = -5, hl = "fl_cofre_24_hl.tga", hlIcon = true, filter = "cof" },
+    s = { img = "fl_establo_blanco_26.tga", w = 26, h = 26, tx = 13, ty = 25, aura = "zm_establo_aura_", aw = 40, ah = 38, ax = -7, ay = -6, hl = "fl_establo_blanco_26_hl.tga", hlIcon = true, filter = "esb", noAura = true,
+          farImg = "fl_establo_azul_26.tga", farHl = "fl_establo_azul_26_hl.tga", farFilter = "esa" },
+    e = { img = "fl_jefe_28.tga", w = 28, h = 28, tx = 13, ty = 27, aura = "zm_elite_aura_", aw = 44, ah = 42, ax = -8, ay = -7, hl = "fl_jefe_28_hl.tga", hlIcon = true, filter = "jef" },
+    d = { img = "fl_mazmorra_28.tga", w = 28, h = 28, tx = 14, ty = 27, aura = "puerta_aura_", aw = 44, ah = 44, ax = -8, ay = -8, hl = "fl_mazmorra_28_hl.tga", hlIcon = true, filter = "maz", auraIfQuest = true },
+    r = { img = "fl_raid_30.tga", w = 30, h = 30, tx = 15, ty = 29, aura = "calavera_fuego_", aw = 46, ah = 52, ax = -8, ay = -18, hl = "fl_raid_30_hl.tga", hlIcon = true, filter = "raid", auraIfQuest = true },
     c = { img = "zm_ciudad.tga", w = 32, h = 30, aura = "zm_ciudad_aura_", aw = 48, ah = 46, ax = -8, ay = -10, hl = "zm_ciudad_hl.tga" },
 }
 -- orden de dibujo: lo primero queda debajo (las ciudades arriba de todo)
@@ -78,6 +92,57 @@ local QARROW_GAP = 6        -- px entre la flecha y el icono
 local QARROW_BOB = 4        -- px que sube y baja
 local QARROW_PERIOD = 1.2   -- s por subida y bajada
 local QARROW_REFRESH = 3    -- s entre recuentos de misiones
+
+-- v3.2: capas del panel "Filtros del Mapa" (worldmap_layers_data.lua):
+-- icono 24x24 con la punta abajo; la punta va en el punto (x, y).
+local LAYER_W, LAYER_H = 24, 24
+local LAYER_TIP = {
+    campamento = { 11, 23 }, cofre = { 12, 22 }, establo_azul = { 12, 23 }, establo_blanco = { 12, 22 },
+    exploracion = { 12, 23 }, fauna = { 12, 22 }, hazana = { 11, 23 }, historia = { 12, 23 }, jefe = { 12, 23 },
+    mazmorra = { 12, 22 }, mineria = { 12, 23 }, mision = { 12, 23 }, mobs = { 12, 23 }, npc = { 12, 23 },
+    pesca = { 12, 22 }, raid = { 12, 23 }, viaje = { 12, 23 },
+}
+local LAYER_MAX_LINES = 8
+-- v3.4: capas cuyos iconos son de una hazaña (los muestra tambien "Hazañas")
+local DEED_LAYERS = { exp = true, haz = true, mob = true, cof = true }
+-- v3.3: aura de "activa" (40x40, centrada en el icono), aura de mision en
+-- incursion / mazmorra (60x60), misiones activas (pines) y su estado
+local AURA_W, AURA_H, AURA_MAX = 40, 40, 90
+local QRING_W, QRING_H = 60, 60
+local QPIN_MAX = 40
+local STATUS_REFRESH = 3      -- s entre repasos del estado de hazañas / misiones
+local COVER_TOL = 0.4         -- tolerancia de los limites del dibujo (como build3)
+
+local function Filters()
+    return WorldMapAddon.Filters
+end
+
+-- filtro (cuadro del panel) de un icono de los de siempre
+local function KindFilter(p)
+    local spec = KIND[p[1]]
+    if spec == nil then
+        return nil
+    end
+    if spec.farFilter ~= nil and p[6] == "far" then
+        return spec.farFilter
+    end
+    return spec.filter
+end
+
+local function FilterOn(key)
+    if key == nil then
+        return true
+    end
+    local F = Filters()
+    if F == nil or F.IsOn == nil then
+        return true
+    end
+    local ok, on = pcall(F.IsOn, key)
+    if not ok then
+        return true
+    end
+    return on
+end
 
 local DIFF_ES = {
     ["Elite"] = "\195\137lite", ["Great Elite"] = "Gran \195\169lite", ["Signature"] = "Distintivo",
@@ -128,6 +193,16 @@ local function TipLines(text, w)
     return math.max(1, math.ceil(n / perLine))
 end
 
+-- v3.5: nombre español oficial cuando el dato no lo traia
+-- (worldmap_names_es.lua); si no hay traduccion, el mismo nombre
+local function NameES(en)
+    local T = WorldMapAddon.NameES
+    if type(T) == "table" and en ~= nil and T[en] ~= nil then
+        return T[en]
+    end
+    return en
+end
+
 -- titulo y renglones del cartel de un icono (nil = sin cartel: cofres)
 local function TipFor(p, es)
     local kind = p[1]
@@ -136,6 +211,11 @@ local function TipFor(p, es)
         esn = en
     end
     local ens, ess = Split(en), Split(esn)
+    for i, e in ipairs(ens) do
+        if ess[i] == nil or ess[i] == "" or ess[i] == e then
+            ess[i] = NameES(e)
+        end
+    end
     if kind == "t" then
         return nil
     elseif kind == "r" or kind == "d" then
@@ -177,7 +257,7 @@ local function TipFor(p, es)
         local lines = {}
         for i, name in ipairs(ens) do
             local diff, lvl = tostring(infos[i] or infos[1] or ""):match("^(.-)|(.*)$")
-            local txt = name
+            local txt = es and (ess[i] or name) or name
             local det = {}
             if diff ~= nil and diff ~= "" then
                 det[#det + 1] = es and (DIFF_ES[diff] or diff) or diff
@@ -193,6 +273,49 @@ local function TipFor(p, es)
         return es and "\195\137lite" or "Elite", lines
     end
     return nil
+end
+
+-- cartel de un icono de capa: { capa, x, y, nombresEN, nombresES, detalleEN, detalleES }
+local function LayerTip(p, es)
+    local F = Filters()
+    local key = p[1]
+    local t = F ~= nil and F.Title ~= nil and F.Title[key] or nil
+    local title = t ~= nil and (es and t.es or t.en) or key
+    local ens, ess = Split(p[4]), Split(p[5])
+    local sens, sess = Split(p[6]), Split(p[7])
+    local lines = {}
+    for i, en in ipairs(ens) do
+        if i > LAYER_MAX_LINES then
+            local rest = #ens - LAYER_MAX_LINES
+            lines[#lines + 1] = es and ("... y " .. rest .. " m\195\161s") or ("... and " .. rest .. " more")
+            break
+        end
+        local esn = ess[i]
+        if esn == nil or esn == "" or esn == en then
+            esn = NameES(en)
+        end
+        local first, second = esn, en
+        if not es then
+            first, second = en, esn
+        end
+        local line = first
+        if second ~= "" and second ~= first then
+            line = first .. " (" .. second .. ")"
+        end
+        local sen = sens[i] or ""
+        local ses = sess[i] or ""
+        if ses == "" or ses == sen then
+            ses = NameES(sen)
+        end
+        local sub = es and ses or sen
+        if sub ~= "" and sub ~= first then
+            line = line .. " - " .. sub
+        end
+        if line ~= "" then
+            lines[#lines + 1] = line
+        end
+    end
+    return title, lines
 end
 
 -- ---------------------------------------------------------------------
@@ -227,7 +350,9 @@ function ZV.New(owner, viewport)
     self.hoverLink = false
     self.fx = { last = 0, broken = false }
     self.pool = {}
+    self.layerPool = {}
     self.linkPool = {}
+    self.mapOk = false
     self.dragging = false
     self.dragMoved = false
 
@@ -335,6 +460,18 @@ function ZV.New(owner, viewport)
     end
     self.mapName = barLabel(Turbine.UI.Lotro.Font.TrajanPro14, "#F0D9A0", Turbine.UI.ContentAlignment.MiddleCenter)
     self.hint = barLabel(Turbine.UI.Lotro.Font.Verdana10, "#A89B7A", Turbine.UI.ContentAlignment.MiddleRight)
+    -- v3.3: los filtros van en la fila de Hombre / Mujer de la ventana
+    -- (worldmap.lua + worldmap_filters.lua); al cambiar uno se redibuja.
+    pcall(function()
+        local F = Filters()
+        if F ~= nil and F.OnChange ~= nil then
+            F.OnChange(function()
+                if this.active and this.mapOk then
+                    this:_fillIcons()
+                end
+            end)
+        end
+    end)
 
     -- arrastrar (clic izquierdo) y volver (clic derecho), igual que el
     -- mapa del mundo (args.X/Y en coordenadas del contenido)
@@ -473,14 +610,101 @@ function ZV:_buildPools()
         c:SetVisible(false)
         return c
     end
+    -- v3.2: iconos de las capas del panel "Filtros del Mapa" (van debajo de
+    -- los de siempre). Uno por icono del mapa que mas tiene; la imagen se
+    -- pone al mostrarlo (cada uno puede ser de otra capa).
+    local LD = WorldMapAddon.LayersData
+    local needL = 0
+    if type(LD) == "table" then
+        for _, list in pairs(LD) do
+            if #list > needL then
+                needL = #list
+            end
+        end
+    end
+    -- v3.3: auras "activa" (hazaña con progreso, mision activa): pocas,
+    -- se reparten entre los iconos que las necesitan; debajo de todo
+    self.auraPool = {}
+    for i = 1, AURA_MAX do
+        self.auraPool[i] = { ctl = layer(AURA_W, AURA_H, "fl_aura_1.tga"), used = false, frame = 1, phase = (i * 5) % FX_FRAMES, x = 0, y = 0 }
+    end
+    local function makePin(i)
+        local item = { layer = true, kind = "L", poi = false, vis = false, x = 0, y = 0, img = false, phase = (i * 7) % FX_FRAMES }
+        local c = Turbine.UI.Control()
+        c:SetParent(self.content)
+        c:SetSize(LAYER_W, LAYER_H)
+        c:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        c:SetMouseVisible(true)
+        c:SetVisible(false)
+        item.icon = c
+        c.MouseEnter = function()
+            this:_enterItem(item)
+        end
+        c.MouseLeave = function()
+            if this.hoverItem == item then
+                this:_leaveItem()
+            end
+        end
+        -- arrastrar el mapa tambien empezando encima de un icono (con
+        -- muchas capas encendidas casi todo el mapa tiene iconos)
+        local function toContent(args)
+            return { X = item.x + (args and args.X or 0), Y = item.y + (args and args.Y or 0), Button = args and args.Button }
+        end
+        c.MouseDown = function(sender, args)
+            if IsLeft(args) and this.content.MouseDown ~= nil then
+                this.content.MouseDown(this.content, toContent(args))
+            end
+        end
+        c.MouseMove = function(sender, args)
+            if this.dragging and this.content.MouseMove ~= nil then
+                this.content.MouseMove(this.content, toContent(args))
+            end
+        end
+        c.MouseUp = function()
+            this.dragging = false
+        end
+        c.MouseClick = function(sender, args)
+            if IsRight(args) then
+                this:Back()
+            elseif item.vis and not this.dragMoved then
+                local lk = this:_linkAt(item.x + (args.X or 0), item.y + (args.Y or 0))
+                if lk ~= nil then
+                    this:Navigate(lk.target)
+                end
+            end
+        end
+        return item
+    end
+    for i = 1, needL do
+        self.layerPool[i] = makePin(i)
+    end
+    -- v3.3: misiones ACTIVAS del jugador (Quest Assistant), encima de las capas
+    self.questPool = {}
+    for i = 1, QPIN_MAX do
+        local item = makePin(i)
+        item.quest = true
+        self.questPool[i] = item
+    end
     for _, k in ipairs(KIND_ORDER) do
         local spec = KIND[k]
         local list = {}
         for i = 1, need[k] do
             local item = { kind = k, frame = 1, phase = (i * 5) % FX_FRAMES, poi = false, vis = false, x = 0, y = 0 }
+            if QARROW_KINDS[k] then
+                -- v3.3: aura dorada cuando hay misiones activas en ese lugar
+                item.qring = layer(QRING_W, QRING_H, "fl_qaura_1.tga")
+                item.qringFrame = 1
+            end
             item.aura = layer(spec.aw, spec.ah, spec.aura .. "1.tga")
-            item.hl = layer(spec.aw, spec.ah, spec.hl)
-            item.icon = layer(spec.w, spec.h, spec.img)
+            if spec.hlIcon then
+                -- resaltado = el icono iluminado, ENCIMA del icono (no toma el mouse)
+                item.icon = layer(spec.w, spec.h, spec.img)
+                item.hl = layer(spec.w, spec.h, spec.hl)
+                item.img = spec.img
+            else
+                item.hl = layer(spec.aw, spec.ah, spec.hl)
+                item.icon = layer(spec.w, spec.h, spec.img)
+            end
             if spec.eyes ~= nil then
                 item.eyes = layer(spec.w, spec.h, spec.eyes)
             end
@@ -515,6 +739,10 @@ function ZV:_buildPools()
                 if IsRight(args) then
                     this:Back()
                 elseif item.vis then
+                    -- v3.5: incursion / mazmorra -> su mapa interior y su ficha
+                    if (item.kind == "d" or item.kind == "r") and item.poi ~= false and this:OpenInstance(item.poi) then
+                        return
+                    end
                     -- icono encima del nombre de un mapa vecino: viaja igual
                     local lk = this:_linkAt(item.x + (args.X or 0), item.y + (args.Y or 0))
                     if lk ~= nil then
@@ -530,30 +758,325 @@ end
 
 function ZV:_showItem(item, p)
     local spec = KIND[item.kind]
-    local x = math.floor(p[2] - spec.w / 2)
-    local y = math.floor(p[3] - spec.h / 2)
+    local x, y
+    if spec.tx ~= nil then
+        -- la punta del icono en el lugar exacto
+        x = math.floor(p[2] - spec.tx + 0.5)
+        y = math.floor(p[3] - spec.ty + 0.5)
+        if y < 0 then
+            -- (muy arriba en el mapa: centrado, para no salirse del borde)
+            y = math.floor(p[3] - spec.h / 2)
+        end
+    else
+        x = math.floor(p[2] - spec.w / 2)
+        y = math.floor(p[3] - spec.h / 2)
+    end
     item.poi = p
     item.x, item.y = x, y
+    if spec.farImg ~= nil then
+        local img = (p[6] == "far") and spec.farImg or spec.img
+        if item.img ~= img then
+            item.img = img
+            item.icon:SetBackground(RES .. img)
+            item.hl:SetBackground(RES .. ((p[6] == "far") and spec.farHl or spec.hl))
+        end
+    end
     item.icon:SetPosition(x, y)
     item.aura:SetPosition(x + spec.ax, y + spec.ay)
-    item.hl:SetPosition(x + spec.ax, y + spec.ay)
+    if spec.hlIcon then
+        item.hl:SetPosition(x, y)
+    else
+        item.hl:SetPosition(x + spec.ax, y + spec.ay)
+    end
     if item.eyes ~= nil then
         item.eyes:SetPosition(x, y)
         item.eyes:SetVisible(true)
     end
-    item.aura:SetVisible(true)
+    -- v3.3.1 (pedido del usuario): establos sin aura; mazmorras e
+    -- incursiones con aura SOLO si hay misiones activas ahi (la prende
+    -- _refreshQuestArrows)
+    item.aura:SetVisible(not spec.noAura and not spec.auraIfQuest)
     item.icon:SetVisible(true)
     item.hl:SetVisible(false)
     item.vis = true
 end
 
+-- v3.2: icono de capa (punta abajo en el punto x, y del mapa)
+function ZV:_showLayer(item, p)
+    local F = Filters()
+    local name = F ~= nil and F.LayerIcon ~= nil and F.LayerIcon[p[1]] or nil
+    if name == nil then
+        return false
+    end
+    local tip = LAYER_TIP[name] or { 12, 23 }
+    local x = math.floor(p[2] - tip[1] + 0.5)
+    local y = math.floor(p[3] - tip[2] + 0.5)
+    item.poi = p
+    item.x, item.y = x, y
+    item.img = name
+    item.status = nil
+    self:_setPinImage(item, false)
+    item.icon:SetPosition(x, y)
+    item.icon:SetVisible(true)
+    item.vis = true
+    return true
+end
+
+-- imagen del icono de capa segun su estado (completada = gris + X) y si el
+-- mouse esta encima (iluminado). Solo cambia la imagen si es otra.
+function ZV:_setPinImage(item, hover)
+    local name = item.img
+    if not name then
+        return
+    end
+    local file
+    if item.status == "done" then
+        file = "fl_" .. name .. "_pin_done.tga"
+    elseif hover then
+        file = "fl_" .. name .. "_pin_hl.tga"
+    else
+        file = "fl_" .. name .. "_pin.tga"
+    end
+    if item.curImg ~= file then
+        item.curImg = file
+        item.icon:SetBackground(RES .. file)
+    end
+end
+
+-- estado de un icono con hazañas (4 columnas + la 8a: "hazaña:entrada" por
+-- renglon). Completado solo si TODOS sus renglones lo estan; activa si
+-- alguno tiene progreso.
+local function PoiStatus(keysText, namesText)
+    local DA = WorldMapAddon.DeedActive
+    if DA == nil or DA.Status == nil or keysText == nil or keysText == "" then
+        return nil
+    end
+    local keys, names = Split(keysText), Split(namesText)
+    local any, allDone, active = false, true, false
+    for i = 1, math.max(#keys, #names) do
+        local k = keys[i] or ""
+        if k == "" then
+            allDone = false
+        else
+            any = true
+            local ok, st = pcall(DA.Status, k, names[i])
+            st = ok and st or nil
+            if st ~= "done" then
+                allDone = false
+            end
+            if st == "active" then
+                active = true
+            end
+        end
+    end
+    if not any then
+        return nil
+    end
+    if allDone then
+        return "done"
+    end
+    if active then
+        return "active"
+    end
+    return nil
+end
+
+-- v3.3: estado de hazañas de todos los iconos visibles + auras de "activa"
+function ZV:_refreshStatus()
+    self.statusAt = Turbine.Engine.GetGameTime()
+    local actives = {}
+    for _, item in ipairs(self.layerPool) do
+        if item.vis and item.poi ~= false then
+            local st = PoiStatus(item.poi[8], item.poi[4])
+            if st ~= item.status then
+                item.status = st
+                self:_setPinImage(item, self.hoverItem == item)
+            end
+            if st == "active" then
+                actives[#actives + 1] = item
+            end
+        end
+    end
+    -- cofres de siempre que son de una hazaña
+    local OD = WorldMapAddon.LayersOldDeed
+    local od = type(OD) == "table" and self.mapId ~= false and OD[self.mapId] or nil
+    for _, item in ipairs(self.pool.t or {}) do
+        if item.vis and item.poi ~= false then
+            local st = nil
+            if od ~= nil then
+                local key = od["t:" .. tostring(item.poi[2]) .. ":" .. tostring(item.poi[3])]
+                if key ~= nil then
+                    st = PoiStatus(key, item.poi[4])
+                end
+            end
+            if st ~= item.status then
+                item.status = st
+                local spec = KIND.t
+                local img = (st == "done") and "fl_cofre_24_done.tga" or spec.img
+                if item.curImg ~= img then
+                    item.curImg = img
+                    item.icon:SetBackground(RES .. img)
+                end
+                item.aura:SetVisible(st ~= "done")
+            end
+            if st == "active" then
+                actives[#actives + 1] = item
+            end
+        end
+    end
+    for _, item in ipairs(self.questPool) do
+        if item.vis then
+            actives[#actives + 1] = item
+        end
+    end
+    -- auras: una por icono activo (las que sobran se apagan)
+    local n = 0
+    for _, item in ipairs(actives) do
+        local a = self.auraPool[n + 1]
+        if a == nil then
+            break
+        end
+        n = n + 1
+        local w, h = item.icon:GetSize()
+        a.x = math.floor(item.x + (w or LAYER_W) / 2 - AURA_W / 2)
+        a.y = math.floor(item.y + (h or LAYER_H) / 2 - AURA_H / 2)
+        a.ctl:SetPosition(a.x, a.y)
+        a.ctl:SetVisible(true)
+        a.used = true
+    end
+    for i = n + 1, #self.auraPool do
+        local a = self.auraPool[i]
+        if a.used then
+            a.used = false
+            a.ctl:SetVisible(false)
+        end
+    end
+end
+
+-- v3.3: "12.3S, 45.6W" -> ns, ew (norte y este positivos)
+local function ParseLoc(loc)
+    local a, ns, b, ew = tostring(loc or ""):match("([%d%.]+)%s*([NnSs])%s*,%s*([%d%.]+)%s*([EeWwOo])")
+    if a == nil then
+        return nil
+    end
+    local n = tonumber(a)
+    local e = tonumber(b)
+    if n == nil or e == nil then
+        return nil
+    end
+    if ns == "S" or ns == "s" then n = -n end
+    if ew == "W" or ew == "w" or ew == "O" or ew == "o" then e = -e end
+    return n, e
+end
+ZV.ParseLoc = ParseLoc
+
+-- v3.3: misiones ACTIVAS del jugador en este mapa (pin de mision con aura),
+-- en los lugares que da Quest Assistant. Mismas reglas que los demas
+-- iconos: dentro del mapa, dentro del dibujo y fuera del cartel del titulo.
+function ZV:_questPinData()
+    local out = {}
+    local Q = WorldMapAddon.Quests
+    local CAL = WorldMapAddon.MapCal
+    local cal = type(CAL) == "table" and self.mapId ~= false and CAL[self.mapId] or nil
+    local zoneName = ZD ~= nil and ZD.MapZone ~= nil and ZD.MapZone[self.mapId] or nil
+    if Q == nil or Q.ActiveInZone == nil or cal == nil or zoneName == nil then
+        return out, ""
+    end
+    local ok, list = pcall(Q.ActiveInZone, zoneName)
+    if not ok or type(list) ~= "table" then
+        return out, ""
+    end
+    local sig = {}
+    for _, e in ipairs(list) do
+        sig[#sig + 1] = tostring(e.ndx)
+    end
+    table.sort(sig)
+    local W, H = self.mapW, self.mapH
+    for _, e in ipairs(list) do
+        local nameEN = (e.quest and e.quest.nameEN) or ("#" .. tostring(e.ndx))
+        local nameES = nameEN
+        pcall(function() nameES = Q.QuestName(e.ndx, e.quest) end)
+        for _, st in ipairs(e.stages or {}) do
+            local ns, ew = ParseLoc(st.loc)
+            if ns ~= nil then
+                local x = ew * cal[1] + cal[2]
+                local y = ns * cal[3] + cal[4]
+                local inside = x - LAYER_W / 2 >= 3 and x + LAYER_W / 2 <= W - 3 and y - LAYER_H >= 3 and y <= H - 3
+                local drawn = ns <= cal[5] + COVER_TOL and ns >= cal[7] - COVER_TOL and ew >= cal[6] - COVER_TOL and ew <= cal[8] + COVER_TOL
+                local banner = cal[9] >= 0 and x + LAYER_W / 2 >= cal[9] and x - LAYER_W / 2 <= cal[11] and y >= cal[10] and y - LAYER_H <= cal[12]
+                if inside and drawn and not banner then
+                    local stEN = st.name or ""
+                    local stES = (st.nameES ~= nil and st.nameES ~= "") and st.nameES or stEN
+                    local merged = false
+                    for _, q in ipairs(out) do
+                        if math.abs(q.x - x) <= 10 and math.abs(q.y - y) <= 10 then
+                            if #q.en < LAYER_MAX_LINES and not q.seen[tostring(e.ndx)] then
+                                q.en[#q.en + 1] = nameEN; q.es[#q.es + 1] = nameES
+                                q.sen[#q.sen + 1] = stEN; q.ses[#q.ses + 1] = stES
+                                q.seen[tostring(e.ndx)] = true
+                            end
+                            merged = true
+                            break
+                        end
+                    end
+                    if not merged and #out < QPIN_MAX then
+                        local seen = {}
+                        seen[tostring(e.ndx)] = true
+                        out[#out + 1] = { x = x, y = y, en = { nameEN }, es = { nameES }, sen = { stEN }, ses = { stES }, seen = seen }
+                    end
+                end
+            end
+        end
+    end
+    return out, table.concat(sig, ",")
+end
+
+function ZV:_fillQuestPins()
+    for _, item in ipairs(self.questPool) do
+        if item.vis then
+            self:_hideItem(item)
+        end
+    end
+    self.questSig = nil
+    if not FilterOn("mis") then
+        return
+    end
+    local data, sig = self:_questPinData()
+    self.questSig = sig
+    for i, q in ipairs(data) do
+        local item = self.questPool[i]
+        if item == nil then
+            break
+        end
+        local p = { "mis", math.floor(q.x + 0.5), math.floor(q.y + 0.5), table.concat(q.en, "\n"), table.concat(q.es, "\n"),
+            table.concat(q.sen, "\n"), table.concat(q.ses, "\n") }
+        self:_showLayer(item, p)
+    end
+end
+
 function ZV:_hideItem(item)
     item.vis = false
     item.poi = false
+    if item.layer then
+        item.status = nil
+        item.icon:SetVisible(false)
+        return
+    end
     if item.qarrow ~= nil then
         item.qcount = 0
         item.qarrow:SetVisible(false)
         item.qaura:SetVisible(false)
+    end
+    if item.qring ~= nil then
+        item.qring:SetVisible(false)
+    end
+    if item.status ~= nil or item.curImg ~= nil then
+        -- (cofre que estaba completado: vuelve a su imagen de siempre)
+        item.status = nil
+        if item.curImg ~= nil and item.curImg ~= KIND[item.kind].img then
+            item.icon:SetBackground(RES .. KIND[item.kind].img)
+        end
+        item.curImg = nil
     end
     item.aura:SetVisible(false)
     item.icon:SetVisible(false)
@@ -573,6 +1096,22 @@ function ZV:_clearIcons()
             end
         end
     end
+    for _, item in ipairs(self.layerPool) do
+        if item.vis then
+            self:_hideItem(item)
+        end
+    end
+    for _, item in ipairs(self.questPool) do
+        if item.vis then
+            self:_hideItem(item)
+        end
+    end
+    for _, a in ipairs(self.auraPool) do
+        if a.used then
+            a.used = false
+            a.ctl:SetVisible(false)
+        end
+    end
     for _, lk in ipairs(self.linkPool) do
         if lk.vis then
             lk.vis = false
@@ -588,16 +1127,58 @@ function ZV:_fillIcons()
         return
     end
     local list = ZD.Pois ~= nil and ZD.Pois[self.mapId] or nil
+    -- v3.2: los que quedan debajo del cartel del titulo de ESTE mapa
+    local HO = WorldMapAddon.LayersHideOld
+    local hide = type(HO) == "table" and HO[self.mapId] or nil
+    -- v3.4: "Hazañas" muestra TODO lo que es de una hazaña (exploracion,
+    -- matar monstruos, cofres de hazaña y saber); las completadas no se
+    -- ven salvo con "Ver completadas" (entonces gris con X)
+    local hazOn = FilterOn("haz")
+    local showDone = FilterOn("done")
+    self.sigAt = WorldMapAddon.DeedActive ~= nil and WorldMapAddon.DeedActive.Signature ~= nil
+        and WorldMapAddon.DeedActive.Signature() or nil
+    local OD = WorldMapAddon.LayersOldDeed
+    local od = type(OD) == "table" and OD[self.mapId] or nil
     if list ~= nil then
         local nextIdx = {}
         for _, p in ipairs(list) do
             local k = p[1]
             local pool = self.pool[k]
-            if pool ~= nil then
+            local key = tostring(k) .. ":" .. tostring(p[2]) .. ":" .. tostring(p[3])
+            local hidden = hide ~= nil and hide[key] == true
+            local deedKey = (k == "t" and od ~= nil) and od[key] or nil
+            -- v3.2: solo lo que esta marcado en "Filtros del Mapa"
+            local on = FilterOn(KindFilter(p)) or (deedKey ~= nil and hazOn)
+            if on and deedKey ~= nil and not showDone and PoiStatus(deedKey, p[4]) == "done" then
+                on = false
+            end
+            if pool ~= nil and not hidden and on then
                 local i = (nextIdx[k] or 0) + 1
                 nextIdx[k] = i
                 if pool[i] ~= nil then
                     self:_showItem(pool[i], p)
+                end
+            end
+        end
+    end
+    -- v3.2: capas (exploracion, hazanas, NPC, ...) marcadas en el panel
+    local LD = WorldMapAddon.LayersData
+    local llist = type(LD) == "table" and LD[self.mapId] or nil
+    if llist ~= nil then
+        local i = 0
+        for _, p in ipairs(llist) do
+            local deed = p[8] ~= nil and p[8] ~= "" and DEED_LAYERS[p[1]] == true
+            local on = FilterOn(p[1]) or (deed and hazOn)
+            if on and deed and not showDone and PoiStatus(p[8], p[4]) == "done" then
+                on = false
+            end
+            if on then
+                local item = self.layerPool[i + 1]
+                if item == nil then
+                    break
+                end
+                if self:_showLayer(item, p) then
+                    i = i + 1
                 end
             end
         end
@@ -627,6 +1208,9 @@ function ZV:_fillIcons()
         end
     end
     self:_refreshQuestArrows()
+    -- v3.3: misiones activas del jugador + estado de hazañas (gris / aura)
+    pcall(function() self:_fillQuestPins() end)
+    pcall(function() self:_refreshStatus() end)
 end
 
 -- cuantas misiones activas tiene cada mazmorra / incursion del mapa; la
@@ -639,7 +1223,7 @@ function ZV:_refreshQuestArrows()
         for _, item in ipairs(self.pool[k] or {}) do
             if item.qarrow ~= nil then
                 local n = 0
-                if can and item.vis and item.poi ~= false then
+                if can and item.vis and item.poi ~= false and FilterOn("mis") then
                     local ok, list = pcall(function()
                         if not Q.Available() then
                             return {}
@@ -656,6 +1240,16 @@ function ZV:_refreshQuestArrows()
                 end
                 item.qarrow:SetVisible(n > 0)
                 item.qaura:SetVisible(n > 0)
+                if KIND[k].auraIfQuest then
+                    item.aura:SetVisible(n > 0)
+                end
+                if item.qring ~= nil then
+                    if n > 0 then
+                        local w, h = item.icon:GetSize()
+                        item.qring:SetPosition(math.floor(item.x + (w or 28) / 2 - QRING_W / 2), math.floor(item.y + (h or 28) / 2 - QRING_H / 2))
+                    end
+                    item.qring:SetVisible(n > 0)
+                end
             end
         end
     end
@@ -683,6 +1277,9 @@ function ZV:_animateQuestArrows(now)
                     if f ~= item.qframe then
                         item.qframe = f
                         item.qaura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
+                        if item.qring ~= nil then
+                            item.qring:SetBackground(RES .. "fl_qaura_" .. tostring(f) .. ".tga")
+                        end
                     end
                 end
             end
@@ -847,7 +1444,8 @@ function ZV:_animate()
         for _, k in ipairs(KIND_ORDER) do
             local spec = KIND[k]
             for _, item in ipairs(self.pool[k] or {}) do
-                if item.vis and item.x >= x0 and item.x <= x1 and item.y >= y0 and item.y <= y1 then
+                local auraOn = not spec.noAura and (not spec.auraIfQuest or (item.qcount or 0) > 0)
+                if auraOn and item.vis and item.x >= x0 and item.x <= x1 and item.y >= y0 and item.y <= y1 then
                     local f = ((tick + item.phase) % FX_FRAMES) + 1
                     if f ~= item.frame then
                         item.frame = f
@@ -856,6 +1454,16 @@ function ZV:_animate()
                     if item.eyes ~= nil then
                         item.eyes:SetOpacity(0.55 + 0.45 * math.sin((2 * math.pi * now / 1.6) + item.phase))
                     end
+                end
+            end
+        end
+        -- v3.3: auras de "activa"
+        for _, a in ipairs(self.auraPool or {}) do
+            if a.used and a.x >= x0 and a.x <= x1 and a.y >= y0 and a.y <= y1 then
+                local f = ((tick + a.phase) % FX_FRAMES) + 1
+                if f ~= a.frame then
+                    a.frame = f
+                    a.ctl:SetBackground(RES .. "fl_aura_" .. tostring(f) .. ".tga")
                 end
             end
         end
@@ -877,10 +1485,61 @@ function ZV:_enterItem(item)
         self:_leaveItem()
     end
     self.hoverItem = item
-    pcall(function() item.hl:SetVisible(true) end)
-    local title, lines = TipFor(item.poi, self.lang)
+    local title, lines
+    if item.layer then
+        pcall(function() self:_setPinImage(item, true) end)
+        title, lines = LayerTip(item.poi, self.lang)
+        -- v3.3: estado de la hazaña / mision
+        local es = self.lang
+        if item.quest then
+            -- (pin de mision: siempre activa)
+        elseif item.status == "done" then
+            lines[#lines + 1] = es and "[Completada]" or "[Completed]"
+        elseif item.status == "active" then
+            lines[#lines + 1] = es and "[En progreso]" or "[In progress]"
+        end
+        -- v3.4: progreso de la hazaña ("Progreso: 3/8")
+        if not item.quest and item.poi[8] ~= nil and item.poi[8] ~= "" then
+            pcall(function()
+                local DA = WorldMapAddon.DeedActive
+                local seen = {}
+                for _, k in ipairs(Split(item.poi[8])) do
+                    local id = k:match("^(%d+)")
+                    if id ~= nil and not seen[id] then
+                        seen[id] = true
+                        local n, tot = DA.Progress(id)
+                        if n ~= nil then
+                            lines[#lines + 1] = (es and "Progreso: " or "Progress: ") .. n .. "/" .. tot
+                        end
+                    end
+                end
+            end)
+        end
+    else
+        if item.status ~= "done" then
+            pcall(function() item.hl:SetVisible(true) end)
+        end
+        title, lines = TipFor(item.poi, self.lang)
+        -- v3.3: cofre de una hazaña: su estado
+        if title == nil and item.status ~= nil and item.kind == "t" then
+            title = self.lang and "Cofre / tesoro" or "Chest / treasure"
+            local en1 = ((item.poi[4] or ""):gsub("\n.*", ""))
+            lines = { self.lang and NameES(en1) or en1 }
+        end
+        if title ~= nil and item.kind == "t" then
+            lines = lines or {}
+            if item.status == "done" then
+                lines[#lines + 1] = self.lang and "[Completada]" or "[Completed]"
+            elseif item.status == "active" then
+                lines[#lines + 1] = self.lang and "[En progreso]" or "[In progress]"
+            end
+        end
+    end
     if title ~= nil and (item.kind == "r" or item.kind == "d") then
         lines = lines or {}
+        if #self:_instancesOf(item.poi) > 0 then
+            lines[#lines + 1] = self.lang and "Clic: ver su mapa e informaci\195\179n" or "Click: open its map and info"
+        end
         for _, l in ipairs(self:_questLines(item.poi)) do
             lines[#lines + 1] = l
         end
@@ -896,7 +1555,11 @@ function ZV:_leaveItem()
     local item = self.hoverItem
     self.hoverItem = false
     if item ~= false then
-        pcall(function() item.hl:SetVisible(false) end)
+        if item.layer then
+            pcall(function() self:_setPinImage(item, false) end)
+        else
+            pcall(function() item.hl:SetVisible(false) end)
+        end
         if self.tipCtrl == item.icon then
             self:_hideTip()
         end
@@ -1035,6 +1698,10 @@ function ZV:_zoneTitle()
 end
 
 function ZV:_zoneMaps()
+    -- v3.5: dentro de una instancia, < > recorren sus mapas interiores
+    if self.instMaps ~= nil and self:_isInstMap(self.mapId) then
+        return self.instMaps
+    end
     if self.zone == false or self.zone == nil or ZD == nil or ZD.Zones == nil then
         return {}
     end
@@ -1054,7 +1721,7 @@ function ZV:_mapTitle()
         end
     end
     local text
-    if idx == 1 then
+    if idx == 1 and not self:_isInstMap(self.mapId) then
         text = self:_zoneTitle()
     else
         text = self:_mapLabel(self.mapId)
@@ -1092,6 +1759,13 @@ function ZV:_checkLanguage()
     if es ~= self.lang then
         self.lang = es
         pcall(function() self:_refreshTexts() end)
+        pcall(function() self:_refreshInstInfo() end)
+        pcall(function()
+            local F = Filters()
+            if F ~= nil and F.RefreshLanguage ~= nil then
+                F.RefreshLanguage()
+            end
+        end)
         local item = self.hoverItem
         if item ~= false then
             self:_leaveItem()
@@ -1111,6 +1785,7 @@ function ZV:_loadMap()
         self.mapImage:SetSize(self.mapW, self.mapH)
         ok = pcall(Turbine.UI.Control.SetBackground, self.mapImage, m.img)
     end
+    self.mapOk = ok
     self.content:SetVisible(ok)
     self.noMap:SetVisible(not ok)
     if ok then
@@ -1125,6 +1800,7 @@ function ZV:_loadMap()
     self:_clampPan()
     self:_applyPan()
     self:_refreshTexts()
+    pcall(function() self:_refreshInstInfo() end)
 end
 
 -- cambia al mapa mid; push = guardar el actual para volver con clic derecho
@@ -1136,6 +1812,13 @@ function ZV:_setMap(mid, push)
         end
     end
     self.mapId = mid
+    -- v3.5: mapa interior de una instancia: la zona no cambia
+    if self:_isInstMap(mid) then
+        self:_loadMap()
+        return
+    end
+    self.instMaps = nil
+    self.instInfo = nil
     -- la zona del mapa del mundo a la que pertenece (puede cambiar al viajar)
     local zname = ZD ~= nil and ZD.MapZone ~= nil and ZD.MapZone[mid] or nil
     local newZone = false
@@ -1218,9 +1901,18 @@ end
 function ZV:Deactivate()
     self.active = false
     self.dragging = false
+    self.instMaps = nil
+    self.instInfo = nil
+    pcall(function() self:_refreshInstInfo() end)
     self:_leaveItem()
     self:_leaveLink()
     self:_hideTip()
+    pcall(function()
+        local F = Filters()
+        if F ~= nil and F.HidePanel ~= nil then
+            F.HidePanel()
+        end
+    end)
     pcall(function() self.root:SetVisible(false) end)
 end
 
@@ -1242,6 +1934,40 @@ function ZV:Tick()
     end
     self:_animate()
     self:_animateQuestArrows(Turbine.Engine.GetGameTime())
+    -- v3.3: cada pocos segundos, misiones activas y estado de hazañas
+    local now = Turbine.Engine.GetGameTime()
+    if self.mapOk and (self.statusAt == nil or now - self.statusAt >= STATUS_REFRESH) then
+        pcall(function()
+            if FilterOn("mis") then
+                local _, sig = self:_questPinData()
+                if sig ~= self.questSig then
+                    self:_fillQuestPins()
+                end
+            end
+            -- v3.4: copia de Deed Tracker / Quest Assistant y, si cambio
+            -- algo (completada nueva, progreso), se vuelve a dibujar
+            local DA = WorldMapAddon.DeedActive
+            if DA ~= nil and DA.Sync ~= nil then
+                DA.Sync()
+            end
+            local sig = DA ~= nil and DA.Signature ~= nil and DA.Signature() or nil
+            if sig ~= nil and sig ~= self.sigAt then
+                self:_fillIcons()
+            else
+                self:_refreshStatus()
+            end
+            -- completadas de Deed Tracker: se relee su guardado cada 30 s
+            -- (lectura asincronica del propio modulo de hazañas)
+            if self.deedsAt == nil or now - self.deedsAt >= 30 then
+                self.deedsAt = now
+                local D = WorldMapAddon.Deeds
+                if D ~= nil and D.RefreshStatus ~= nil then
+                    D.RefreshStatus(false)
+                end
+            end
+        end)
+        self.statusAt = now
+    end
     self:_checkLanguage()
 end
 
@@ -1286,4 +2012,241 @@ function ZV:_questLines(p)
         return {}
     end
     return out
+end
+
+-- ---------------------------------------------------------------------
+-- v3.5 (pedido del usuario): clic en una incursion / mazmorra -> su mapa
+-- interior (imagen del propio cliente, numero de recurso, igual que los
+-- mapas de zona) y una ficha con niveles, jugadores, misiones activas y
+-- jefes (worldmap_instances_data.lua). < > recorren sus mapas; clic
+-- derecho vuelve al mapa de la zona. Sin mapa interior: solo la ficha.
+-- Las posiciones de jefes no estan confirmadas: solo se nombra la sala.
+-- ---------------------------------------------------------------------
+local INFO_W = 330
+local INFO_PAD = 8
+local INFO_MAX_BOSSES = 10
+
+local function InstData()
+    return WorldMapAddon.InstanceData
+end
+
+function ZV:_isInstMap(mid)
+    local m = ZD ~= nil and mid ~= false and mid ~= nil and ZD.Maps[mid] or nil
+    return m ~= nil and m.inst == true
+end
+
+-- instancias (indices) de un icono: cada nombre (ingles) del icono
+function ZV:_instancesOf(p)
+    local D = InstData()
+    local out = {}
+    if D == nil or p == nil or p == false then
+        return out
+    end
+    local seen = {}
+    for _, name in ipairs(Split(p[4])) do
+        for _, idx in ipairs(D.ByName[name] or {}) do
+            if not seen[idx] and D.Inst[idx] ~= nil then
+                seen[idx] = true
+                out[#out + 1] = idx
+            end
+        end
+    end
+    return out
+end
+
+function ZV:OpenInstance(p)
+    local D = InstData()
+    local idxs = self:_instancesOf(p)
+    if D == nil or #idxs == 0 then
+        return false
+    end
+    local maps, seen = {}, {}
+    for _, idx in ipairs(idxs) do
+        for _, mid in ipairs(D.Inst[idx].maps or {}) do
+            local m = D.Maps[mid]
+            if m ~= nil and not seen[mid] then
+                seen[mid] = true
+                if ZD.Maps[mid] == nil then
+                    ZD.Maps[mid] = { img = m.img, w = m.w, h = m.h, en = m.en, es = m.es, inst = true }
+                end
+                maps[#maps + 1] = mid
+            end
+        end
+    end
+    self:_leaveItem()
+    self:_hideTip()
+    self.instInfo = { idxs = idxs, poi = p, open = true }
+    if #maps > 0 then
+        self.instMaps = maps
+        self:_setMap(maps[1], true)
+    else
+        -- sin mapa interior: la ficha encima del mapa de la zona
+        self:_refreshInstInfo()
+    end
+    return true
+end
+
+function ZV:_buildInstInfo()
+    local this = self
+    local box = Turbine.UI.Control()
+    box:SetParent(self.root)
+    box:SetBackColor(HexToColor(BORDER_HEX))
+    box:SetMouseVisible(true)
+    box:SetVisible(false)
+    local inner = Turbine.UI.Control()
+    inner:SetParent(box)
+    inner:SetPosition(1, 1)
+    inner:SetBackColor(Turbine.UI.Color(1, 0.06, 0.05, 0.03))
+    inner:SetMouseVisible(false)
+    local title = Turbine.UI.Label()
+    title:SetParent(box)
+    title:SetPosition(INFO_PAD, 6)
+    title:SetFont(Turbine.UI.Lotro.Font.TrajanPro14)
+    title:SetForeColor(HexToColor("#F0D9A0"))
+    title:SetMultiline(true)
+    title:SetMouseVisible(false)
+    local body = Turbine.UI.Label()
+    body:SetParent(box)
+    body:SetFont(Turbine.UI.Lotro.Font.Verdana12)
+    body:SetForeColor(HexToColor("#E8DDBF"))
+    body:SetMultiline(true)
+    body:SetMouseVisible(false)
+    -- clic: plegar / desplegar (queda solo el titulo)
+    box.MouseClick = function(sender, args)
+        if IsRight(args) then
+            this:Back()
+        elseif this.instInfo ~= nil then
+            this.instInfo.open = not this.instInfo.open
+            this:_refreshInstInfo()
+        end
+    end
+    self.instBox = { box = box, inner = inner, title = title, body = body }
+end
+
+function ZV:_instInfoLines()
+    local D = InstData()
+    local info = self.instInfo
+    local es = self.lang
+    local title, lines = "", {}
+    local function both(a, b)
+        if a == nil or a == "" then return b or "" end
+        if b == nil or b == "" or b == a then return a end
+        return a .. " (" .. b .. ")"
+    end
+    for n, idx in ipairs(info.idxs) do
+        local it = D.Inst[idx]
+        local name = es and both(it.es, it.en) or both(it.en, it.es)
+        if n == 1 then
+            title = name
+            if #info.idxs > 1 and info.poi ~= nil then
+                -- (varias alas / partes: el nombre del lugar)
+                local pen = Split(info.poi[4])[1] or ""
+                local pes = Split(info.poi[5])[1] or ""
+                if pes == "" or pes == pen then pes = NameES(pen) end
+                title = es and both(pes, pen) or both(pen, pes)
+            end
+            if #info.idxs > 1 then
+                lines[#lines + 1] = (es and "Partes: " or "Parts: ") .. #info.idxs
+            end
+        end
+        if #info.idxs > 1 then
+            lines[#lines + 1] = "- " .. name
+        end
+        local lvl = it.lmin or ""
+        if it.lmax ~= nil and it.lmax ~= "" and it.lmax ~= it.lmin then
+            lvl = lvl .. "-" .. it.lmax
+        end
+        local row = {}
+        if lvl ~= "" then
+            row[#row + 1] = (es and "Nivel " or "Level ") .. lvl .. (it.scaling and (es and " (escala)" or " (scaling)") or "")
+        end
+        local sizes = es and it.sizesES or it.sizesEN
+        if sizes ~= nil and sizes ~= "" then
+            row[#row + 1] = sizes
+        end
+        if #row > 0 then
+            lines[#lines + 1] = (#info.idxs > 1 and "   " or "") .. table.concat(row, "  |  ")
+        end
+    end
+    -- misiones activas del jugador en este lugar (Quest Assistant)
+    local Q = WorldMapAddon.Quests
+    if Q ~= nil and Q.InstanceQuests ~= nil and Q.Available ~= nil and info.poi ~= nil then
+        pcall(function()
+            if not Q.Available() then return end
+            local list = Q.InstanceQuests(Split(info.poi[4]), Split(info.poi[5]))
+            if #list > 0 then
+                lines[#lines + 1] = (es and "Misiones activas aqu\195\173: " or "Active quests here: ") .. #list
+                for i, q in ipairs(list) do
+                    if i > 6 then break end
+                    lines[#lines + 1] = "- " .. ((es and q.es or q.en) or q.es or q.en or "")
+                end
+            end
+        end)
+    end
+    -- jefes (con la sala donde estan, segun la guia; sin posicion exacta)
+    local nb = 0
+    for _, idx in ipairs(info.idxs) do
+        for _, b in ipairs(D.Inst[idx].bosses or {}) do
+            if nb == 0 then
+                lines[#lines + 1] = es and "Jefes:" or "Bosses:"
+            end
+            nb = nb + 1
+            if nb > INFO_MAX_BOSSES then
+                break
+            end
+            local name = es and both(b[2], b[1]) or b[1]
+            if b[3] ~= nil and b[3] ~= "" then
+                name = name .. " - " .. b[3]
+            end
+            lines[#lines + 1] = "- " .. name
+        end
+    end
+    if not self:_isInstMap(self.mapId) then
+        lines[#lines + 1] = es and "(sin mapa interior)" or "(no interior map)"
+    else
+        lines[#lines + 1] = es and "Clic derecho: volver a la zona" or "Right-click: back to the zone"
+    end
+    return title, lines
+end
+
+function ZV:_refreshInstInfo()
+    local info = self.instInfo
+    local show = self.active and info ~= nil and InstData() ~= nil
+    if not show then
+        if self.instBox ~= nil then
+            self.instBox.box:SetVisible(false)
+        end
+        return
+    end
+    if self.instBox == nil then
+        self:_buildInstInfo()
+    end
+    local t = self.instBox
+    local title, lines = self:_instInfoLines()
+    local bodyW = INFO_W - 2 * INFO_PAD
+    local tl = TipLines(title, bodyW * 0.8)
+    local titleH = tl * 18 + 2
+    local bodyH = 0
+    if info.open then
+        for _, l in ipairs(lines) do
+            bodyH = bodyH + TipLines(l, bodyW) * TIP_LINE_H
+        end
+    end
+    local vw, vh = self.viewport:GetSize()
+    local maxH = math.max(60, (vh or 400) - BAR_H - 16)
+    local h = 6 + titleH + (info.open and (bodyH + 6) or 0) + 6
+    if h > maxH then
+        bodyH = bodyH - (h - maxH)
+        h = maxH
+    end
+    t.box:SetPosition(8, BAR_H + 8)
+    t.box:SetSize(INFO_W, h)
+    t.inner:SetSize(INFO_W - 2, h - 2)
+    t.title:SetSize(bodyW, titleH)
+    t.title:SetText(title)
+    t.body:SetPosition(INFO_PAD, 6 + titleH + 4)
+    t.body:SetSize(bodyW, math.max(1, bodyH))
+    t.body:SetText(info.open and table.concat(lines, "\n") or "")
+    t.body:SetVisible(info.open)
+    t.box:SetVisible(true)
 end
