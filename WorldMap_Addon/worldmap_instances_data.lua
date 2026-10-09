@@ -1,8 +1,8 @@
 -- WorldMap_Addon/worldmap_instances_data.lua
--- v3.5: mapas interiores de incursiones y mazmorras y su ficha (niveles,
+-- v3.7: mapas interiores de incursiones y mazmorras y su ficha (niveles,
 -- jugadores, jefes con su sala). Fuente: datos/LOTRO_Raids_y_Mazmorras
 -- (LotroCompanion lotro-data + lotro-maps-db). Las posiciones de jefes NO
--- estan confirmadas: solo se muestra la descripcion de la sala.
+-- v3.7.1: jefes con nombre en su posicion del marcador del juego.
 -- Archivo GENERADO: no editar a mano.
 
 _G.WorldMapAddon = _G.WorldMapAddon or {}
@@ -277,6 +277,110 @@ D.Inst[#D.Inst + 1] = { en = "The Vile Maw", es = "La Fauce Vil", lmin = "58", l
 D.Inst[#D.Inst + 1] = { en = "The Water Wheels: Nalâ-dûm", es = "Las Ruedas de Agua: Nalâ-dûm", lmin = "58", lmax = "58", players = "3", scaling = false, sizesES = "Grupo de 3", sizesEN = "Small fellowship (3)", maps = { 1879153147, 1879153148, 1879153149, 1879153150, 1879153210 }, bosses = {  } }
 D.Inst[#D.Inst + 1] = { en = "Throne of the Dread Terror", es = "Trono del Terror Temible", lmin = "105", lmax = "105", players = "12", scaling = false, sizesES = "Incursión (12)", sizesEN = "Raid (12)", maps = { 1879334694 }, bosses = {  } }
 D.Inst[#D.Inst + 1] = { en = "Urugarth", es = "Urugarth", lmin = "50", lmax = "50", players = "6", scaling = false, sizesES = "Comunidad (6)", sizesEN = "Fellowship (6)", maps = { 1879084150 }, bosses = { { "Burzfil", "Burzfîl", "Camino inicial de crebain, puente izquierdo" }, { "Sorkrank", "Sorkrank", "Camino inicial de crebain, puente izquierdo" }, { "Dushkal", "Dushkâl", "Guarida de Dushkal" }, { "Akrûr", "Akrûr", "Plataforma después del puente de piedra" }, { "Lhugrien", "Lhugrien", "Guarida de dracos" }, { "Grishakrum", "Gríshakrum", "Desvío en la bajada" }, { "Athpukh", "Athpukh", "Perreras del noroeste" }, { "Lâmkarn", "Lâmkarn", "Perreras del noroeste" }, { "Gruglok", "Gruglok", "Arena de oleadas" }, { "Thordragh", "Thordragh", "Patio de Lagmâs" }, { "Brizrip", "Brízrip", "Patio de Lagmâs" }, { "Morthrâng", "Morthrâng", "Patio de Lagmâs" }, { "Lagmâs", "Lagmâs", "Parte alta de las rampas del patio" } } }
+D.Boss = {}
+D.Boss[1879048289] = { { 830, 763, "Tarlug", "Târlug", "Primera sala grande del castillo", "b" }, { 861, 583, "Gurthul", "Gúrthul", "Piso siguiente", "b" }, { 797, 657, "Gurthul", "Gúrthul", "Piso siguiente", "b" }, { 812, 368, "Mordirith", "Mordirith", "Sala del trono, arriba", "b" }, { 829, 624, "Rodakhan\nMormoz", "Rodakhan\nMormoz", "Sala siguiente del castillo\nSala de un piso superior", "b" }, { 829, 668, "Múra", "Múra", "Sala junto a Rodakhan", "b" } }
+D.Boss[1879076058] = { { 774, 510, "Helchgam", "Helchgam", "Lago de las alcantarillas", "b" }, { 782, 388, "Zûrtith", "Zûrtith", "", "b" }, { 643, 485, "Tarbâm", "Tarbâm", "", "b" }, { 912, 464, "Bolgrukh", "Bolgrukh", "", "b" }, { 246, 741, "Sálvakh", "Sálvakh", "Despensa", "b" } }
+D.Boss[1879087106] = { { 844, 572, "Forvengwath's Pledge", "Juramento de Forvengwath", "", "b" }, { 758, 570, "Forvengwath's Pledge", "Juramento de Forvengwath", "", "b" }, { 995, 382, "Afraig, Gúlaran Sorceress", "Afraig, hechicera de Gularan", "", "b" }, { 608, 380, "Coblaith, Gúlaran Sorceress", "Coblaith, hechicera de Gularan", "", "b" }, { 800, 252, "Castellan Wisdán", "Castellano Wisdán", "", "b" }, { 793, 357, "Castellan Wisdán\nUdúnion", "Castellano Wisdán\nUdúnion", "\n", "b" }, { 800, 504, "Forvengwath", "Forvengwath", "", "b" }, { 800, 399, "Múlvuirë, High Sorceress", "Múlvuirë, gran hechicera", "", "b" } }
+D.Boss[1879101482] = { { 519, 354, "Barz", "Barz", "Bornabar, rampa oriental", "b" }, { 312, 372, "Zurm", "Zurm", "Bornabar, rampa occidental", "b" }, { 423, 120, "Asmólf", "Asmólf", "", "b" } }
+D.Boss[1879101483] = { { 690, 898, "Frûz", "Frûz", "Noruidor superior", "b" }, { 772, 455, "Hyrrokkin\nTortrygg", "Hyrrokkin\nTortrygg", "\n", "b" }, { 649, 465, "Asmólf", "Asmólf", "", "b" } }
+D.Boss[1879101485] = { { 403, 313, "Stone-biter", "Mordedor de piedra", "Norbar", "b" }, { 402, 287, "Shadow-eater", "Devorasombras", "Norbar", "b" } }
+D.Boss[1879101486] = { { 573, 263, "Narnûlubat", "Narnûlubat", "Acceso a Norbar", "b" } }
+D.Boss[1879101489] = { { 397, 301, "Thaurlach", "Thaurlach", "Sala final del Balrog", "b" } }
+D.Boss[1879101491] = { { 416, 297, "Zogtârk", "Zogtark", "Noruidor inferior", "b" } }
+D.Boss[1879101643] = { { 365, 178, "Izkâl, Ashûrz's Beast\nAshûrz the Great Goblin", "Izkâl, la bestia de Ashûrz\nAshûrz, el Gran Trasgo", "\n", "b" }, { 411, 370, "Aklash, Leader of Soldiers", "Aklash, jefe de los soldados", "", "b" }, { 263, 248, "Rakothúrz, Horm's Handler", "Rakothúrz, el domador de Horm", "", "b" }, { 456, 202, "Horm, The Pit Beast", "Horm, la bestia de la fosa", "", "b" }, { 448, 241, "Bhoghad, Emissary to Goblin-town", "Bhoghad, emisario de la Ciudad de los Trasgos", "", "b" } }
+D.Boss[1879102227] = { { 825, 580, "Thrâng", "Thrâng", "Arena de Norbar", "b" }, { 817, 665, "Eimyr", "Eimyr", "", "b" } }
+D.Boss[1879138594] = { { 810, 840, "Gazathrug Lurker", "Merodeador Gazathrug", "", "b" }, { 944, 548, "Bonetooth", "Dientehueso", "", "b" }, { 817, 812, "Hwandrin", "Hwandrin", "", "b" } }
+D.Boss[1879138595] = { { 801, 412, "Narkû", "Narkû", "", "b" } }
+D.Boss[1879138596] = { { 804, 335, "Vrarz the Cook", "Vrarz el cocinero", "", "b" } }
+D.Boss[1879138597] = { { 739, 324, "Void-eater", "Devorador del vacío", "", "b" }, { 447, 591, "Doom-speaker", "Portavoz del destino", "", "b" }, { 789, 866, "Gurvand", "Gurvand", "", "b" } }
+D.Boss[1879138598] = { { 827, 848, "Unur", "Unur", "", "b" }, { 525, 733, "Helegfan", "Helegfan", "", "b" }, { 685, 755, "Tramug", "Tramug", "", "b" }, { 608, 656, "Dhûrz", "Dhûrz", "", "b" } }
+D.Boss[1879138599] = { { 890, 479, "Nardurgûl", "Nardurgûl", "", "b" }, { 925, 571, "Frûzgûl", "Frûzgûl", "", "b" }, { 890, 660, "Darûkûrz", "Darûkûrz", "", "b" }, { 710, 660, "Narghug", "Narghug", "", "b" }, { 675, 570, "Mokza", "Mokza", "", "b" }, { 710, 481, "Lorzgûl", "Lorzgûl", "", "b" }, { 800, 901, "Morhûn", "Morhûn", "", "b" }, { 800, 571, "Morhûn", "Morhûn", "", "b" }, { 782, 737, "Skûm", "Skûm", "", "b" }, { 818, 737, "Urauth", "Urauth", "", "b" } }
+D.Boss[1879145196] = { { 865, 864, "Talug's Fang-caster", "Lanzador de colmillos de Talug", "", "b" }, { 812, 755, "Talug's Fang-caster\nGeneral Talug", "Lanzador de colmillos de Talug\nGeneral Talug", "\n", "b" } }
+D.Boss[1879145197] = { { 775, 600, "Commander Greb", "Comandante Greb", "", "b" } }
+D.Boss[1879145612] = { { 401, 309, "Dhaub", "Dhaub", "", "b" } }
+D.Boss[1879145613] = { { 400, 293, "Ruingal", "Ruingal", "", "b" }, { 356, 441, "Thrug", "Thrug", "", "b" }, { 399, 215, "Kranklûk", "Kranklûk", "", "b" } }
+D.Boss[1879152319] = { { 356, 311, "Blagh\nRung", "Blagh\nRung", "Sala grande de entrada\nSala grande de entrada", "b" } }
+D.Boss[1879152320] = { { 369, 207, "Zholuga", "Zholuga", "Encuentro de jefe", "b" } }
+D.Boss[1879152321] = { { 522, 301, "The Blind One", "El Ciego", "Encuentro de jefe", "b" }, { 350, 310, "The Mistress of Pestilence", "La Maestra de la Peste", "Encuentro final", "b" } }
+D.Boss[1879152343] = { { 266, 266, "Âmbal", "Âmbal", "", "b" } }
+D.Boss[1879153210] = { { 274, 360, "Caerlûg", "Caerlûg", "", "b" } }
+D.Boss[1879153314] = { { 403, 303, "Ergoth", "Ergoth", "", "b" } }
+D.Boss[1879159718] = { { 288, 223, "Flâgît", "Flâgît", "Encuentro de jefe", "b" }, { 492, 423, "Istum", "Îstum", "Encuentro de jefe", "b" } }
+D.Boss[1879159719] = { { 399, 134, "Thaguzg", "Thaguzg", "", "b" } }
+D.Boss[1879159720] = { { 372, 138, "Bashkuga", "Bashkuga", "", "b" } }
+D.Boss[1879161307] = { { 801, 453, "Carchrien", "Carchrien", "", "b" }, { 800, 741, "Urcheron", "Urcheron", "", "b" }, { 653, 600, "Durkâr", "Durkâr", "", "b" } }
+D.Boss[1879162303] = { { 822, 520, "Urchír", "Urchír", "", "b" }, { 598, 376, "Alagossír", "Alagossír", "", "b" }, { 422, 680, "Gorothúl", "Gorothúl", "", "b" }, { 760, 820, "Demafaer", "Demafaer", "", "b" } }
+D.Boss[1879162304] = { { 800, 276, "Dúrchest", "Dúrchest", "", "b" } }
+D.Boss[1879174680] = { { 848, 445, "Kranklob", "Kranklob", "", "b" } }
+D.Boss[1879174850] = { { 640, 437, "Morgaraf", "Morgaraf", "", "b" }, { 640, 763, "Cargaraf", "Cargaraf", "", "b" } }
+D.Boss[1879184735] = { { 825, 488, "Valandil of Arnor\nDolvaethor", "Valandil de Arnor\nDolvaethor", "\n", "b" }, { 707, 713, "Hooktooth", "Colmilloganchudo", "", "b" }, { 823, 758, "Shingrinder", "Muelespinillas", "", "b" }, { 823, 681, "Dolvaethor", "Dolvaethor", "", "b" } }
+D.Boss[1879184736] = { { 805, 842, "Nengon", "Nengon", "", "b" }, { 804, 630, "Nengon", "Nengon", "", "b" } }
+D.Boss[1879184737] = { { 420, 299, "Guloth", "Guloth", "", "b" }, { 220, 299, "Balhest", "Balhest", "", "b" } }
+D.Boss[1879189787] = { { 634, 299, "Chieftain Gûrsh", "Caudillo Gûrsh", "", "b" }, { 348, 299, "Chieftain Gûrsh", "Caudillo Gûrsh", "", "b" }, { 584, 299, "Commander Unudhu", "Comandante Unudhu", "", "b" }, { 131, 301, "Commander Piztor", "Comandante Piztor", "", "b" } }
+D.Boss[1879189788] = { { 404, 274, "Llygad the Blade", "Llygad la Hoja", "", "b" }, { 401, 195, "Chief Warrior Thurgtârk", "Thurgtârk el jefe de guerra", "", "b" }, { 400, 45, "Commander Târsh", "Comandante Târsh", "", "b" } }
+D.Boss[1879189789] = { { 265, 533, "Grisgart", "Grisgart", "", "b" }, { 240, 552, "Rêmgoj", "Rêmgoj", "", "b" }, { 241, 517, "Praunk-goj", "Praunk-goj", "", "b" }, { 297, 552, "Burzgost", "Burzgost", "", "b" }, { 292, 512, "Burzdyr", "Burzdyr", "", "b" } }
+D.Boss[1879189790] = { { 962, 207, "Zaudru", "Zaudru", "", "b" }, { 961, 265, "Breosal", "Breosal", "", "b" }, { 798, 581, "Breosal", "Breosal", "", "b" } }
+D.Boss[1879190613] = { { 195, 389, "Gaerdring\nGaerthel", "Gaerdring\nGaerthel", "\n", "b" } }
+D.Boss[1879190615] = { { 93, 211, "Sambrog", "Sambrog", "", "b" } }
+D.Boss[1879193366] = { { 398, 185, "Vernon Thistlethorn", "Vernon Cardoespina", "", "b" }, { 356, 239, "Múl Dúin", "Múl Dúin", "", "b" }, { 445, 234, "Frûmolog", "Frûmolog", "", "b" }, { 398, 231, "Ferndúr the Virulent", "Ferndúr el Virulento", "", "b" }, { 398, 290, "Fithákh", "Fithákh", "", "b" } }
+D.Boss[1879198093] = { { 843, 1050, "Dunhoth Nemúl\nFrothmar", "Dunhoth Nemúl\nFrothmar", "\n", "b" }, { 822, 550, "Dourbark", "Dourbark", "", "b" }, { 733, 503, "Baleleaf", "Baleleaf", "", "b" } }
+D.Boss[1879198096] = { { 461, 287, "Olwir\nWil Wheatly\nOsan", "Olwir\nWil Wheatly\nOsan", "\n\n", "b" }, { 489, 261, "Lossoth-wight", "Lossoth-wight", "", "b" }, { 461, 315, "Saija\nGrimey Proudfoot", "Saija\nGrimey Ganapié", "\n", "b" } }
+D.Boss[1879198097] = { { 392, 362, "Matumáth\nNarslaug\nMatúrz-olog\nIvar", "Matumáth\nNarslaug\nMatúrz-olog\nIvar", "\n\n\n", "b" }, { 417, 361, "Dúngorth", "Dúngorth", "", "b" } }
+D.Boss[1879198099] = { { 345, 232, "Drugoth's Deathsworn", "Drugoth's Deathsworn", "", "b" } }
+D.Boss[1879198101] = { { 354, 161, "Grimey Proudfoot", "Grimey Ganapié", "", "b" } }
+D.Boss[1879210151] = { { 862, 728, "Mal Stackwort", "Mal Juntahierbas", "", "b" } }
+D.Boss[1879219925] = { { 367, 261, "Draigoch's Body", "Draigoch's Body", "", "b" } }
+D.Boss[1879222607] = { { 270, 465, "Saruman\nKâlbak", "Saruman\nKâlbak", "Cima de la torre\nAla de relámpago, delante a la derecha", "b" } }
+D.Boss[1879222608] = { { 162, 204, "Iorweth", "Iorweth", "Ala de ácido, delante a la izquierda", "b" }, { 133, 190, "Saruman", "Saruman", "Cima de la torre", "b" } }
+D.Boss[1879222609] = { { 296, 153, "Saruman\nCrisiant\nUsgarren", "Saruman\nCrisiant\nUsgarren", "Cima de la torre\nAla de fuego y hielo, detrás de la entrada\nAla de fuego y hielo, detrás de la entrada", "b" } }
+D.Boss[1879224887] = { { 204, 301, "Bukot\nSaruman", "Bukot\nSaruman", "Ala de sombra, hacia la torre\nCima de la torre", "b" } }
+D.Boss[1879226336] = { { 714, 780, "Zabúrz", "Zabúrz", "", "b" }, { 1132, 777, "Fúshbraf", "Fúshbraf", "", "b" }, { 722, 287, "Ironarm", "Ironarm", "", "b" } }
+D.Boss[1879227068] = { { 751, 609, "Gurbák", "Gurbák", "", "b" }, { 872, 774, "Ghashanuz\nThe Ring-forge of Orthanc", "Ghashanuz\nThe Ring-forge of Orthanc", "\n", "b" }, { 701, 454, "Dhâr", "Dhâr", "", "b" } }
+D.Boss[1879227951] = { { 328, 134, "Dargnákh", "Dargnákh", "", "b" }, { 402, 482, "Dargnákh", "Dargnákh", "", "b" } }
+D.Boss[1879228447] = { { 416, 245, "Frûshkul", "Frûshkul", "", "b" } }
+D.Boss[1879228448] = { { 646, 287, "Gurthúl", "Gurthúl", "Piso siguiente", "b" } }
+D.Boss[1879256516] = { { 469, 742, "Grudom", "Grudom", "", "b" } }
+D.Boss[1879256517] = { { 883, 491, "Brosh", "Brosh", "", "b" }, { 782, 493, "Mârubh", "Mârubh", "", "b" }, { 830, 481, "Warlord Shárnakh\nBrogasht, the Great Goblin\nGorgar the Ruthless\nUloga, The Great Goblin", "Warlord Shárnakh\nBroghasht, el Gran Trasgo\nGorgar el Despiadado\nUloga, el Gran Trasgo", "\n\n\n", "b" }, { 830, 575, "Hukmún\nUloga, The Great Goblin", "Hukmún\nUloga, el Gran Trasgo", "\n", "b" } }
+D.Boss[1879323274] = { { 571, 423, "Muzgásh", "Muzgásh", "", "b" }, { 971, 378, "Dagron", "Dagron", "", "b" } }
+D.Boss[1879323955] = { { 400, 332, "Lúmithil", "Lúmithil", "", "b" } }
+D.Boss[1879334694] = { { 1557, 856, "Mordirith", "Mordirith", "Sala del trono, arriba", "b" }, { 1578, 1741, "Amarthiel", "Amarthiel", "", "b" }, { 2025, 1997, "Mordirith", "Mordirith", "Sala del trono, arriba", "b" } }
+D.Boss[1879358738] = { { 410, 458, "Gorkasak, Captain of the Guard", "Gorkasak, Captain of the Guard", "", "b" }, { 781, 569, "Dulgabêth the Broken", "Dulgabêth the Broken", "", "b" }, { 410, 704, "Kulgrú, Mistress of the Household", "Kulgrú, Mistress of the Household", "", "b" }, { 1298, 567, "Zhólug", "Zhólug", "", "b" } }
+D.Boss[1879361633] = { { 1478, 254, "Gumog\nUiliúr", "Gumog\nUiliúr", "\n", "b" }, { 1316, 281, "Gumog", "Gumog", "", "b" }, { 1044, 1120, "Thraknûl", "Thraknûl", "", "b" } }
+D.Boss[1879388396] = { { 290, 310, "Rúnar Wolfstooth", "Rúnar Dientelobo", "", "b" } }
+D.Boss[1879388912] = { { 2010, 1323, "Khúrthak the Rent", "Khúrthak the Rent", "", "b" } }
+D.Boss[1879389689] = { { 793, 92, "Gurzhorn", "Gurzhorn", "", "b" }, { 721, 848, "Shalgoth", "Shalgoth", "", "b" } }
+D.Boss[1879390420] = { { 382, 808, "Gwaurodel", "Gwaurodel", "", "b" }, { 434, 815, "Gwaurodel, the Lady of Foul Water", "Gwaurodel, the Lady of Foul Water", "", "b" }, { 1064, 811, "Balchneth", "Balchneth", "", "b" } }
+D.Boss[1879395042] = { { 401, 208, "Mátrothog", "Mátrothog", "", "b" } }
+D.Boss[1879395606] = { { 1239, 617, "Memory of Brogur", "Memory of Brogur", "", "b" }, { 1155, 611, "Memory of Candaith", "Memory of Candaith", "", "b" }, { 1157, 576, "Memory of Lorniel", "Memory of Lorniel", "", "b" }, { 1239, 661, "Memory of Fríthild", "Memory of Fríthild", "", "b" }, { 1151, 658, "Memory of Laerdan", "Memory of Laerdan", "", "b" }, { 1238, 576, "Memory of Halbarad", "Memory of Halbarad", "", "b" }, { 1197, 682, "Memory of Golasgil", "Recuerdo de Golasgil", "", "b" }, { 1197, 968, "Gurvand\nThe Ring-forge of Orthanc\nGurthúl\nUdúnion\nVrarz the Cook\nGorothúl\nSkorgrím Dourhand", "Gurvand\nThe Ring-forge of Orthanc\nGurthúl\nUdúnion\nVrarz el cocinero\nGorothúl\nSkorgrim Duramano", "\n\nPiso siguiente\n\n\n\n", "b" }, { 1253, 966, "Gúrthul\nGhashanuz", "Gúrthul\nGhashanuz", "Piso siguiente\n", "b" }, { 1255, 1013, "Gúrthul", "Gúrthul", "Piso siguiente", "b" }, { 1197, 1010, "Gúrthul", "Gúrthul", "Piso siguiente", "b" }, { 1150, 928, "Gúrthul", "Gúrthul", "Piso siguiente", "b" }, { 1199, 926, "Gúrthul", "Gúrthul", "Piso siguiente", "b" } }
+D.Boss[1879421179] = { { 450, 251, "Raging Corraler", "Raging Corraler", "", "b" } }
+D.Boss[1879421479] = { { 942, 566, "Mozrúk", "Mozrúk", "", "b" }, { 746, 592, "Gâdh-and-Shum", "Gâdh-and-Shum", "", "b" } }
+D.Boss[1879442093] = { { 834, 792, "Arváng Blackfoot\nAndvár Crow-feeder", "Arváng Blackfoot\nAndvár Crow-feeder", "\n", "b" }, { 786, 793, "Náli the Thumb-taker\nNíthi the Cunning", "Náli the Thumb-taker\nNíthi the Cunning", "\n", "b" } }
+D.Boss[1879443657] = { { 1605, 1429, "Kvethar\nThrekvegg", "Kvethár\nThrekvegg", "Primer encuentro\nPrimer encuentro", "b" }, { 1643, 1427, "Armod", "Armód", "Primer encuentro", "b" } }
+D.Boss[1879443658] = { { 1858, 2127, "Thrall-lord Dushtalbúk", "Thrall-lord Dushtalbúk", "", "b" } }
+D.Boss[1879453499] = { { 631, 692, "Gárvadach", "Gárvadach", "", "b" } }
+D.Boss[1879456452] = { { 396, 300, "Aglond\nFelarod\nSarlant", "Aglond\nFelarod\nSarlant", "\n\n", "b" }, { 168, 300, "Prince Amondir", "Príncipe Amondir", "", "b" }, { 370, 301, "Luilloth\nAstoryn", "Luilloth\nAstoryn", "\n", "b" } }
+D.Boss[1879456523] = { { 799, 721, "Castellan Obáshurz", "Castellan Obáshurz", "", "b" } }
+D.Boss[1879456524] = { { 804, 353, "Claghord\nAsachal\nShard of Taúressar\nHigh Chieftain Claghórd", "Claghórd\nÁsachal\nFragmento de Tauressar\nHigh Chieftain Claghórd", "Tercer encuentro A\nTercer encuentro B\nCuarto encuentro\n", "b" }, { 800, 268, "High Priestess Ásachal", "High Priestess Ásachal", "", "b" } }
+D.Boss[1879459099] = { { 798, 235, "Aniochán the Harrower", "Aniochán el Atormentador", "", "b" }, { 811, 208, "Kârsija", "Kârsija", "", "b" }, { 767, 241, "Kurja", "Kurja", "", "b" } }
+D.Boss[1879478181] = { { 471, 298, "Jadazin\nNâxam\nKaranzôr\nZagarón\nPhêrida\nDulgakhó\nBurkhad\nÊphaltud", "Jadazin\nNâxam\nKaranzôr\nZagarón\nPhêrida\nDulgakhó\nBurkhad\nÊphaltud", "\n\n\nPrimer encuentro, acompañante\nPrimer encuentro, acompañante\n\nPrimer encuentro, acompañante\n", "b" }, { 444, 292, "Ishakhâr", "Ishakhâr", "Primer encuentro, T2 o superior", "b" } }
+D.Boss[1879478486] = { { 949, 587, "Belondor\nLêshana\nKhalmôz\nUmini\nNâxam\nSallax\nShayuz\nMairan\nHâkraph\nHadûlo\nImephâr\nRamish", "Belondor\nLêshana\nKhalmôz\nUmini\nNâxam\nSallax\nShayuz\nMairan\nHâkraph\nHadûlo\nImephâr\nRamish", "Segundo encuentro\n\n\n\n\n\n\n\n\n\n\n", "b" }, { 1007, 808, "Umini\nRamish", "Umini\nRamish", "\n", "b" }, { 971, 803, "Nâxam\nHadûlo", "Nâxam\nHadûlo", "\n", "b" }, { 904, 804, "Shayuz\nImephâr", "Shayuz\nImephâr", "\n", "b" } }
+D.Boss[1879478496] = { { 893, 617, "Umshûra the Glutton", "Umshûra the Glutton", "", "b" } }
+D.Boss[1879478783] = { { 333, 224, "Lêshana\nKhalmôz\nSallax\nHâkraph\nBelondor", "Lêshana\nKhalmôz\nSallax\nHâkraph\nBelondor", "\n\n\n\nSegundo encuentro", "b" }, { 358, 218, "Mairan", "Mairan", "", "b" } }
+D.Boss[1879480482] = { { 805, 661, "Akhmâr Redstorm\nHorthion\nNakrov the Scarred", "Akhmâr Redstorm\nHorthion\nNakrov the Scarred", "\n\n", "b" }, { 904, 661, "Ulanor\nShaidal\nBhastah\nShakfut", "Ulanor\nShaidal\nBhastah\nShakfut", "\n\n\n", "b" } }
+D.Boss[1879487383] = { { 851, 584, "Ragrekhûl", "Ragrekhûl", "", "b" } }
+D.Boss[1879491954] = { { 1023, 371, "Hashûga\nSharâtu\nKizurdâl", "Hashûga\nSharâtu\nKizurdâl", "\n\n", "b" }, { 760, 281, "Eshêgur the Reaper", "Eshêgur the Reaper", "", "b" } }
+D.Boss[1879492990] = { { 903, 775, "Imanak-tûr", "Imanak-tûr", "", "b" }, { 581, 492, "Aratûg", "Aratûg", "", "b" }, { 1121, 486, "Sakhârshag", "Sakhârshag", "", "b" } }
+D.Boss[1879494891] = { { 196, 510, "Bauko, Left Hand of Forgetting", "Bauko, Left Hand of Forgetting", "", "b" }, { 196, 471, "Daiko, Right Hand of Forgetting", "Daiko, Right Hand of Forgetting", "", "b" } }
+D.Boss[1879495208] = { { 572, 536, "Kulkorth\nTamâkh", "Kulkorth\nTamâkh", "\n", "b" }, { 757, 593, "Kanâshu\nMaluchon, the Pale Brother", "Kanâshu\nMaluchon, the Pale Brother", "\n", "b" } }
+D.Boss[1879495217] = { { 816, 630, "Kormoltur, Lord of Terror", "Kormoltur, Lord of Terror", "", "b" }, { 804, 688, "Rumók the Blood-spiller", "Rumók the Blood-spiller", "", "b" } }
+D.Boss[1879495218] = { { 830, 570, "Thahar\nSagush", "Thahar\nSagush", "\n", "b" }, { 777, 551, "Thahar\nSagush", "Thahar\nSagush", "\n", "b" } }
+D.Boss[1879503002] = { { 855, 712, "Kâlach Hûl\nMethân Sai\nRaghtâ Sai", "Kâlach Hûl\nMethân Sai\nRaghtâ Sai", "\n\n", "b" } }
+D.Boss[1879507528] = { { 575, 970, "Blood Sorceress Agaris", "Blood Sorceress Agaris", "", "b" }, { 1115, 279, "Badharál's Webmother", "Badharál's Webmother", "", "b" }, { 846, 441, "Badharál's Webmother", "Badharál's Webmother", "", "b" }, { 583, 1011, "Badharál the Gorger", "Badharál the Gorger", "", "b" } }
+D.Boss[1879507580] = { { 847, 812, "Blood Sorceress Agaris", "Blood Sorceress Agaris", "", "b" }, { 756, 815, "Cristhir the Night-shadow", "Cristhir the Night-shadow", "", "b" } }
+D.Boss[1879507793] = { { 367, 963, "Zamâktar the Putrescent", "Zamâktar the Putrescent", "", "b" } }
+D.Boss[1879509384] = { { 485, 302, "Cristhir the Night-shadow", "Cristhir the Night-shadow", "", "b" }, { 487, 206, "Maukhorn", "Maukhorn", "", "b" } }
+D.Boss[1879517905] = { { 736, 702, "Giríshu, Thief of Blades\nSamâshu, Thief of Blight\nGizûshu, Thief of Shadows", "Giríshu, Thief of Blades\nSamâshu, Thief of Blight\nGizûshu, Thief of Shadows", "\n\n", "b" }, { 801, 382, "Molbása the Untamed", "Molbása the Untamed", "", "b" } }
+D.Boss[1879520515] = { { 703, 586, "Ratúlko the Bloody", "Ratulko el Sanguinario", "", "b" }, { 730, 664, "Thothril the Entangler", "Thothril la Enredadora", "", "b" } }
 D.ByName["Adkhât-zahhar, the Houses of Rest"] = { 1 }
 D.ByName["Agoroth, the Narrowdelve"] = { 2 }
 D.ByName["Annúminas: Glinghant"] = { 22 }

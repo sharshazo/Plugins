@@ -983,6 +983,62 @@ local function QuestTextKey(ndx)
     return c
 end
 
+-- v3.6: misiones ACTIVAS que nombran a alguno de estos (jefes): en sus
+-- objetivos (español, Quest Assistant) o en el nombre de la mision.
+-- { { es, en, ndx }, ... }
+-- v3.7: firma barata de las misiones activas (para no recalcular jefes)
+function Q.ActiveSig()
+    if not Q.Available() then
+        return ""
+    end
+    local t = {}
+    for _, ndx in ipairs(ActiveNdxList()) do
+        t[#t + 1] = tostring(ndx)
+    end
+    table.sort(t)
+    return table.concat(t, ",")
+end
+
+function Q.QuestsNaming(names)
+    local out = {}
+    if type(names) ~= "table" or not Q.Available() then
+        return out
+    end
+    local keys = {}
+    for _, n in ipairs(names) do
+        local k = PlaceKey(n)
+        if k ~= nil and #k >= 4 then
+            keys[#keys + 1] = k
+            -- v3.7.1: tambien en plural ("guardias de sangre", "soldiers")
+            keys[#keys + 1] = k .. "s"
+            keys[#keys + 1] = k .. "es"
+            local a, rest = k:match("^(%S+)( .+)$")
+            if a ~= nil then
+                keys[#keys + 1] = a .. "s" .. rest
+                keys[#keys + 1] = a .. "es" .. rest
+            end
+        end
+    end
+    if #keys == 0 then
+        return out
+    end
+    for _, ndx in ipairs(ActiveNdxList()) do
+        local quest = QuestByNdx(ndx)
+        if quest ~= nil then
+            local okT, text = pcall(QuestTextKey, ndx)
+            text = (okT and type(text) == "string") and text or " "
+            text = text .. (PlaceKey(Q.QuestName(ndx, quest)) or "") .. " " .. (PlaceKey(quest.nameEN) or "") .. " "
+            for _, k in ipairs(keys) do
+                if text:find(" " .. k .. " ", 1, true) ~= nil then
+                    out[#out + 1] = { es = Q.QuestName(ndx, quest), en = tostring(quest.nameEN or ""), ndx = ndx }
+                    break
+                end
+            end
+        end
+    end
+    return out
+end
+
 -- names = nombres en ingles del icono; namesES (opcional) = en español
 function Q.InstanceQuests(names, namesES)
     local out = {}

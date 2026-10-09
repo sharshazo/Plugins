@@ -1208,6 +1208,8 @@ function ZV:_fillIcons()
         end
     end
     self:_refreshQuestArrows()
+    -- v3.6: jefes del mapa interior de una instancia
+    pcall(function() self:_fillBosses() end)
     -- v3.3: misiones activas del jugador + estado de hazañas (gris / aura)
     pcall(function() self:_fillQuestPins() end)
     pcall(function() self:_refreshStatus() end)
@@ -1217,6 +1219,15 @@ end
 -- flecha solo se ve si hay al menos una. Sin Quest Assistant, ninguna.
 function ZV:_refreshQuestArrows()
     self.qarrowAt = Turbine.Engine.GetGameTime()
+    -- v3.7: la cache de jefes / elites solo se borra si cambian las misiones
+    local Qs = WorldMapAddon.Quests
+    local okS, sig = pcall(function() return Qs ~= nil and Qs.ActiveSig ~= nil and Qs.ActiveSig() or "" end)
+    if not okS or sig ~= self.bossQSig or self.qarrowAt - (self.bossQAt or 0) > 30 then
+        self.bossQCache = {}
+        self.bossQSig = okS and sig or nil
+        self.bossQAt = self.qarrowAt
+    end
+    pcall(function() self:_refreshBossArrows() end)
     local Q = WorldMapAddon.Quests
     local can = Q ~= nil and Q.InstanceQuests ~= nil and Q.Available ~= nil
     for k in pairs(QARROW_KINDS) do
@@ -1240,7 +1251,7 @@ function ZV:_refreshQuestArrows()
                 end
                 item.qarrow:SetVisible(n > 0)
                 item.qaura:SetVisible(n > 0)
-                if KIND[k].auraIfQuest then
+                if KIND[k] ~= nil and KIND[k].auraIfQuest then
                     item.aura:SetVisible(n > 0)
                 end
                 if item.qring ~= nil then
@@ -1266,6 +1277,20 @@ function ZV:_animateQuestArrows(now)
         end
         local bob = math.floor(QARROW_BOB * math.sin(2 * math.pi * now / QARROW_PERIOD) + 0.5)
         local tick = math.floor(now * FX_FPS)
+        -- v3.6: flecha sobre los jefes que pide una mision activa
+        for _, item in ipairs(self.bossPool or {}) do
+            if item.vis and item.qcount > 0 then
+                local x = math.floor(item.poi[1] - QARROW.w / 2)
+                local y = item.y - QARROW.h - QARROW_GAP + bob
+                item.qarrow:SetPosition(x, y)
+                item.qaura:SetPosition(x + QARROW.adx, y + QARROW.ady)
+                local f = ((tick + item.phase) % FX_FRAMES) + 1
+                if f ~= item.qframe then
+                    item.qframe = f
+                    item.qaura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
+                end
+            end
+        end
         for k in pairs(QARROW_KINDS) do
             for _, item in ipairs(self.pool[k] or {}) do
                 if item.qarrow ~= nil and item.vis and item.qcount > 0 then
@@ -1486,6 +1511,11 @@ function ZV:_enterItem(item)
     end
     self.hoverItem = item
     local title, lines
+    if item.boss then
+        title, lines = self:_bossTip(item)
+        pcall(function() self:_openTip(item.icon, title, lines) end)
+        return
+    end
     if item.layer then
         pcall(function() self:_setPinImage(item, true) end)
         title, lines = LayerTip(item.poi, self.lang)
@@ -1557,7 +1587,7 @@ function ZV:_leaveItem()
     if item ~= false then
         if item.layer then
             pcall(function() self:_setPinImage(item, false) end)
-        else
+        elseif item.hl ~= nil then
             pcall(function() item.hl:SetVisible(false) end)
         end
         if self.tipCtrl == item.icon then
@@ -1760,6 +1790,7 @@ function ZV:_checkLanguage()
         self.lang = es
         pcall(function() self:_refreshTexts() end)
         pcall(function() self:_refreshInstInfo() end)
+        pcall(function() self:_fillBosses() end)
         pcall(function()
             local F = Filters()
             if F ~= nil and F.RefreshLanguage ~= nil then
@@ -2111,6 +2142,8 @@ function ZV:_buildInstInfo()
     body:SetForeColor(HexToColor("#E8DDBF"))
     body:SetMultiline(true)
     body:SetMouseVisible(false)
+    -- colores por seccion (si el cliente no acepta marcas: texto sin color)
+    self.markupOk = pcall(function() body:SetMarkupEnabled(true) end)
     -- clic: plegar / desplegar (queda solo el titulo)
     box.MouseClick = function(sender, args)
         if IsRight(args) then
@@ -2133,6 +2166,10 @@ function ZV:_instInfoLines()
         if b == nil or b == "" or b == a then return a end
         return a .. " (" .. b .. ")"
     end
+    -- v3.6: colores por seccion (texto con marcas <rgb=...> del juego)
+    local function C(hex, text)
+        return "<rgb=" .. hex .. ">" .. text .. "</rgb>"
+    end
     for n, idx in ipairs(info.idxs) do
         local it = D.Inst[idx]
         local name = es and both(it.es, it.en) or both(it.en, it.es)
@@ -2146,11 +2183,11 @@ function ZV:_instInfoLines()
                 title = es and both(pes, pen) or both(pen, pes)
             end
             if #info.idxs > 1 then
-                lines[#lines + 1] = (es and "Partes: " or "Parts: ") .. #info.idxs
+                lines[#lines + 1] = C("#C9A66B", (es and "Partes: " or "Parts: ") .. #info.idxs)
             end
         end
         if #info.idxs > 1 then
-            lines[#lines + 1] = "- " .. name
+            lines[#lines + 1] = C("#F0D9A0", "- " .. name)
         end
         local lvl = it.lmin or ""
         if it.lmax ~= nil and it.lmax ~= "" and it.lmax ~= it.lmin then
@@ -2165,7 +2202,7 @@ function ZV:_instInfoLines()
             row[#row + 1] = sizes
         end
         if #row > 0 then
-            lines[#lines + 1] = (#info.idxs > 1 and "   " or "") .. table.concat(row, "  |  ")
+            lines[#lines + 1] = C("#B8C8D8", (#info.idxs > 1 and "   " or "") .. table.concat(row, "  |  "))
         end
     end
     -- misiones activas del jugador en este lugar (Quest Assistant)
@@ -2175,10 +2212,10 @@ function ZV:_instInfoLines()
             if not Q.Available() then return end
             local list = Q.InstanceQuests(Split(info.poi[4]), Split(info.poi[5]))
             if #list > 0 then
-                lines[#lines + 1] = (es and "Misiones activas aqu\195\173: " or "Active quests here: ") .. #list
+                lines[#lines + 1] = C("#7CE07C", (es and "Misiones activas aqu\195\173: " or "Active quests here: ") .. #list)
                 for i, q in ipairs(list) do
                     if i > 6 then break end
-                    lines[#lines + 1] = "- " .. ((es and q.es or q.en) or q.es or q.en or "")
+                    lines[#lines + 1] = C("#F0D060", "- " .. ((es and q.es or q.en) or q.es or q.en or ""))
                 end
             end
         end)
@@ -2188,23 +2225,28 @@ function ZV:_instInfoLines()
     for _, idx in ipairs(info.idxs) do
         for _, b in ipairs(D.Inst[idx].bosses or {}) do
             if nb == 0 then
-                lines[#lines + 1] = es and "Jefes:" or "Bosses:"
+                lines[#lines + 1] = C("#FF8A60", es and "Jefes:" or "Bosses:")
             end
             nb = nb + 1
             if nb > INFO_MAX_BOSSES then
                 break
             end
             local name = es and both(b[2], b[1]) or b[1]
+            local line = C("#F0E6D0", "- " .. name)
             if b[3] ~= nil and b[3] ~= "" then
-                name = name .. " - " .. b[3]
+                line = line .. C("#A89B7A", " - " .. b[3])
             end
-            lines[#lines + 1] = "- " .. name
+            -- jefe que pide una mision activa
+            if self:_bossQuests(b[1], b[2]) > 0 then
+                line = line .. C("#FFD040", es and "  [misi\195\179n]" or "  [quest]")
+            end
+            lines[#lines + 1] = line
         end
     end
     if not self:_isInstMap(self.mapId) then
-        lines[#lines + 1] = es and "(sin mapa interior)" or "(no interior map)"
+        lines[#lines + 1] = C("#8C8C8C", es and "(sin mapa interior)" or "(no interior map)")
     else
-        lines[#lines + 1] = es and "Clic derecho: volver a la zona" or "Right-click: back to the zone"
+        lines[#lines + 1] = C("#8C8C8C", es and "Clic derecho: volver a la zona" or "Right-click: back to the zone")
     end
     return title, lines
 end
@@ -2229,7 +2271,7 @@ function ZV:_refreshInstInfo()
     local bodyH = 0
     if info.open then
         for _, l in ipairs(lines) do
-            bodyH = bodyH + TipLines(l, bodyW) * TIP_LINE_H
+            bodyH = bodyH + TipLines((l:gsub("<[^>]*>", "")), bodyW) * TIP_LINE_H
         end
     end
     local vw, vh = self.viewport:GetSize()
@@ -2246,7 +2288,185 @@ function ZV:_refreshInstInfo()
     t.title:SetText(title)
     t.body:SetPosition(INFO_PAD, 6 + titleH + 4)
     t.body:SetSize(bodyW, math.max(1, bodyH))
-    t.body:SetText(info.open and table.concat(lines, "\n") or "")
+    local text = info.open and table.concat(lines, "\n") or ""
+    if not self.markupOk then
+        text = text:gsub("<[^>]*>", "")
+    end
+    t.body:SetText(text)
     t.body:SetVisible(info.open)
     t.box:SetVisible(true)
+end
+
+-- ---------------------------------------------------------------------
+-- v3.6 (pedido del usuario): jefes en el mapa interior (icono + nombre).
+-- Solo donde el marcador del propio juego cae en ESE mapa (ver
+-- worldmap_instances_data.lua). Si una mision activa nombra al jefe, la
+-- flecha dorada que sube y baja lo señala (igual que en las mazmorras).
+-- Se ven con el filtro "Jefes".
+-- ---------------------------------------------------------------------
+-- v3.7: jefe = cabeza de orco con corona (34x34); elite = cabeza con casco
+-- (28x28), un icono por grupo de monstruos. El pool crece segun el mapa.
+local BOSS_MAX = 80
+local BOSS_W, BOSS_H, BOSS_TX, BOSS_TY = 34, 34, 16, 33
+local ELITE_W, ELITE_H, ELITE_TX, ELITE_TY = 28, 28, 13, 27
+
+function ZV:_buildBossPool(n)
+    self.bossPool = self.bossPool or {}
+    local this = self
+    local function layer(w, h, image)
+        local c = Turbine.UI.Control()
+        c:SetParent(self.content)
+        c:SetSize(w, h)
+        c:SetBackground(RES .. image)
+        c:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        c:SetMouseVisible(false)
+        c:SetVisible(false)
+        return c
+    end
+    for i = #self.bossPool + 1, math.min(n or BOSS_MAX, BOSS_MAX) do
+        local item = { boss = true, kind = "B", vis = false, poi = false, x = 0, y = 0, qcount = 0, qframe = 1, phase = (i * 3) % FX_FRAMES }
+        item.qaura = layer(QARROW.aw, QARROW.ah, QARROW.aura .. "1.tga")
+        item.qarrow = layer(QARROW.w, QARROW.h, QARROW.img)
+        item.iconB = layer(BOSS_W, BOSS_H, "fl_jefeorco_34.tga")
+        item.iconE = layer(ELITE_W, ELITE_H, "fl_elite_28.tga")
+        item.icon = item.iconB
+        local lbl = Turbine.UI.Label()
+        lbl:SetParent(self.content)
+        lbl:SetSize(160, 16)
+        lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
+        lbl:SetForeColor(HexToColor("#FFB080"))
+        lbl:SetFontStyle(Turbine.UI.FontStyle.Outline)
+        lbl:SetOutlineColor(HexToColor("#000000"))
+        lbl:SetTextAlignment(Turbine.UI.ContentAlignment.TopCenter)
+        lbl:SetMouseVisible(false)
+        lbl:SetVisible(false)
+        item.lbl = lbl
+        for _, ic in ipairs({ item.iconB, item.iconE }) do
+            ic:SetMouseVisible(true)
+            ic.MouseEnter = function() this:_enterItem(item) end
+            ic.MouseLeave = function()
+                if this.hoverItem == item then this:_leaveItem() end
+            end
+            ic.MouseClick = function(sender, args)
+                if IsRight(args) then this:Back() end
+            end
+        end
+        self.bossPool[i] = item
+    end
+end
+
+function ZV:_fillBosses()
+    for _, item in ipairs(self.bossPool or {}) do
+        if item.vis then
+            item.vis = false
+            item.poi = false
+            item.qcount = 0
+            item.iconB:SetVisible(false)
+            item.iconE:SetVisible(false)
+            item.lbl:SetVisible(false)
+            item.qarrow:SetVisible(false)
+            item.qaura:SetVisible(false)
+        end
+    end
+    local D = WorldMapAddon.InstanceData
+    local list = D ~= nil and D.Boss ~= nil and self:_isInstMap(self.mapId) and D.Boss[self.mapId] or nil
+    -- v3.7.1: solo jefes con nombre (los elites / monstruos sin nombre no se
+    -- usan). La flecha sale sobre el jefe si una mision activa lo nombra.
+    local showB, showE = FilterOn("jef"), false
+    if list == nil or (not showB and not showE) then
+        return
+    end
+    if self.bossPool == nil or #self.bossPool < math.min(#list, BOSS_MAX) then
+        self:_buildBossPool(#list)
+    end
+    local i = 0
+    for _, b in ipairs(list) do
+        local elite = (b[6] == "e")
+        if (elite and showE) or (not elite and showB) then
+        i = i + 1
+        local item = self.bossPool[i]
+        if item == nil then break end
+        item.elite = elite
+        item.icon = elite and item.iconE or item.iconB
+        local x = math.floor(b[1] - (elite and ELITE_TX or BOSS_TX) + 0.5)
+        local y = math.floor(b[2] - (elite and ELITE_TY or BOSS_TY) + 0.5)
+        item.poi = b
+        item.x, item.y = x, y
+        item.icon:SetPosition(x, y)
+        item.icon:SetVisible(not elite)
+        if not elite then
+            local names = Split(self.lang and b[4] or b[3])
+            local txt = names[1] or ""
+            if #names > 1 then txt = txt .. " +" .. (#names - 1) end
+            item.lbl:SetText(txt)
+            item.lbl:SetPosition(math.floor(b[1] - 80), b[2] + 2)
+            item.lbl:SetVisible(true)
+        end
+        item.vis = true
+        end
+    end
+    self:_refreshBossArrows()
+end
+
+-- cuantas misiones activas nombran a este jefe (cache por recuento)
+function ZV:_bossQuests(en, es)
+    self.bossQCache = self.bossQCache or {}
+    local key = tostring(en) .. "|" .. tostring(es)
+    local c = self.bossQCache[key]
+    if c ~= nil then
+        return #c, c
+    end
+    c = {}
+    local Q = WorldMapAddon.Quests
+    if Q ~= nil and Q.QuestsNaming ~= nil then
+        local names = {}
+        for _, n in ipairs(Split(en)) do names[#names + 1] = n end
+        for _, n in ipairs(Split(es)) do names[#names + 1] = n end
+        local ok, list = pcall(Q.QuestsNaming, names)
+        if ok and type(list) == "table" then c = list end
+    end
+    self.bossQCache[key] = c
+    return #c, c
+end
+
+function ZV:_refreshBossArrows()
+    for _, item in ipairs(self.bossPool or {}) do
+        local n = 0
+        if item.vis and item.poi ~= false and FilterOn("mis") then
+            n = self:_bossQuests(item.poi[3], item.poi[4])
+        end
+        item.qcount = n
+        item.qarrow:SetVisible(n > 0)
+        item.qaura:SetVisible(n > 0)
+    end
+end
+
+function ZV:_bossTip(item)
+    local b = item.poi
+    local es = self.lang
+    local lines = {}
+    local ens, ess, rooms = Split(b[3]), Split(b[4]), Split(b[5])
+    for i, en in ipairs(ens) do
+        local e = ess[i] or en
+        local line = es and ((e ~= en) and (e .. " (" .. en .. ")") or e) or en
+        if item.elite then
+            line = tostring(rooms[i] or "1") .. " x " .. line
+        elseif rooms[i] ~= nil and rooms[i] ~= "" then
+            line = line .. " - " .. rooms[i]
+        end
+        lines[#lines + 1] = line
+    end
+    local n, qs = self:_bossQuests(b[3], b[4])
+    if n > 0 then
+        lines[#lines + 1] = es and "Misi\195\179n activa:" or "Active quest:"
+        for i, q in ipairs(qs) do
+            if i > 4 then break end
+            lines[#lines + 1] = "- " .. ((es and q.es or q.en) or "")
+        end
+    end
+    lines[#lines + 1] = es and "(posici\195\179n del marcador del juego)" or "(game marker position)"
+    if item.elite then
+        return (es and "Monstruos \195\169lite" or "Elite monsters"), lines
+    end
+    return (es and "Jefe" or "Boss"), lines
 end
