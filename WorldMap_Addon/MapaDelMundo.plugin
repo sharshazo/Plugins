@@ -3,7 +3,7 @@
 	<Information>
 		<Name>Mapa del Mundo</Name>
 		<Author>AI Agent</Author>
-		<Version>3.7.1</Version>
+		<Version>3.8</Version>
 		<Description>Mapa interactivo de Middle-earth con las 59 zonas del juego (nombre, nivel e imagen de referencia de cada zona) en espanol. Incluye buscador de zonas (por nombre o nivel), resaltado por nivel, filtro de expansiones, marcadores personalizados, mapas de zona con mazmorras, incursiones, ciudades, establos, cofres, elites, exploracion, hazanas, NPC, mineria, pesca, fauna y mas, con panel Filtros del Mapa (ES/EN), y comando /mapa.</Description>
 	</Information>
 	<Package>WorldMap_Addon.Main</Package>

@@ -185,12 +185,29 @@ end
 
 -- renglones aproximados de un texto en Verdana12 (~6.6 px por letra)
 local function TipLines(text, w)
-    local n = 0
-    for _ in tostring(text or ""):gmatch("[^\128-\191]") do
-        n = n + 1
+    -- v3.8: se simula el corte por palabras (los textos largos de saber
+    -- cortaban la ultima linea si solo se contaban letras)
+    local perLine = math.max(1, math.floor(w / 6.9))
+    local lines, cur = 1, 0
+    for word in tostring(text or ""):gmatch("%S+") do
+        local n = 0
+        for _ in word:gmatch("[^\128-\191]") do
+            n = n + 1
+        end
+        if cur == 0 then
+            cur = n
+        elseif cur + 1 + n <= perLine then
+            cur = cur + 1 + n
+        else
+            lines = lines + 1
+            cur = n
+        end
+        while cur > perLine do
+            lines = lines + 1
+            cur = cur - perLine
+        end
     end
-    local perLine = math.max(1, math.floor(w / 6.6))
-    return math.max(1, math.ceil(n / perLine))
+    return lines
 end
 
 -- v3.5: nombre español oficial cuando el dato no lo traia
@@ -317,6 +334,140 @@ local function LayerTip(p, es)
     end
     return title, lines
 end
+
+-- v3.8 (pedido del jugador): mas informacion de hazañas y lugares en el
+-- cartel, tomada de Deed Tracker (worldmap_deedinfo_data.lua, generado de
+-- sus DataFiles): saber del lugar, hazaña, tipo, nivel, recompensas,
+-- titulo y objetivo. Sin ese archivo el cartel queda como antes.
+local DEED_TYPE = {
+    [100] = { "Clase", "Class" }, [101] = { "Raza", "Race" }, [102] = { "Evento", "Event" },
+    [103] = { "Explorador", "Explorer" }, [104] = { "Saber", "Lore" },
+    [105] = { "Reputaci\195\179n", "Reputation" }, [106] = { "Matanza", "Slayer" },
+}
+local DINFO_MAX = 2
+local DOT = " \194\183 "
+-- igual que WorldMapAddon.DeedActive.Norm (las claves del archivo se hicieron asi)
+local function InfoNorm(text)
+    local s = tostring(text or "")
+    s = s:gsub("<[^>]*>", " ")
+    s = s:gsub("[A-Z]", function(c) return c:lower() end)
+    s = s:gsub("[^a-z0-9\128-\255]", " ")
+    s = s:gsub("%s+", " ")
+    s = s:gsub("^ ", ""):gsub(" $", "")
+    return s
+end
+local function Thousands(n, es)
+    local s = tostring(math.floor(tonumber(n) or 0))
+    local sep = es and "." or ","
+    local out = s:reverse():gsub("(%d%d%d)", "%1" .. sep):reverse()
+    return (out:gsub("^%" .. sep, ""))
+end
+local function DeedInfoLines(p, es)
+    local out = {}
+    local I = WorldMapAddon.DeedInfo
+    if type(I) ~= "table" or type(I.D) ~= "table" or p == nil then
+        return out
+    end
+    local function pick(a, b)
+        if es then
+            return (a ~= nil and a ~= "") and a or (b or "")
+        end
+        return (b ~= nil and b ~= "") and b or (a or "")
+    end
+    -- el lugar (objetivo de una hazaña) por su nombre
+    local placeId, place = nil, nil
+    local names = {}
+    for _, n in ipairs(Split(p[4])) do names[#names + 1] = n end
+    for _, n in ipairs(Split(p[5])) do names[#names + 1] = n end
+    for _, n in ipairs(names) do
+        local hit = type(I.N) == "table" and I.N[InfoNorm(n)] or nil
+        if hit ~= nil then
+            local a, b = hit:match("^(%d+):(%d+)$")
+            local objs = I.O ~= nil and I.O[tonumber(a)] or nil
+            if objs ~= nil and objs[tonumber(b)] ~= nil then
+                placeId, place = tonumber(a), objs[tonumber(b)]
+                break
+            end
+        end
+    end
+    -- hazañas del icono (las del dato; si no trae, la del lugar)
+    local ids, seen = {}, {}
+    for _, k in ipairs(Split(p[8] or "")) do
+        local id = tonumber(k:match("^(%d+)") or "")
+        if id ~= nil and I.D[id] ~= nil and not seen[id] then
+            seen[id] = true
+            ids[#ids + 1] = id
+        end
+    end
+    if #ids == 0 and placeId ~= nil and I.D[placeId] ~= nil then
+        ids[1] = placeId
+    end
+    -- el lugar dentro de las hazañas del propio icono (nombres repetidos)
+    if place == nil and I.O ~= nil then
+        local want = {}
+        for _, n in ipairs(names) do want[InfoNorm(n)] = true end
+        for _, id in ipairs(ids) do
+            for _, o in ipairs(I.O[id] or {}) do
+                if place == nil and (want[InfoNorm(o[1])] or want[InfoNorm(o[2])]) then
+                    placeId, place = id, o
+                end
+            end
+        end
+    end
+    if #ids == 0 then
+        return out
+    end
+    local loreShown = false
+    if place ~= nil and (placeId == ids[1] or seen[placeId]) then
+        local lore = pick(place[3], place[4])
+        if lore ~= "" then
+            out[#out + 1] = "\"" .. lore .. "\""
+            loreShown = true
+        end
+    end
+    for i, id in ipairs(ids) do
+        if i > DINFO_MAX then
+            out[#out + 1] = es and ("... y " .. (#ids - DINFO_MAX) .. " haza\195\177as m\195\161s") or ("... and " .. (#ids - DINFO_MAX) .. " more deeds")
+            break
+        end
+        local d = I.D[id]
+        local head = (es and "Haza\195\177a: " or "Deed: ") .. pick(d[1], d[2])
+        local extra = {}
+        local tp = DEED_TYPE[tonumber(d[3]) or 0]
+        if tp ~= nil then extra[#extra + 1] = es and tp[1] or tp[2] end
+        if (tonumber(d[4]) or 0) > 0 then extra[#extra + 1] = (es and "nivel " or "level ") .. d[4] end
+        if #extra > 0 then head = head .. " (" .. table.concat(extra, ", ") .. ")" end
+        out[#out + 1] = head
+        local rw = {}
+        if (tonumber(d[5]) or 0) > 0 then rw[#rw + 1] = Thousands(d[5], es) .. (es and " XP de virtud" or " virtue XP") end
+        if (tonumber(d[6]) or 0) > 0 then rw[#rw + 1] = d[6] .. (es and " puntos LOTRO" or " LOTRO points") end
+        if (tonumber(d[7]) or 0) > 0 then
+            local fac = pick(d[8], d[12])
+            rw[#rw + 1] = "+" .. Thousands(d[7], es) .. " " .. ((fac ~= "") and fac or (es and "reputaci\195\179n" or "reputation"))
+        end
+        if #rw > 0 then out[#out + 1] = (es and "Recompensas: " or "Rewards: ") .. table.concat(rw, DOT) end
+        local title = pick(d[9], d[13])
+        if title ~= "" then out[#out + 1] = (es and "T\195\173tulo: " or "Title: ") .. title end
+        local objs = I.O ~= nil and I.O[id] or nil
+        if objs ~= nil and #objs > 0 then
+            if tonumber(d[3]) == 106 or #objs == 1 then
+                out[#out + 1] = (es and "Objetivo: " or "Objective: ") .. pick(objs[1][1], objs[1][2])
+            else
+                out[#out + 1] = (es and "Objetivos: " or "Objectives: ") .. #objs
+            end
+        end
+        if i == 1 and not loreShown then
+            local lore = pick(d[10], d[11])
+            if lore ~= "" then
+                out[#out + 1] = "\"" .. lore .. "\""
+                loreShown = true
+            end
+        end
+    end
+    out[#out + 1] = es and "(informaci\195\179n de Deed Tracker)" or "(info from Deed Tracker)"
+    return out
+end
+WorldMapAddon.DeedInfoLines = DeedInfoLines
 
 -- ---------------------------------------------------------------------
 -- Vista de mapa de zona (vive dentro del viewport del Mapa del Mundo)
@@ -1542,6 +1693,14 @@ function ZV:_enterItem(item)
                             lines[#lines + 1] = (es and "Progreso: " or "Progress: ") .. n .. "/" .. tot
                         end
                     end
+                end
+            end)
+        end
+        -- v3.8: saber del lugar, hazaña, recompensas... (Deed Tracker)
+        if not item.quest then
+            pcall(function()
+                for _, l in ipairs(DeedInfoLines(item.poi, es)) do
+                    lines[#lines + 1] = l
                 end
             end)
         end

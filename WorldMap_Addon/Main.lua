@@ -50,6 +50,8 @@ import "WorldMap_Addon.worldmap_filters"
 import "WorldMap_Addon.worldmap_instances_data"
 -- v3.5: nombres en español que faltaban
 import "WorldMap_Addon.worldmap_names_es"
+-- v3.8: informacion de hazañas de Deed Tracker para el cartel (opcional)
+pcall(import, "WorldMap_Addon.worldmap_deedinfo_data")
 import "WorldMap_Addon.worldmap_zonemap"
 import "WorldMap_Addon.worldmap"
 import "WorldMap_Addon.worldmap_launcher"
