@@ -362,11 +362,12 @@ local function Thousands(n, es)
     local out = s:reverse():gsub("(%d%d%d)", "%1" .. sep):reverse()
     return (out:gsub("^%" .. sep, ""))
 end
-local function DeedInfoLines(p, es)
-    local out = {}
+-- datos de Deed Tracker para un icono: { lore, deeds = { {id, name, tipo,
+-- nivel, vxp, lp, rep, faccion, titulo, objetivo, nobj} } } o nil
+local function DeedInfoData(p, es)
     local I = WorldMapAddon.DeedInfo
     if type(I) ~= "table" or type(I.D) ~= "table" or p == nil then
-        return out
+        return nil
     end
     local function pick(a, b)
         if es then
@@ -401,6 +402,7 @@ local function DeedInfoLines(p, es)
     end
     if #ids == 0 and placeId ~= nil and I.D[placeId] ~= nil then
         ids[1] = placeId
+        seen[placeId] = true
     end
     -- el lugar dentro de las hazañas del propio icono (nombres repetidos)
     if place == nil and I.O ~= nil then
@@ -415,59 +417,90 @@ local function DeedInfoLines(p, es)
         end
     end
     if #ids == 0 then
-        return out
+        return nil
     end
-    local loreShown = false
-    if place ~= nil and (placeId == ids[1] or seen[placeId]) then
-        local lore = pick(place[3], place[4])
-        if lore ~= "" then
-            out[#out + 1] = "\"" .. lore .. "\""
-            loreShown = true
-        end
+    local info = { deeds = {}, more = 0, lore = "", loreIsPlace = false }
+    if place ~= nil and seen[placeId] then
+        info.lore = pick(place[3], place[4])
+        info.loreIsPlace = info.lore ~= ""
     end
     for i, id in ipairs(ids) do
         if i > DINFO_MAX then
-            out[#out + 1] = es and ("... y " .. (#ids - DINFO_MAX) .. " haza\195\177as m\195\161s") or ("... and " .. (#ids - DINFO_MAX) .. " more deeds")
+            info.more = #ids - DINFO_MAX
             break
         end
         local d = I.D[id]
-        local head = (es and "Haza\195\177a: " or "Deed: ") .. pick(d[1], d[2])
-        local extra = {}
         local tp = DEED_TYPE[tonumber(d[3]) or 0]
-        if tp ~= nil then extra[#extra + 1] = es and tp[1] or tp[2] end
-        if (tonumber(d[4]) or 0) > 0 then extra[#extra + 1] = (es and "nivel " or "level ") .. d[4] end
+        local objs = I.O ~= nil and I.O[id] or nil
+        local e = {
+            id = id, name = pick(d[1], d[2]), tipo = tp and (es and tp[1] or tp[2]) or nil,
+            nivel = tonumber(d[4]) or 0, vxp = tonumber(d[5]) or 0, lp = tonumber(d[6]) or 0, rep = tonumber(d[7]) or 0,
+            faccion = pick(d[8], d[12]), titulo = pick(d[9], d[13]), nobj = objs and #objs or 0, objetivo = nil,
+        }
+        if objs ~= nil and #objs > 0 and (tonumber(d[3]) == 106 or #objs == 1) then
+            e.objetivo = pick(objs[1][1], objs[1][2])
+        end
+        info.deeds[#info.deeds + 1] = e
+        if i == 1 and info.lore == "" then
+            info.lore = pick(d[10], d[11])
+        end
+    end
+    return info
+end
+WorldMapAddon.DeedInfoData = DeedInfoData
+
+local function DeedInfoLines(p, es)
+    local out = {}
+    local info = DeedInfoData(p, es)
+    if info == nil then
+        return out
+    end
+    local loreShown = false
+    if info.loreIsPlace then
+        out[#out + 1] = "\"" .. info.lore .. "\""
+        loreShown = true
+    end
+    for i, e in ipairs(info.deeds) do
+        local head = (es and "Haza\195\177a: " or "Deed: ") .. e.name
+        local extra = {}
+        if e.tipo ~= nil then extra[#extra + 1] = e.tipo end
+        if e.nivel > 0 then extra[#extra + 1] = (es and "nivel " or "level ") .. e.nivel end
         if #extra > 0 then head = head .. " (" .. table.concat(extra, ", ") .. ")" end
         out[#out + 1] = head
         local rw = {}
-        if (tonumber(d[5]) or 0) > 0 then rw[#rw + 1] = Thousands(d[5], es) .. (es and " XP de virtud" or " virtue XP") end
-        if (tonumber(d[6]) or 0) > 0 then rw[#rw + 1] = d[6] .. (es and " puntos LOTRO" or " LOTRO points") end
-        if (tonumber(d[7]) or 0) > 0 then
-            local fac = pick(d[8], d[12])
-            rw[#rw + 1] = "+" .. Thousands(d[7], es) .. " " .. ((fac ~= "") and fac or (es and "reputaci\195\179n" or "reputation"))
+        if e.vxp > 0 then rw[#rw + 1] = Thousands(e.vxp, es) .. (es and " XP de virtud" or " virtue XP") end
+        if e.lp > 0 then rw[#rw + 1] = e.lp .. (es and " puntos LOTRO" or " LOTRO points") end
+        if e.rep > 0 then
+            rw[#rw + 1] = "+" .. Thousands(e.rep, es) .. " " .. ((e.faccion ~= "") and e.faccion or (es and "reputaci\195\179n" or "reputation"))
         end
         if #rw > 0 then out[#out + 1] = (es and "Recompensas: " or "Rewards: ") .. table.concat(rw, DOT) end
-        local title = pick(d[9], d[13])
-        if title ~= "" then out[#out + 1] = (es and "T\195\173tulo: " or "Title: ") .. title end
-        local objs = I.O ~= nil and I.O[id] or nil
-        if objs ~= nil and #objs > 0 then
-            if tonumber(d[3]) == 106 or #objs == 1 then
-                out[#out + 1] = (es and "Objetivo: " or "Objective: ") .. pick(objs[1][1], objs[1][2])
-            else
-                out[#out + 1] = (es and "Objetivos: " or "Objectives: ") .. #objs
-            end
+        if e.titulo ~= "" then out[#out + 1] = (es and "T\195\173tulo: " or "Title: ") .. e.titulo end
+        if e.objetivo ~= nil then
+            out[#out + 1] = (es and "Objetivo: " or "Objective: ") .. e.objetivo
+        elseif e.nobj > 1 then
+            out[#out + 1] = (es and "Objetivos: " or "Objectives: ") .. e.nobj
         end
-        if i == 1 and not loreShown then
-            local lore = pick(d[10], d[11])
-            if lore ~= "" then
-                out[#out + 1] = "\"" .. lore .. "\""
-                loreShown = true
-            end
+        if i == 1 and not loreShown and info.lore ~= "" then
+            out[#out + 1] = "\"" .. info.lore .. "\""
+            loreShown = true
         end
+    end
+    if info.more > 0 then
+        out[#out + 1] = es and ("... y " .. info.more .. " haza\195\177as m\195\161s") or ("... and " .. info.more .. " more deeds")
     end
     out[#out + 1] = es and "(informaci\195\179n de Deed Tracker)" or "(info from Deed Tracker)"
     return out
 end
 WorldMapAddon.DeedInfoLines = DeedInfoLines
+
+-- v3.9 (pedido del jugador, opcion "Tarjeta moderna"): colores de los
+-- carteles y de la tarjeta de hazañas
+local CARD_BORDER_HEX = "#3C4250"
+local CARD_BG = Turbine.UI.Color(0.96, 16 / 255, 18 / 255, 24 / 255)
+local function CardFont(name, fallback)
+    local F = Turbine.UI.Lotro.Font
+    return F[name] or F[fallback] or F.Verdana12
+end
 
 -- ---------------------------------------------------------------------
 -- Vista de mapa de zona (vive dentro del viewport del Mapa del Mundo)
@@ -1664,11 +1697,18 @@ function ZV:_enterItem(item)
     local title, lines
     if item.boss then
         title, lines = self:_bossTip(item)
-        pcall(function() self:_openTip(item.icon, title, lines) end)
+        self:_openAnyCard(item, title, lines)
         return
     end
     if item.layer then
         pcall(function() self:_setPinImage(item, true) end)
+        -- v3.9: tarjeta moderna (Deed Tracker); si no se puede, el cartel de texto
+        if not item.quest then
+            local okC, shown = pcall(function() return self:_openDeedCard(item) end)
+            if okC and shown == true then
+                return
+            end
+        end
         title, lines = LayerTip(item.poi, self.lang)
         -- v3.3: estado de la hazaña / mision
         local es = self.lang
@@ -1734,7 +1774,7 @@ function ZV:_enterItem(item)
         end
     end
     if title ~= nil then
-        pcall(function() self:_openTip(item.icon, title, lines or {}) end)
+        self:_openAnyCard(item, title, lines or {})
     else
         self:_hideTip()
     end
@@ -1758,7 +1798,7 @@ end
 function ZV:_buildTip()
     local tip = Turbine.UI.Window()
     tip:SetSize(TIP_W, 60)
-    tip:SetBackColor(HexToColor(BORDER_HEX))
+    tip:SetBackColor(HexToColor(CARD_BORDER_HEX))
     tip:SetZOrder(0x7FFFFFFF)
     tip:SetMouseVisible(false)
     tip:SetVisible(false)
@@ -1766,14 +1806,14 @@ function ZV:_buildTip()
     inner:SetParent(tip)
     inner:SetPosition(1, 1)
     inner:SetSize(TIP_W - 2, 58)
-    inner:SetBackColor(Turbine.UI.Color(1, 0.06, 0.05, 0.03))
+    inner:SetBackColor(CARD_BG)
     inner:SetMouseVisible(false)
     local title = Turbine.UI.Label()
     title:SetParent(tip)
     title:SetPosition(TIP_PAD, 6)
     title:SetSize(TIP_W - (2 * TIP_PAD), TIP_TITLE_H)
-    title:SetFont(Turbine.UI.Lotro.Font.TrajanPro14)
-    title:SetForeColor(HexToColor("#F0D9A0"))
+    title:SetFont(CardFont("Verdana14", "TrajanPro14"))
+    title:SetForeColor(HexToColor("#F5F8FF"))
     title:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
     title:SetMouseVisible(false)
     local body = Turbine.UI.Label()
@@ -1781,7 +1821,7 @@ function ZV:_buildTip()
     body:SetPosition(TIP_PAD, 6 + TIP_TITLE_H + 2)
     body:SetSize(TIP_W - (2 * TIP_PAD), 20)
     body:SetFont(Turbine.UI.Lotro.Font.Verdana12)
-    body:SetForeColor(HexToColor("#E8DDBF"))
+    body:SetForeColor(HexToColor("#C8CEDA"))
     body:SetMultiline(true)
     body:SetMouseVisible(false)
     self.tip = { win = tip, inner = inner, title = title, body = body, h = 60 }
@@ -1789,6 +1829,9 @@ end
 
 function ZV:_placeTip()
     local t = self.tip
+    if self.cardShown == true and self.cardObj ~= nil then
+        t = self.cardObj
+    end
     if t == nil then
         return
     end
@@ -1821,6 +1864,13 @@ function ZV:_openTip(ctrl, titleText, lines)
     t.body:SetSize(bodyW, math.max(1, bodyH))
     t.title:SetText(titleText)
     t.body:SetText(table.concat(lines, "\n"))
+    self.cardShown = false
+    if self.card ~= nil then
+        pcall(function() self.card.win:SetVisible(false) end)
+    end
+    if self.gcard ~= nil then
+        pcall(function() self.gcard.win:SetVisible(false) end)
+    end
     self:_placeTip()
     t.win:SetVisible(true)
     self.tipOn = true
@@ -1830,6 +1880,13 @@ end
 function ZV:_hideTip()
     self.tipOn = false
     self.tipCtrl = false
+    self.cardShown = false
+    if self.card ~= nil then
+        pcall(function() self.card.win:SetVisible(false) end)
+    end
+    if self.gcard ~= nil then
+        pcall(function() self.gcard.win:SetVisible(false) end)
+    end
     if self.tip ~= nil then
         pcall(function() self.tip.win:SetVisible(false) end)
     end
@@ -2092,6 +2149,10 @@ function ZV:Deactivate()
     self.active = false
     self.dragging = false
     self.instMaps = nil
+    self.find = nil
+    if self.findArrow ~= nil then
+        pcall(function() self:_animateFind(0) end)
+    end
     self.instInfo = nil
     pcall(function() self:_refreshInstInfo() end)
     self:_leaveItem()
@@ -2124,6 +2185,9 @@ function ZV:Tick()
     end
     self:_animate()
     self:_animateQuestArrows(Turbine.Engine.GetGameTime())
+    if self.findArrow ~= nil then
+        pcall(function() self:_animateFind(Turbine.Engine.GetGameTime()) end)
+    end
     -- v3.3: cada pocos segundos, misiones activas y estado de hazañas
     local now = Turbine.Engine.GetGameTime()
     if self.mapOk and (self.statusAt == nil or now - self.statusAt >= STATUS_REFRESH) then
@@ -2280,25 +2344,25 @@ function ZV:_buildInstInfo()
     local this = self
     local box = Turbine.UI.Control()
     box:SetParent(self.root)
-    box:SetBackColor(HexToColor(BORDER_HEX))
+    box:SetBackColor(HexToColor(CARD_BORDER_HEX))
     box:SetMouseVisible(true)
     box:SetVisible(false)
     local inner = Turbine.UI.Control()
     inner:SetParent(box)
     inner:SetPosition(1, 1)
-    inner:SetBackColor(Turbine.UI.Color(1, 0.06, 0.05, 0.03))
+    inner:SetBackColor(CARD_BG)
     inner:SetMouseVisible(false)
     local title = Turbine.UI.Label()
     title:SetParent(box)
     title:SetPosition(INFO_PAD, 6)
-    title:SetFont(Turbine.UI.Lotro.Font.TrajanPro14)
-    title:SetForeColor(HexToColor("#F0D9A0"))
+    title:SetFont(CardFont("Verdana14", "TrajanPro14"))
+    title:SetForeColor(HexToColor("#F5F8FF"))
     title:SetMultiline(true)
     title:SetMouseVisible(false)
     local body = Turbine.UI.Label()
     body:SetParent(box)
     body:SetFont(Turbine.UI.Lotro.Font.Verdana12)
-    body:SetForeColor(HexToColor("#E8DDBF"))
+    body:SetForeColor(HexToColor("#C8CEDA"))
     body:SetMultiline(true)
     body:SetMouseVisible(false)
     -- colores por seccion (si el cliente no acepta marcas: texto sin color)
@@ -2628,4 +2692,1098 @@ function ZV:_bossTip(item)
         return (es and "Monstruos \195\169lite" or "Elite monsters"), lines
     end
     return (es and "Jefe" or "Boss"), lines
+end
+
+-- ---------------------------------------------------------------------
+-- v3.9 (pedido del jugador, opcion "Tarjeta moderna"): tarjeta de hazañas
+-- y lugares al pasar el mouse. Fondo oscuro con esquinas redondeadas,
+-- barra de color segun el tipo, icono, etiquetas (estado, nivel), saber,
+-- barra de progreso y recompensas con su icono (XP de virtud, moneda
+-- LOTRO, reputacion). Todo sale de Deed Tracker (worldmap_deedinfo_data).
+-- Si algo falla, el mapa usa el cartel de texto de siempre.
+-- ---------------------------------------------------------------------
+local CARD_W = 300
+-- v3.11: opciones del jugador (worldmap_options.lua); sin ese archivo, lo de siempre
+local function Opt(key, def)
+    local O = WorldMapAddon.Options
+    if O == nil or O.Get == nil then
+        return def
+    end
+    local ok, v = pcall(O.Get, key)
+    if not ok or v == nil then
+        return def
+    end
+    return v
+end
+local function CardW()
+    local w = tonumber(Opt("width", CARD_W)) or CARD_W
+    if w < 260 or w > 420 then
+        w = CARD_W
+    end
+    return w
+end
+-- (v3.11.1: se cambia la transparencia del FONDO, no win:SetOpacity: en el
+-- juego SetOpacity en la ventana deja invisible el fondo semitransparente)
+local function CardOpacity(c)
+    local o = tonumber(Opt("opacity", 100)) or 100
+    if o < 50 or o > 100 then
+        o = 100
+    end
+    local bg = Turbine.UI.Color(0.96 * o / 100, 16 / 255, 18 / 255, 24 / 255)
+    pcall(function()
+        c.top:SetBackColor(bg)
+        c.mid:SetBackColor(bg)
+        c.bot:SetBackColor(bg)
+    end)
+end
+local CARD_R = 12
+local CARD_PAD = 18
+local CARD_LINE_H = 15
+local CARD_DEEDS = 2
+local CARD_CHIPS = 3
+local CARD_ACCENT = {
+    exp = { 80, 170, 255 }, haz = { 190, 120, 255 }, mob = { 235, 95, 80 },
+    cof = { 240, 190, 70 }, his = { 90, 200, 170 },
+}
+local CARD_ACCENT_DEF = { 150, 160, 180 }
+local CHIP_TEXT = { vxp = "#96DCFF", lp = "#FFD75A", rep = "#A0DCAA" }
+
+local function RGB(t, a)
+    return Turbine.UI.Color(a or 1, t[1] / 255, t[2] / 255, t[3] / 255)
+end
+
+-- ancho aproximado de un texto (no hay forma de medirlo en el juego)
+local function TextW(text, px)
+    local n = 0
+    for _ in tostring(text or ""):gmatch("[^\128-\191]") do
+        n = n + 1
+    end
+    return math.floor(n * (px or 6.6) + 0.5)
+end
+
+local function Cut(text, maxW, px)
+    text = tostring(text or "")
+    if TextW(text, px) <= maxW then
+        return text
+    end
+    local out, n = {}, 0
+    local limit = math.floor(maxW / (px or 6.6)) - 3
+    for ch in text:gmatch("[%z\1-\127\194-\244][\128-\191]*") do
+        n = n + 1
+        if n > limit then
+            break
+        end
+        out[#out + 1] = ch
+    end
+    return table.concat(out) .. "..."
+end
+
+function ZV:_buildCard()
+    local c = {}
+    local win = Turbine.UI.Window()
+    win:SetSize(CARD_W, 100)
+    win:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+    win:SetZOrder(0x7FFFFFFF)
+    win:SetMouseVisible(false)
+    win:SetVisible(false)
+    c.win = win
+    local function box(color)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetMouseVisible(false)
+        if color ~= nil then
+            k:SetBackColor(color)
+        end
+        return k
+    end
+    local function img(file, w, h)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetSize(w, h)
+        k:SetBackground(RES .. file)
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function label(font, hex, align, multi)
+        local l = Turbine.UI.Label()
+        l:SetParent(win)
+        l:SetFont(font)
+        l:SetForeColor(HexToColor(hex))
+        l:SetTextAlignment(align or Turbine.UI.ContentAlignment.TopLeft)
+        l:SetMultiline(multi == true)
+        l:SetMouseVisible(false)
+        return l
+    end
+    local border = HexToColor(CARD_BORDER_HEX)
+    -- marco: esquinas (imagen) + bandas de relleno + lineas del borde
+    c.tl = img("card_tl.tga", CARD_R, CARD_R)
+    c.tr = img("card_tr.tga", CARD_R, CARD_R)
+    c.bl = img("card_bl.tga", CARD_R, CARD_R)
+    c.br = img("card_br.tga", CARD_R, CARD_R)
+    c.top, c.mid, c.bot = box(CARD_BG), box(CARD_BG), box(CARD_BG)
+    c.lineT, c.lineB, c.lineL, c.lineR = box(border), box(border), box(border), box(border)
+    c.accent = box(RGB(CARD_ACCENT_DEF))
+    c.icon = Turbine.UI.Control()
+    c.icon:SetParent(win)
+    c.icon:SetSize(32, 32)
+    c.icon:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+    c.icon:SetMouseVisible(false)
+    local V12 = Turbine.UI.Lotro.Font.Verdana12
+    local V10 = CardFont("Verdana10", "Verdana12")
+    c.title = label(CardFont("Verdana16", "Verdana14"), "#F5F8FF")
+    c.sub = label(V12, "#8CAAD2")
+    c.pills = {}
+    for i = 1, 2 do
+        local pl = { l = img("card_blue_l.tga", 9, 18), r = img("card_blue_r.tga", 9, 18), m = box(), t = label(V10, "#FFFFFF", Turbine.UI.ContentAlignment.MiddleCenter) }
+        c.pills[i] = pl
+    end
+    c.lore = label(V12, "#BEC4D2", nil, true)
+    c.others = label(V12, "#8CAAD2", nil, true)
+    c.deeds = {}
+    for i = 1, CARD_DEEDS do
+        local d = {}
+        d.name = label(V12, "#F5F8FF")
+        d.count = label(V12, "#A0C8FF", Turbine.UI.ContentAlignment.TopRight)
+        d.barBg = box(RGB({ 38, 44, 56 }))
+        d.bar = box(RGB(CARD_ACCENT_DEF))
+        d.chips = {}
+        for j = 1, CARD_CHIPS do
+            d.chips[j] = { l = img("card_chip_l.tga", 12, 24), r = img("card_chip_r.tga", 12, 24), m = box(RGB({ 30, 34, 44 })),
+                           icon = img("card_vxp.tga", 18, 18), t = label(V10, "#FFFFFF", Turbine.UI.ContentAlignment.MiddleLeft) }
+        end
+        d.extra = label(V12, "#E6C878", nil, true)
+        d.sep = box(RGB({ 45, 50, 62 }))
+        c.deeds[i] = d
+    end
+    c.more = label(V12, "#8C96AA")
+    c.footer = label(V10, "#5A6273", Turbine.UI.ContentAlignment.TopRight)
+    self.card = c
+end
+
+local function Show(ctl, on)
+    ctl:SetVisible(on == true)
+end
+
+function ZV:_openDeedCard(item)
+    if Opt("cards", true) == false then
+        return false
+    end
+    local es = self.lang
+    local p = item.poi
+    local info = DeedInfoData(p, es)
+    if info == nil or #info.deeds == 0 then
+        return false
+    end
+    if self.card == nil then
+        self:_buildCard()
+    end
+    local c = self.card
+    local W = CardW()
+    local inner = W - CARD_PAD - 16
+    local key = p[1]
+    local accent = CARD_ACCENT[key] or CARD_ACCENT_DEF
+    -- cabecera: icono, nombre del lugar, tipo · hazaña
+    local F = Filters()
+    local iconName = F ~= nil and F.LayerIcon ~= nil and F.LayerIcon[key] or nil
+    if iconName ~= nil then
+        c.icon:SetBackground(RES .. "fl_" .. iconName .. "_32.tga")
+        c.icon:SetVisible(true)
+    else
+        c.icon:SetVisible(false)
+    end
+    c.icon:SetPosition(14, 12)
+    local tt = F ~= nil and F.Title ~= nil and F.Title[key] or nil
+    local kindName = tt ~= nil and (es and tt.es or tt.en) or ""
+    local ens, ess = Split(p[4]), Split(p[5])
+    local title = ens[1] or ""
+    if es then
+        local e1 = ess[1]
+        if e1 == nil or e1 == "" or e1 == title then
+            e1 = NameES(title)
+        end
+        title = e1
+    end
+    if #ens > 1 then
+        title = title .. "  (+" .. (#ens - 1) .. ")"
+    end
+    local textX = (iconName ~= nil) and 54 or CARD_PAD
+    local textW = W - textX - 12
+    c.title:SetText(Cut(title, textW, 8.4))
+    c.title:SetPosition(textX, 12)
+    c.title:SetSize(textW, 20)
+    local sub = kindName
+    if info.deeds[1].name ~= "" and info.deeds[1].name ~= title then
+        sub = (sub ~= "" and (sub .. DOT) or "") .. info.deeds[1].name
+    end
+    c.sub:SetText(Cut(sub, textW))
+    c.sub:SetPosition(textX, 34)
+    c.sub:SetSize(textW, 16)
+    local y = 56
+    -- etiquetas: estado y nivel
+    local pills = {}
+    if item.status == "done" then
+        pills[#pills + 1] = { es and "Completada" or "Completed", "green", "#8CF0AA", { 22, 70, 40 } }
+    elseif item.status == "active" then
+        pills[#pills + 1] = { es and "En progreso" or "In progress", "amber", "#FFC85A", { 90, 60, 10 } }
+    end
+    if info.deeds[1].nivel > 0 then
+        pills[#pills + 1] = { (es and "Nivel " or "Level ") .. info.deeds[1].nivel, "blue", "#A0C8FF", { 30, 45, 70 } }
+    end
+    local px = CARD_PAD
+    for i, pl in ipairs(c.pills) do
+        local d = pills[i]
+        local on = d ~= nil
+        Show(pl.l, on); Show(pl.r, on); Show(pl.m, on); Show(pl.t, on)
+        if on then
+            local w = TextW(d[1], 6.2) + 8
+            pl.l:SetBackground(RES .. "card_" .. d[2] .. "_l.tga")
+            pl.r:SetBackground(RES .. "card_" .. d[2] .. "_r.tga")
+            pl.m:SetBackColor(RGB(d[4]))
+            pl.l:SetPosition(px, y)
+            pl.m:SetPosition(px + 9, y)
+            pl.m:SetSize(w, 18)
+            pl.r:SetPosition(px + 9 + w, y)
+            pl.t:SetText(d[1])
+            pl.t:SetForeColor(HexToColor(d[3]))
+            pl.t:SetPosition(px + 9, y)
+            pl.t:SetSize(w, 18)
+            px = px + w + 18 + 6
+        end
+    end
+    if #pills > 0 then
+        y = y + 26
+    end
+    -- v3.10.1: si el icono junta varios lugares, los demas nombres
+    if #ens > 1 then
+        local list = {}
+        for i = 2, math.min(#ens, 6) do
+            local n = ens[i]
+            if es then
+                local e = ess[i]
+                if e == nil or e == "" or e == n then e = NameES(n) end
+                n = e
+            end
+            list[#list + 1] = n
+        end
+        local txt = (es and "Tambi\195\169n aqu\195\173: " or "Also here: ") .. table.concat(list, ", ")
+        if #ens > 6 then
+            txt = txt .. (es and (" y " .. (#ens - 6) .. " m\195\161s") or (" and " .. (#ens - 6) .. " more"))
+        end
+        local h = TipLines(txt, inner) * CARD_LINE_H + 2
+        c.others:SetText(txt)
+        c.others:SetPosition(CARD_PAD, y)
+        c.others:SetSize(inner, h)
+        c.others:SetVisible(true)
+        y = y + h + 6
+    else
+        c.others:SetVisible(false)
+    end
+    -- saber del lugar (o de la hazaña)
+    if info.lore ~= "" and Opt("lore", true) ~= false then
+        local h = TipLines(info.lore, inner) * CARD_LINE_H + 2
+        c.lore:SetText(info.lore)
+        c.lore:SetPosition(CARD_PAD, y)
+        c.lore:SetSize(inner, h)
+        c.lore:SetVisible(true)
+        y = y + h + 8
+    else
+        c.lore:SetVisible(false)
+    end
+    -- hazañas
+    local DA = WorldMapAddon.DeedActive
+    for i, d in ipairs(c.deeds) do
+        local e = info.deeds[i]
+        local on = e ~= nil
+        Show(d.name, on); Show(d.count, on); Show(d.sep, false)
+        if not on then
+            Show(d.barBg, false); Show(d.bar, false); Show(d.extra, false)
+            for _, ch in ipairs(d.chips) do
+                Show(ch.l, false); Show(ch.r, false); Show(ch.m, false); Show(ch.icon, false); Show(ch.t, false)
+            end
+        else
+            if i > 1 then
+                d.sep:SetPosition(CARD_PAD, y)
+                d.sep:SetSize(inner, 1)
+                d.sep:SetVisible(true)
+                y = y + 9
+            end
+            local n, tot = nil, nil
+            if DA ~= nil and DA.Progress ~= nil then
+                local okP, a, b = pcall(DA.Progress, tostring(e.id))
+                if okP then n, tot = a, b end
+            end
+            local nameTxt = e.name
+            if i > 1 and e.tipo ~= nil then
+                nameTxt = nameTxt .. " (" .. e.tipo .. ")"
+            end
+            d.name:SetText(Cut(nameTxt, inner - 60))
+            d.name:SetPosition(CARD_PAD, y)
+            d.name:SetSize(inner - 56, 16)
+            if n ~= nil and tot ~= nil and tonumber(tot) ~= nil and tonumber(tot) > 0 then
+                d.count:SetText(n .. " / " .. tot)
+                d.count:SetPosition(W - 16 - 56, y)
+                d.count:SetSize(56, 16)
+                d.count:SetVisible(true)
+                y = y + 19
+                d.barBg:SetPosition(CARD_PAD, y)
+                d.barBg:SetSize(inner, 6)
+                d.bar:SetBackColor(RGB(accent))
+                d.bar:SetPosition(CARD_PAD, y)
+                d.bar:SetSize(math.max(4, math.floor(inner * math.min(1, (tonumber(n) or 0) / tonumber(tot)))), 6)
+                d.barBg:SetVisible(true)
+                d.bar:SetVisible(true)
+                y = y + 14
+            else
+                if e.nobj > 1 then
+                    d.count:SetText(e.nobj .. (es and " objetivos" or " objectives"))
+                    d.count:SetPosition(W - 16 - 90, y)
+                    d.count:SetSize(90, 16)
+                else
+                    d.count:SetVisible(false)
+                end
+                d.barBg:SetVisible(false)
+                d.bar:SetVisible(false)
+                y = y + 22
+            end
+            -- recompensas con su icono
+            local chips = {}
+            local rw = Opt("rewards", true) ~= false
+            if not rw then
+                -- (opcion: sin recompensas)
+            elseif e.vxp > 0 then chips[#chips + 1] = { "card_vxp.tga", Thousands(e.vxp, es) .. (es and " XP virtud" or " virtue XP"), CHIP_TEXT.vxp } end
+            if rw and e.lp > 0 then chips[#chips + 1] = { "card_lp.tga", e.lp .. " LOTRO", CHIP_TEXT.lp } end
+            if rw and e.rep > 0 then
+                local fac = (e.faccion ~= "") and e.faccion or (es and "reputaci\195\179n" or "reputation")
+                chips[#chips + 1] = { "card_rep.tga", "+" .. Thousands(e.rep, es) .. " " .. fac, CHIP_TEXT.rep }
+            end
+            local cx = CARD_PAD
+            for j, ch in ipairs(d.chips) do
+                local cd = chips[j]
+                local con = cd ~= nil
+                Show(ch.l, con); Show(ch.r, con); Show(ch.m, con); Show(ch.icon, con); Show(ch.t, con)
+                if con then
+                    local txt = Cut(cd[2], inner - 40, 6.2)
+                    local w = TextW(txt, 6.2) + 28
+                    if cx > CARD_PAD and cx + w + 24 > CARD_PAD + inner then
+                        cx = CARD_PAD
+                        y = y + 30
+                    end
+                    ch.l:SetPosition(cx, y)
+                    ch.m:SetPosition(cx + 12, y)
+                    ch.m:SetSize(w, 24)
+                    ch.r:SetPosition(cx + 12 + w, y)
+                    ch.icon:SetBackground(RES .. cd[1])
+                    ch.icon:SetPosition(cx + 5, y + 3)
+                    ch.t:SetText(txt)
+                    ch.t:SetForeColor(HexToColor(cd[3]))
+                    ch.t:SetPosition(cx + 27, y)
+                    ch.t:SetSize(w - 15, 24)
+                    cx = cx + w + 24 + 6
+                end
+            end
+            if #chips > 0 then
+                y = y + 30
+            end
+            -- titulo y objetivo
+            local extra = {}
+            if e.titulo ~= "" then
+                extra[#extra + 1] = (es and "T\195\173tulo: " or "Title: ") .. e.titulo
+            end
+            if e.objetivo ~= nil then
+                extra[#extra + 1] = (es and "Objetivo: " or "Objective: ") .. e.objetivo
+            end
+            if #extra > 0 then
+                local txt = table.concat(extra, "\n")
+                local h = 2
+                for _, l in ipairs(extra) do
+                    h = h + TipLines(l, inner) * CARD_LINE_H
+                end
+                d.extra:SetText(txt)
+                d.extra:SetPosition(CARD_PAD, y)
+                d.extra:SetSize(inner, h)
+                d.extra:SetVisible(true)
+                y = y + h + 4
+            else
+                d.extra:SetVisible(false)
+            end
+        end
+    end
+    if info.more > 0 then
+        c.more:SetText(es and ("+ " .. info.more .. " haza\195\177as m\195\161s aqu\195\173") or ("+ " .. info.more .. " more deeds here"))
+        c.more:SetPosition(CARD_PAD, y)
+        c.more:SetSize(inner, 16)
+        c.more:SetVisible(true)
+        y = y + 18
+    else
+        c.more:SetVisible(false)
+    end
+    c.footer:SetText("Deed Tracker")
+    c.footer:SetPosition(W - 16 - 120, y)
+    c.footer:SetSize(120, 14)
+    y = y + 18
+    local H = math.max(y + 4, 2 * CARD_R + 40)
+    -- marco
+    c.win:SetSize(W, H)
+    c.tl:SetPosition(0, 0)
+    c.tr:SetPosition(W - CARD_R, 0)
+    c.bl:SetPosition(0, H - CARD_R)
+    c.br:SetPosition(W - CARD_R, H - CARD_R)
+    c.top:SetPosition(CARD_R, 0); c.top:SetSize(W - 2 * CARD_R, CARD_R)
+    c.mid:SetPosition(0, CARD_R); c.mid:SetSize(W, H - 2 * CARD_R)
+    c.bot:SetPosition(CARD_R, H - CARD_R); c.bot:SetSize(W - 2 * CARD_R, CARD_R)
+    c.lineT:SetPosition(CARD_R, 0); c.lineT:SetSize(W - 2 * CARD_R, 1)
+    c.lineB:SetPosition(CARD_R, H - 1); c.lineB:SetSize(W - 2 * CARD_R, 1)
+    c.lineL:SetPosition(0, CARD_R); c.lineL:SetSize(1, H - 2 * CARD_R)
+    c.lineR:SetPosition(W - 1, CARD_R); c.lineR:SetSize(1, H - 2 * CARD_R)
+    c.accent:SetBackColor(RGB(accent))
+    c.accent:SetPosition(1, CARD_R)
+    c.accent:SetSize(4, H - 2 * CARD_R)
+    c.h = H
+    -- mostrar en lugar del cartel de texto
+    if self.tip ~= nil then
+        pcall(function() self.tip.win:SetVisible(false) end)
+    end
+    if self.gcard ~= nil then
+        pcall(function() self.gcard.win:SetVisible(false) end)
+    end
+    self.cardShown = true
+    self.cardObj = c
+    self.tipOn = true
+    self.tipCtrl = item.icon
+    self:_placeTip()
+    CardOpacity(c)
+    c.win:SetVisible(true)
+    return true
+end
+
+-- ---------------------------------------------------------------------
+-- v3.10 (pedido del jugador): la misma tarjeta moderna para TODOS los
+-- carteles del mapa de zona (ciudades, establos, mazmorras, incursiones,
+-- jefes, misiones activas, NPC, campamentos...). Cada tipo con su icono y
+-- su color; las lineas de siempre con estilo (titulo, etiquetas, misiones
+-- en amarillo, ayudas en gris). Si algo falla, el cartel de texto.
+-- ---------------------------------------------------------------------
+local GCARD_LINES = 16
+local GCARD_PILLS = 3
+local KIND_CARD = {
+    c = { "zm_ciudad.tga", 32, 30, { 240, 200, 110 } },
+    s = { "fl_establo_blanco_26.tga", 26, 26, { 200, 210, 225 } },
+    d = { "fl_mazmorra_28.tga", 28, 28, { 170, 120, 255 } },
+    r = { "fl_raid_30.tga", 30, 30, { 255, 110, 60 } },
+    e = { "fl_jefe_28.tga", 28, 28, { 235, 95, 80 } },
+    t = { "fl_cofre_24.tga", 24, 24, { 240, 190, 70 } },
+}
+local LAYER_ACCENT = {
+    exp = { 80, 170, 255 }, haz = { 190, 120, 255 }, mob = { 235, 95, 80 }, cof = { 240, 190, 70 },
+    his = { 90, 200, 170 }, mis = { 255, 208, 64 }, npc = { 120, 200, 140 }, cam = { 230, 150, 80 },
+    via = { 110, 190, 255 }, min = { 180, 150, 120 }, pes = { 90, 170, 230 }, fau = { 150, 200, 110 },
+    esb = { 200, 210, 225 }, esa = { 90, 150, 255 }, jef = { 235, 95, 80 },
+}
+local PILL_STYLE = {
+    green = { "green", "#8CF0AA", { 22, 70, 40 } },
+    amber = { "amber", "#FFC85A", { 90, 60, 10 } },
+    blue = { "blue", "#A0C8FF", { 30, 45, 70 } },
+}
+
+-- "Nombre (Name)" -> "Nombre", "Name"   (el ultimo parentesis)
+local function SplitParen(text)
+    local a, b = tostring(text or ""):match("^(.*) %((.-)%)$")
+    if a ~= nil and a ~= "" then
+        return a, b
+    end
+    return text, nil
+end
+
+-- estilo de cada linea de los carteles de siempre
+local function LineStyle(l)
+    if l:match("^Clic") or l:match("^Click") or l:match("^%(") then
+        return "#8C96AA", false
+    end
+    if l:match("^Misiones activas") or l:match("^Active quests") or l:match("^Misi\195\179n activa") or l:match("^Active quest") then
+        return "#7CE07C", true
+    end
+    if l:match("^Sin misiones") or l:match("^No active") then
+        return "#8C96AA", false
+    end
+    if l:match("^%- ") or l:match("^%.%.%.") then
+        return "#F0D060", false
+    end
+    if l:match('^"') then
+        return "#BEC4D2", false
+    end
+    return "#C8CEDA", false
+end
+
+function ZV:_buildGCard()
+    local c = {}
+    local win = Turbine.UI.Window()
+    win:SetSize(CARD_W, 100)
+    win:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+    win:SetZOrder(0x7FFFFFFF)
+    win:SetMouseVisible(false)
+    win:SetVisible(false)
+    c.win = win
+    local function box(color)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetMouseVisible(false)
+        if color ~= nil then
+            k:SetBackColor(color)
+        end
+        return k
+    end
+    local function img(file, w, h)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetSize(w, h)
+        if file ~= nil then
+            k:SetBackground(RES .. file)
+        end
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function label(font, hex, align, multi)
+        local l = Turbine.UI.Label()
+        l:SetParent(win)
+        l:SetFont(font)
+        l:SetForeColor(HexToColor(hex))
+        l:SetTextAlignment(align or Turbine.UI.ContentAlignment.TopLeft)
+        l:SetMultiline(multi == true)
+        l:SetMouseVisible(false)
+        return l
+    end
+    local border = HexToColor(CARD_BORDER_HEX)
+    c.tl = img("card_tl.tga", CARD_R, CARD_R)
+    c.tr = img("card_tr.tga", CARD_R, CARD_R)
+    c.bl = img("card_bl.tga", CARD_R, CARD_R)
+    c.br = img("card_br.tga", CARD_R, CARD_R)
+    c.top, c.mid, c.bot = box(CARD_BG), box(CARD_BG), box(CARD_BG)
+    c.lineT, c.lineB, c.lineL, c.lineR = box(border), box(border), box(border), box(border)
+    c.accent = box(RGB(CARD_ACCENT_DEF))
+    c.icon = img(nil, 32, 32)
+    local V12 = Turbine.UI.Lotro.Font.Verdana12
+    local V10 = CardFont("Verdana10", "Verdana12")
+    c.title = label(CardFont("Verdana16", "Verdana14"), "#F5F8FF")
+    c.sub = label(V12, "#8CAAD2")
+    c.pills = {}
+    for i = 1, GCARD_PILLS do
+        c.pills[i] = { l = img("card_blue_l.tga", 9, 18), r = img("card_blue_r.tga", 9, 18), m = box(), t = label(V10, "#FFFFFF", Turbine.UI.ContentAlignment.MiddleCenter) }
+    end
+    c.lines = {}
+    for i = 1, GCARD_LINES do
+        c.lines[i] = label(V12, "#C8CEDA", nil, true)
+    end
+    self.gcard = c
+end
+
+-- datos de la tarjeta para cualquier icono (a partir del cartel de texto)
+function ZV:_cardSpec(item, title, lines)
+    local es = self.lang
+    local spec = { pills = {}, lines = {}, accent = CARD_ACCENT_DEF }
+    local rest = {}
+    for _, l in ipairs(lines or {}) do
+        rest[#rest + 1] = l
+    end
+    local function takePills()
+        local keep = {}
+        for _, l in ipairs(rest) do
+            if l == "[Completada]" or l == "[Completed]" then
+                spec.pills[#spec.pills + 1] = { es and "Completada" or "Completed", "green" }
+            elseif l == "[En progreso]" or l == "[In progress]" then
+                spec.pills[#spec.pills + 1] = { es and "En progreso" or "In progress", "amber" }
+            elseif l:match("^Progreso: ") or l:match("^Progress: ") then
+                spec.pills[#spec.pills + 1] = { (l:gsub("^%a+: ", "")):gsub("/", " / "), "blue" }
+            else
+                keep[#keep + 1] = l
+            end
+        end
+        rest = keep
+    end
+    if item.boss then
+        spec.icon, spec.iw, spec.ih, spec.accent = "fl_jefeorco_34.tga", 34, 34, { 235, 95, 80 }
+        local first = table.remove(rest, 1) or ""
+        local name, room = first:match("^(.*) %- (.-)$")
+        spec.title = name or first
+        spec.sub = (es and "Jefe" or "Boss") .. ((room ~= nil and room ~= "") and (DOT .. room) or "")
+    elseif item.layer then
+        local p = item.poi
+        local key = p[1]
+        local F = Filters()
+        local iconName = F ~= nil and F.LayerIcon ~= nil and F.LayerIcon[key] or nil
+        if iconName ~= nil then
+            spec.icon, spec.iw, spec.ih = "fl_" .. iconName .. "_32.tga", 32, 32
+        end
+        spec.accent = LAYER_ACCENT[key] or CARD_ACCENT_DEF
+        local ens, ess = Split(p[4]), Split(p[5])
+        local sens, sess = Split(p[6]), Split(p[7])
+        local function nameOf(i)
+            local en, esn = ens[i] or "", ess[i]
+            if esn == nil or esn == "" or esn == en then
+                esn = NameES(en)
+            end
+            return es and esn or en, es and en or esn
+        end
+        local function subOf(i)
+            local sen, ses = sens[i] or "", sess[i] or ""
+            if ses == "" or ses == sen then
+                ses = NameES(sen)
+            end
+            return es and ses or sen
+        end
+        local n1, n1b = nameOf(1)
+        spec.title = n1
+        local sub = title or ""
+        local s1 = subOf(1)
+        if s1 ~= "" and s1 ~= n1 then
+            sub = (sub ~= "" and (sub .. DOT) or "") .. s1
+        end
+        spec.sub = sub
+        local newRest = {}
+        if n1b ~= nil and n1b ~= "" and n1b ~= n1 then
+            newRest[#newRest + 1] = "(" .. n1b .. ")"
+        end
+        for i = 2, math.min(#ens, LAYER_MAX_LINES) do
+            local a = nameOf(i)
+            local sb = subOf(i)
+            newRest[#newRest + 1] = "- " .. a .. ((sb ~= "" and sb ~= a) and (" - " .. sb) or "")
+        end
+        if #ens > LAYER_MAX_LINES then
+            newRest[#newRest + 1] = es and ("... y " .. (#ens - LAYER_MAX_LINES) .. " m\195\161s") or ("... and " .. (#ens - LAYER_MAX_LINES) .. " more")
+        end
+        -- las lineas que agrego el mapa despues de los nombres (estado, progreso)
+        for i = math.min(#ens, LAYER_MAX_LINES + 1) + 1, #rest do
+            newRest[#newRest + 1] = rest[i]
+        end
+        rest = newRest
+    else
+        local k = KIND_CARD[item.kind]
+        if k ~= nil then
+            spec.icon, spec.iw, spec.ih, spec.accent = k[1], k[2], k[3], k[4]
+            if item.kind == "s" and item.poi ~= nil and item.poi[6] == "far" then
+                spec.icon, spec.accent = "fl_establo_azul_26.tga", { 90, 150, 255 }
+            end
+        end
+        if item.kind == "c" then
+            spec.title = title or ""
+            spec.sub = table.remove(rest, 1) or ""
+        elseif item.kind == "s" then
+            spec.sub = title or ""
+            spec.title = table.remove(rest, 1) or (title or "")
+        elseif item.kind == "d" or item.kind == "r" then
+            local first = table.remove(rest, 1) or ""
+            local a, b = SplitParen(first)
+            spec.title = a
+            local kindTxt = item.kind == "r" and (es and "Incursi\195\179n" or "Raid") or (es and "Mazmorra" or "Dungeon")
+            spec.sub = kindTxt .. ((b ~= nil and b ~= "") and (DOT .. b) or "")
+            -- nivel y jugadores (ficha de la instancia)
+            pcall(function()
+                local D = WorldMapAddon.InstanceData
+                local idxs = self:_instancesOf(item.poi)
+                local it = D ~= nil and idxs[1] ~= nil and D.Inst[idxs[1]] or nil
+                if it ~= nil then
+                    local lv = tostring(it.lmin or "")
+                    if it.lmax ~= nil and it.lmax ~= "" and it.lmax ~= it.lmin then
+                        lv = lv .. "-" .. it.lmax
+                    end
+                    if lv ~= "" then
+                        if it.scaling == true then
+                            lv = lv .. (es and " (escala)" or " (scaling)")
+                        end
+                        spec.pills[#spec.pills + 1] = { (es and "Nivel " or "Level ") .. lv, "blue" }
+                    end
+                    if it.players ~= nil and it.players ~= "" then
+                        spec.pills[#spec.pills + 1] = { it.players .. (es and " jugadores" or " players"), "blue" }
+                    end
+                end
+            end)
+            local nq = 0
+            for _, l in ipairs(rest) do
+                if l:match("^%- ") then nq = nq + 1 end
+            end
+            if nq > 0 then
+                table.insert(spec.pills, 1, { nq .. (es and (nq == 1 and " misi\195\179n" or " misiones") or (nq == 1 and " quest" or " quests")), "amber" })
+            end
+        else
+            spec.title = table.remove(rest, 1) or (title or "")
+            spec.sub = title or ""
+        end
+    end
+    takePills()
+    spec.lines = rest
+    return spec
+end
+
+function ZV:_openAnyCard(item, title, lines)
+    if Opt("lore", true) == false and lines ~= nil then
+        local keep = {}
+        for _, l in ipairs(lines) do
+            if not tostring(l):match('^"') then
+                keep[#keep + 1] = l
+            end
+        end
+        lines = keep
+    end
+    if Opt("cards", true) == false then
+        pcall(function() self:_openTip(item.icon, title, lines or {}) end)
+        return
+    end
+    local ok, shown = pcall(function()
+        return self:_openGCard(item, self:_cardSpec(item, title, lines))
+    end)
+    if ok and shown == true then
+        return
+    end
+    pcall(function() self:_openTip(item.icon, title, lines or {}) end)
+end
+
+function ZV:_openGCard(item, spec)
+    if spec == nil or spec.title == nil or spec.title == "" then
+        return false
+    end
+    if self.gcard == nil then
+        self:_buildGCard()
+    end
+    local c = self.gcard
+    local W = CardW()
+    local inner = W - CARD_PAD - 16
+    local accent = spec.accent or CARD_ACCENT_DEF
+    local textX = CARD_PAD
+    if spec.icon ~= nil then
+        local iw, ih = spec.iw or 32, spec.ih or 32
+        c.icon:SetBackground(RES .. spec.icon)
+        c.icon:SetSize(iw, ih)
+        c.icon:SetPosition(14 + math.floor((34 - iw) / 2), 12 + math.floor((32 - ih) / 2))
+        c.icon:SetVisible(true)
+        textX = 54
+    else
+        c.icon:SetVisible(false)
+    end
+    local textW = W - textX - 12
+    local hasSub = spec.sub ~= nil and spec.sub ~= "" and spec.sub ~= spec.title
+    c.title:SetText(Cut(spec.title, textW, 8.4))
+    c.title:SetPosition(textX, hasSub and 12 or 18)
+    c.title:SetSize(textW, 20)
+    c.sub:SetText(Cut(spec.sub or "", textW))
+    c.sub:SetPosition(textX, 34)
+    c.sub:SetSize(textW, 16)
+    c.sub:SetVisible(hasSub)
+    local y = 56
+    local px = CARD_PAD
+    local npill = 0
+    for i, pl in ipairs(c.pills) do
+        local d = spec.pills[i]
+        local st = d ~= nil and PILL_STYLE[d[2]] or nil
+        local w = d ~= nil and (TextW(d[1], 6.2) + 8) or 0
+        local on = st ~= nil and (px + w + 18 <= CARD_PAD + inner)
+        Show(pl.l, on); Show(pl.r, on); Show(pl.m, on); Show(pl.t, on)
+        if on then
+            npill = npill + 1
+            pl.l:SetBackground(RES .. "card_" .. st[1] .. "_l.tga")
+            pl.r:SetBackground(RES .. "card_" .. st[1] .. "_r.tga")
+            pl.m:SetBackColor(RGB(st[3]))
+            pl.l:SetPosition(px, y)
+            pl.m:SetPosition(px + 9, y)
+            pl.m:SetSize(w, 18)
+            pl.r:SetPosition(px + 9 + w, y)
+            pl.t:SetText(d[1])
+            pl.t:SetForeColor(HexToColor(st[2]))
+            pl.t:SetPosition(px + 9, y)
+            pl.t:SetSize(w, 18)
+            px = px + w + 18 + 6
+        end
+    end
+    if npill > 0 then
+        y = y + 26
+    end
+    local n = #spec.lines
+    for i, lbl in ipairs(c.lines) do
+        local l = spec.lines[i]
+        if l ~= nil and i == GCARD_LINES and n > GCARD_LINES then
+            l = "..."
+        end
+        if l == nil then
+            lbl:SetVisible(false)
+        else
+            local hex, gap = LineStyle(l)
+            if gap and i > 1 then
+                y = y + 4
+            end
+            local h = TipLines(l, inner) * CARD_LINE_H + 1
+            lbl:SetText(l)
+            lbl:SetForeColor(HexToColor(hex))
+            lbl:SetPosition(CARD_PAD, y)
+            lbl:SetSize(inner, h)
+            lbl:SetVisible(true)
+            y = y + h
+        end
+    end
+    if n == 0 and npill == 0 then
+        y = y - 4
+    end
+    local H = math.max(y + 10, 2 * CARD_R + 40)
+    c.win:SetSize(W, H)
+    c.tl:SetPosition(0, 0)
+    c.tr:SetPosition(W - CARD_R, 0)
+    c.bl:SetPosition(0, H - CARD_R)
+    c.br:SetPosition(W - CARD_R, H - CARD_R)
+    c.top:SetPosition(CARD_R, 0); c.top:SetSize(W - 2 * CARD_R, CARD_R)
+    c.mid:SetPosition(0, CARD_R); c.mid:SetSize(W, H - 2 * CARD_R)
+    c.bot:SetPosition(CARD_R, H - CARD_R); c.bot:SetSize(W - 2 * CARD_R, CARD_R)
+    c.lineT:SetPosition(CARD_R, 0); c.lineT:SetSize(W - 2 * CARD_R, 1)
+    c.lineB:SetPosition(CARD_R, H - 1); c.lineB:SetSize(W - 2 * CARD_R, 1)
+    c.lineL:SetPosition(0, CARD_R); c.lineL:SetSize(1, H - 2 * CARD_R)
+    c.lineR:SetPosition(W - 1, CARD_R); c.lineR:SetSize(1, H - 2 * CARD_R)
+    c.accent:SetBackColor(RGB(accent))
+    c.accent:SetPosition(1, CARD_R)
+    c.accent:SetSize(4, H - 2 * CARD_R)
+    c.h = H
+    if self.tip ~= nil then
+        pcall(function() self.tip.win:SetVisible(false) end)
+    end
+    if self.card ~= nil then
+        pcall(function() self.card.win:SetVisible(false) end)
+    end
+    self.cardShown = true
+    self.cardObj = c
+    self.tipOn = true
+    self.tipCtrl = item.icon
+    self:_placeTip()
+    CardOpacity(c)
+    c.win:SetVisible(true)
+    return true
+end
+
+-- ---------------------------------------------------------------------
+-- v3.11 (pedido del jugador): buscar un lugar o una hazaña por su nombre
+-- (español o ingles, con o sin acentos). El indice se arma una sola vez,
+-- en la primera busqueda. Un clic en el resultado abre su mapa y una
+-- flecha que sube y baja lo señala.
+-- ---------------------------------------------------------------------
+local FIND_FOLD = {}
+do
+    local groups = {
+        { "a", 128, 133 }, { "a", 160, 165 }, { "c", 135, 135 }, { "c", 167, 167 },
+        { "e", 136, 139 }, { "e", 168, 171 }, { "i", 140, 143 }, { "i", 172, 175 },
+        { "n", 145, 145 }, { "n", 177, 177 }, { "o", 146, 150 }, { "o", 178, 182 },
+        { "u", 153, 156 }, { "u", 185, 188 },
+    }
+    for _, g in ipairs(groups) do
+        for b = g[2], g[3] do
+            FIND_FOLD["\195" .. string.char(b)] = g[1]
+        end
+    end
+end
+local function FindFold(text)
+    local s = tostring(text or ""):lower()
+    return (s:gsub("\195[\128-\191]", function(c) return FIND_FOLD[c] or c end))
+end
+local FIND_POI_KIND = {
+    c = { "Ciudad", "City" }, s = { "Establo", "Stable-master" },
+    d = { "Mazmorra", "Dungeon" }, r = { "Incursi\195\179n", "Raid" },
+}
+
+WorldMapAddon.ZoneFind = WorldMapAddon.ZoneFind or {}
+local ZF = WorldMapAddon.ZoneFind
+
+local function FindIndex()
+    if ZF.index ~= nil then
+        return ZF.index
+    end
+    local idx = {}
+    local function add(mid, p, kind, layer, deed)
+        local ens, ess = Split(p[4]), Split(p[5])
+        local sens, sess = Split(p[6]), Split(p[7])
+        for i, en in ipairs(ens) do
+            local es = ess[i]
+            if es == nil or es == "" then
+                es = NameES(en)
+            end
+            local sen, ses = "", ""
+            if deed then
+                sen = sens[i] or sens[1] or ""
+                ses = sess[i] or sess[1] or ""
+                if ses == "" then
+                    ses = NameES(sen)
+                end
+            end
+            if en ~= "" or es ~= "" then
+                idx[#idx + 1] = {
+                    mid = mid, x = p[2], y = p[3], en = en, es = es, sen = sen, ses = ses,
+                    kind = kind, layer = layer, deed = deed,
+                    key = FindFold(en .. "\n" .. es), skey = FindFold(sen .. "\n" .. ses),
+                }
+            end
+        end
+    end
+    local function okMap(mid)
+        local m = ZD ~= nil and ZD.Maps ~= nil and ZD.Maps[mid] or nil
+        return m ~= nil and m.inst ~= true
+    end
+    if ZD ~= nil and type(ZD.Pois) == "table" then
+        for mid, list in pairs(ZD.Pois) do
+            if okMap(mid) then
+                for _, p in ipairs(list) do
+                    if FIND_POI_KIND[p[1]] ~= nil then
+                        add(mid, { p[1], p[2], p[3], p[4], p[5] }, p[1], false, false)
+                    end
+                end
+            end
+        end
+    end
+    local LD = WorldMapAddon.LayersData
+    if type(LD) == "table" then
+        for mid, list in pairs(LD) do
+            if okMap(mid) then
+                for _, p in ipairs(list) do
+                    local deed = p[8] ~= nil and p[8] ~= "" and DEED_LAYERS[p[1]] == true
+                    add(mid, p, p[1], true, deed)
+                end
+            end
+        end
+    end
+    ZF.index = idx
+    return idx
+end
+
+-- nombre (español) de la zona del mapa mid
+local function FindZoneName(mid, es)
+    local zname = ZD ~= nil and ZD.MapZone ~= nil and ZD.MapZone[mid] or nil
+    local inst = WorldMapAddon.instance
+    if zname ~= nil and inst ~= nil and inst._zoneByOriginal ~= nil then
+        local ok, z = pcall(inst._zoneByOriginal, inst, zname)
+        if ok and z ~= nil then
+            return (es and z.nombre or zname) or zname, z
+        end
+    end
+    local m = ZD ~= nil and ZD.Maps ~= nil and ZD.Maps[mid] or nil
+    if m ~= nil then
+        return (es and (m.es or m.en) or (m.en or m.es)) or "", nil
+    end
+    return "", nil
+end
+
+-- resultados { place = true, mid, x, y, name, sub, kindText, zoneName, zone }
+-- (como mucho max), total de coincidencias distintas
+function ZF.Search(query, max)
+    local q = FindFold(tostring(query or ""):gsub("^%s+", ""):gsub("%s+$", ""))
+    if #q < 3 then
+        return {}, 0
+    end
+    max = max or 30
+    local es = IsES()
+    local F = Filters()
+    local first, second, seen = {}, {}, {}
+    for _, e in ipairs(FindIndex()) do
+        local byName = e.key:find(q, 1, true) ~= nil
+        local byDeed = not byName and e.deed and e.skey:find(q, 1, true) ~= nil
+        if byName or byDeed then
+            local dk = tostring(e.mid) .. "\n" .. e.key .. "\n" .. e.skey
+            if not seen[dk] then
+                seen[dk] = true
+                local list = byName and first or second
+                list[#list + 1] = e
+            end
+        end
+    end
+    local total = #first + #second
+    local out = {}
+    local function push(e)
+        if #out >= max then
+            return
+        end
+        local kt
+        if e.layer then
+            local t = F ~= nil and F.Title ~= nil and F.Title[e.kind] or nil
+            kt = t ~= nil and (es and t.es or t.en) or e.kind
+        else
+            local k = FIND_POI_KIND[e.kind]
+            kt = es and k[1] or k[2]
+        end
+        local zn, z = FindZoneName(e.mid, es)
+        local name = es and (e.es ~= "" and e.es or e.en) or (e.en ~= "" and e.en or e.es)
+        local sub = es and (e.ses ~= "" and e.ses or e.sen) or (e.sen ~= "" and e.sen or e.ses)
+        out[#out + 1] = {
+            place = true, mid = e.mid, x = e.x, y = e.y, name = name, sub = sub or "",
+            kindText = kt or "", zoneName = zn, zone = z, deed = e.deed,
+        }
+    end
+    for _, e in ipairs(first) do push(e) end
+    for _, e in ipairs(second) do push(e) end
+    return out, total
+end
+
+-- abre el mapa mid, lo centra en (x, y) y una flecha lo señala
+function ZV:FindAt(mid, x, y)
+    if ZD == nil or ZD.Maps == nil or ZD.Maps[mid] == nil then
+        return false
+    end
+    self:_leaveItem()
+    self:_hideTip()
+    if self.mapId ~= mid then
+        self:_setMap(mid, true)
+    end
+    if not self.mapOk then
+        return false
+    end
+    if self.findArrow == nil then
+        local function layer(w, h, image)
+            local c = Turbine.UI.Control()
+            c:SetParent(self.content)
+            c:SetSize(w, h)
+            c:SetBackground(RES .. image)
+            c:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+            c:SetMouseVisible(false)
+            c:SetVisible(false)
+            return c
+        end
+        self.findRing = layer(QRING_W, QRING_H, "fl_qaura_1.tga")
+        self.findAura = layer(QARROW.aw, QARROW.ah, QARROW.aura .. "1.tga")
+        self.findArrow = layer(QARROW.w, QARROW.h, QARROW.img)
+        self.findFrame = 1
+    end
+    self.find = { mid = mid, x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
+    -- centrado en el lugar (debajo de la barra)
+    local vw, vh = self.viewport:GetSize()
+    if vw ~= nil and vh ~= nil then
+        self.panX = math.floor(vw / 2 - self.find.x)
+        self.panY = math.floor(BAR_H + (vh - BAR_H) / 2 - self.find.y)
+        self:_clampPan()
+        self:_applyPan()
+    end
+    self.findRing:SetPosition(self.find.x - math.floor(QRING_W / 2), self.find.y - math.floor(QRING_H / 2))
+    self.findRing:SetVisible(true)
+    self.findArrow:SetVisible(true)
+    self.findAura:SetVisible(true)
+    self:_animateFind(Turbine.Engine.GetGameTime())
+    return true
+end
+
+-- la flecha de la busqueda sube y baja; se va al cambiar de mapa
+function ZV:_animateFind(now)
+    if self.findArrow == nil then
+        return
+    end
+    local on = self.find ~= nil and self.find.mid == self.mapId and self.mapOk == true
+    if not on then
+        if self.findArrow:IsVisible() then
+            self.findArrow:SetVisible(false)
+            self.findAura:SetVisible(false)
+            self.findRing:SetVisible(false)
+        end
+        self.find = nil
+        return
+    end
+    local bob = math.floor(QARROW_BOB * math.sin(2 * math.pi * now / QARROW_PERIOD) + 0.5)
+    local x = self.find.x - math.floor(QARROW.w / 2)
+    local y = self.find.y - QARROW.h - QARROW_GAP - 8 + bob
+    self.findArrow:SetPosition(x, y)
+    self.findAura:SetPosition(x + QARROW.adx, y + QARROW.ady)
+    local f = (math.floor(now * FX_FPS) % FX_FRAMES) + 1
+    if f ~= self.findFrame then
+        self.findFrame = f
+        self.findAura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
+        self.findRing:SetBackground(RES .. "fl_qaura_" .. tostring(f) .. ".tga")
+    end
 end

@@ -32,9 +32,9 @@ _IMAGES = {
         };
     };
 
-    ["PROGRESS_BACK"] = Turbine.UI.Graphic(RESOURCEDIR .. "ProgressBar_Back.tga"); -- 200x18
-    ["PROGRESS_BAR"] = Turbine.UI.Graphic(RESOURCEDIR .. "ProgressBar.tga"); -- 179x9
-    ["PROGRESS_BAR_COMPLETE"] = Turbine.UI.Graphic(RESOURCEDIR .. "ProgressBarComplete.tga"); -- 179x9
+    ["PROGRESS_BACK"] = Turbine.UI.Graphic(RESOURCEDIR .. "Card/prog_back.tga"); -- 200x18
+    ["PROGRESS_BAR"] = Turbine.UI.Graphic(RESOURCEDIR .. "Card/prog_bar.tga"); -- 179x9
+    ["PROGRESS_BAR_COMPLETE"] = Turbine.UI.Graphic(RESOURCEDIR .. "Card/prog_done.tga"); -- 179x9
 
     ["OPTIONS_NORMAL"] = 0x41101833;
     ["OPTIONS_ROLLOVER"] = 0x41101832;

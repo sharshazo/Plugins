@@ -52,6 +52,8 @@ import "WorldMap_Addon.worldmap_instances_data"
 import "WorldMap_Addon.worldmap_names_es"
 -- v3.8: informacion de hazañas de Deed Tracker para el cartel (opcional)
 pcall(import, "WorldMap_Addon.worldmap_deedinfo_data")
+-- v3.11: opciones del jugador (tarjetas, % de hazañas...)
+pcall(import, "WorldMap_Addon.worldmap_options")
 import "WorldMap_Addon.worldmap_zonemap"
 import "WorldMap_Addon.worldmap"
 import "WorldMap_Addon.worldmap_launcher"

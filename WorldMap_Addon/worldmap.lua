@@ -755,6 +755,10 @@ function WorldMapAddon.UI.WorldMap:Constructor()
         else
             this:_updateLevelHighlights()
             this:_refreshQuestBadges()
+            pcall(function()
+                if Deeds ~= nil and Deeds.RefreshStatus ~= nil then Deeds.RefreshStatus(false) end
+                this:_refreshDeedBars()
+            end)
         end
     end
 end
@@ -1092,6 +1096,7 @@ end
 -- Si una zona no trae esos campos (datos viejos), se usa el nombre completo
 -- en el centroide del poligono con un ancho amplio -- nunca falla.
 local LABEL_LINE_H = 16
+local DEEDBAR_W, DEEDBAR_H, DEEDBAR_TXT_W = 36, 5, 30
 local LABEL_NAME_HEX = "#FFFFFF"
 local LABEL_LEVEL_HEX = "#EEE0B4"
 
@@ -1150,6 +1155,66 @@ function WorldMapAddon.UI.WorldMap:_buildZoneLabels()
             levelLabel:SetSelectable(false)
             levelLabel:SetText(tostring(zone.nivel))
             self.zoneLevelLabels[zone] = levelLabel
+        end
+        -- v3.11 (pedido del jugador): barrita con el % de hazañas hechas
+        -- (Deed Tracker) debajo del nivel de cada zona que tiene hazañas
+        pcall(function()
+            if Deeds ~= nil and Deeds.ZoneData ~= nil and Deeds.ZoneData(zone) ~= nil then
+                local by = top + nameH - 2 + (hasLevel and (LABEL_LINE_H + 2) or 0) + 1
+                local bx = math.floor(cx - (DEEDBAR_W + DEEDBAR_TXT_W + 3) / 2)
+                local bg = Turbine.UI.Control()
+                bg:SetParent(self.mapContent)
+                bg:SetPosition(bx, by + 4)
+                bg:SetSize(DEEDBAR_W, DEEDBAR_H)
+                bg:SetBackColor(HexToColor("#1A1E26"))
+                bg:SetMouseVisible(false)
+                bg:SetVisible(false)
+                local fill = Turbine.UI.Control()
+                fill:SetParent(bg)
+                fill:SetPosition(1, 1)
+                fill:SetSize(0, DEEDBAR_H - 2)
+                fill:SetBackColor(HexToColor("#5AC878"))
+                fill:SetMouseVisible(false)
+                local txt = Turbine.UI.Label()
+                txt:SetParent(self.mapContent)
+                txt:SetPosition(bx + DEEDBAR_W + 3, by)
+                txt:SetSize(DEEDBAR_TXT_W, 13)
+                txt:SetFont(Turbine.UI.Lotro.Font.Verdana10)
+                txt:SetForeColor(HexToColor("#A0E6B4"))
+                txt:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
+                txt:SetFontStyle(Turbine.UI.FontStyle.Outline)
+                txt:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+                txt:SetMouseVisible(false)
+                txt:SetVisible(false)
+                self.zoneDeedBars = self.zoneDeedBars or {}
+                self.zoneDeedBars[#self.zoneDeedBars + 1] = { zone = zone, bg = bg, fill = fill, txt = txt }
+            end
+        end)
+    end
+end
+
+-- v3.11: actualiza las barritas de % de hazañas (Deed Tracker)
+function WorldMapAddon.UI.WorldMap:_refreshDeedBars()
+    local O = WorldMapAddon.Options
+    local off = O ~= nil and O.Get ~= nil and O.Get("deedbars") == false
+    for _, b in ipairs(self.zoneDeedBars or {}) do
+        local ok = pcall(function()
+            local c = Deeds.Counts(b.zone)
+            if off or c == nil or c.total <= 0 or (self.hiddenZones and self.hiddenZones[b.zone]) then
+                b.bg:SetVisible(false)
+                b.txt:SetVisible(false)
+                return
+            end
+            local pct = Deeds.Percent(c.done, c.total)
+            local w = math.floor((DEEDBAR_W - 2) * math.min(1, c.done / c.total) + 0.5)
+            b.fill:SetSize(w, DEEDBAR_H - 2)
+            b.fill:SetBackColor(HexToColor(c.done >= c.total and "#F0C850" or "#5AC878"))
+            b.txt:SetText(pct .. "%")
+            b.bg:SetVisible(true)
+            b.txt:SetVisible(true)
+        end)
+        if not ok then
+            pcall(function() b.bg:SetVisible(false); b.txt:SetVisible(false) end)
         end
     end
 end
@@ -1717,13 +1782,25 @@ function WorldMapAddon.UI.WorldMap:_performSearch()
     end
 
     -- v2.6: tambien misiones (3+ letras, no un nivel)
-    if not levelQuery and Quests ~= nil and Quests.Available() and #query >= 3 then
-        local ok, results, total = pcall(Quests.Search, query, 40)
-        if ok and type(results) == "table" and #results > 0 then
-            self:_showQuestResults(results, total)
-        else
-            self:_hideQuestResults()
+    -- v3.11: y lugares / hazañas de los mapas de zona
+    local qres, qtotal, pres, ptotal = {}, 0, {}, 0
+    if not levelQuery and #query >= 3 then
+        if Quests ~= nil and Quests.Available() then
+            local ok, results, total = pcall(Quests.Search, query, 40)
+            if ok and type(results) == "table" then
+                qres, qtotal = results, tonumber(total) or #results
+            end
         end
+        local ZF = WorldMapAddon.ZoneFind
+        if ZF ~= nil and ZF.Search ~= nil then
+            local ok, results, total = pcall(ZF.Search, query, 30)
+            if ok and type(results) == "table" then
+                pres, ptotal = results, tonumber(total) or #results
+            end
+        end
+    end
+    if #qres + #pres > 0 then
+        self:_showQuestResults(qres, qtotal, pres, ptotal)
     else
         self:_hideQuestResults()
     end
@@ -1926,6 +2003,10 @@ function WorldMapAddon.UI.WorldMap:_applyDlcFilter()
             if self.zoneSearchHighlights[zone] then self.zoneSearchHighlights[zone]:SetVisible(false) end
             if self.zoneLevelHighlights[zone] then self.zoneLevelHighlights[zone]:SetVisible(false) end
         end
+    end
+
+    if self.zoneDeedBars ~= nil then
+        pcall(function() self:_refreshDeedBars() end)
     end
 
     if self.hoveredZone and self.hiddenZones[self.hoveredZone] then
@@ -2196,7 +2277,7 @@ function WorldMapAddon.UI.WorldMap:_buildTooltip()
     --     de "marco"), MAS un Control solido aparte (self.tooltipBg,
     --     mismo rol que "inner") del tamaño COMPLETO del tooltip, creado
     --     ANTES que los tiles/etiquetas para quedar atras de todo.
-    self.tooltip:SetBackColor(Turbine.UI.Color(0.06, 0.05, 0.03))
+    self.tooltip:SetBackColor(Turbine.UI.Color(60 / 255, 66 / 255, 80 / 255))
     self.tooltip:SetZOrder(0x7FFFFFFF)
     self.tooltip:SetVisible(false)
 
@@ -2204,7 +2285,7 @@ function WorldMapAddon.UI.WorldMap:_buildTooltip()
     self.tooltipBg:SetParent(self.tooltip)
     self.tooltipBg:SetPosition(0, 0)
     self.tooltipBg:SetSize(TooltipData.CanvasWidth, TooltipData.CanvasHeight)
-    self.tooltipBg:SetBackColor(Turbine.UI.Color(0.06, 0.05, 0.03))
+    self.tooltipBg:SetBackColor(Turbine.UI.Color(16 / 255, 18 / 255, 24 / 255))
     self.tooltipBg:SetMouseVisible(false)
 
     for _, tile in ipairs(TooltipData.Tiles) do
@@ -2223,8 +2304,8 @@ function WorldMapAddon.UI.WorldMap:_buildTooltip()
     self.tooltipTitle:SetParent(self.tooltip)
     self.tooltipTitle:SetPosition(H.nombre.x, H.nombre.y)
     self.tooltipTitle:SetSize(H.nombre.w, H.nombre.h)
-    self.tooltipTitle:SetFont(Turbine.UI.Lotro.Font.TrajanPro16)
-    self.tooltipTitle:SetForeColor(HexToColor("#F0D9A0"))
+    self.tooltipTitle:SetFont(Turbine.UI.Lotro.Font.Verdana16 or Turbine.UI.Lotro.Font.TrajanPro16)
+    self.tooltipTitle:SetForeColor(HexToColor("#F5F8FF"))
     self.tooltipTitle:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
     self.tooltipTitle:SetMouseVisible(false)
 
@@ -2521,12 +2602,12 @@ local QP_LIST_Y_DEEDS = QP_TOP + 96
 local QP_FILTER_W = 118
 local QP_X_W = 18        -- ancho de la X de cada mision
 local QP_CONFIRM_W = 54  -- ancho del "Quitar" de confirmacion
-local QP_TAB_ON_HEX = "#F0D060"
-local QP_TAB_OFF_HEX = "#8C7A55"
-local QP_DONE_HEX = "#7FBF6A"
-local QP_PENDING_HEX = "#E8E0C8"
-local QP_SECTION_HEX = "#F0D9A0"
-local QP_HEADER_HEX = "#A89B7A"
+local QP_TAB_ON_HEX = "#8CC8FF"
+local QP_TAB_OFF_HEX = "#6A7488"
+local QP_DONE_HEX = "#7FD08C"
+local QP_PENDING_HEX = "#E8ECF4"
+local QP_SECTION_HEX = "#F5F8FF"
+local QP_HEADER_HEX = "#8C96AA"
 
 function WorldMapAddon.UI.WorldMap:_onZoneClick(mapX, mapY)
     local zone = FindZoneAt(mapX, mapY)
@@ -2615,9 +2696,111 @@ function WorldMapAddon.UI.WorldMap:_onZoneViewZone(zone)
     end
 end
 
+-- v3.10 (pedido del jugador): ventana moderna (mismo estilo que las
+-- tarjetas del mapa de zona): fondo oscuro, esquinas redondeadas, barra de
+-- titulo propia que se arrastra y X para cerrar. Si algo falla, la ventana
+-- nativa de siempre.
+local MP_RES = "WorldMap_Addon/assets/worldmap/icon/"
+local MP_R = 12
+local MP_HEAD_H = 34
+local function MPFont(name, fallback)
+    local F = Turbine.UI.Lotro.Font
+    return F[name] or F[fallback] or F.Verdana12
+end
+local function ModernPanel(w, h)
+    local win = Turbine.UI.Window()
+    win:SetSize(w, h)
+    win:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+    local bg = Turbine.UI.Color(0.96, 16 / 255, 18 / 255, 24 / 255)
+    local border = HexToColor("#3C4250")
+    local function box(x, y, bw, bh, color)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetPosition(x, y)
+        k:SetSize(bw, bh)
+        k:SetBackColor(color)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function img(file, x, y)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetPosition(x, y)
+        k:SetSize(MP_R, MP_R)
+        k:SetBackground(MP_RES .. file)
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    img("card_tl.tga", 0, 0)
+    img("card_tr.tga", w - MP_R, 0)
+    img("card_bl.tga", 0, h - MP_R)
+    img("card_br.tga", w - MP_R, h - MP_R)
+    box(MP_R, 0, w - 2 * MP_R, MP_R, bg)
+    box(0, MP_R, w, h - 2 * MP_R, bg)
+    box(MP_R, h - MP_R, w - 2 * MP_R, MP_R, bg)
+    box(MP_R, 0, w - 2 * MP_R, 1, border)
+    box(MP_R, h - 1, w - 2 * MP_R, 1, border)
+    box(0, MP_R, 1, h - 2 * MP_R, border)
+    box(w - 1, MP_R, 1, h - 2 * MP_R, border)
+    box(14, MP_HEAD_H, w - 28, 1, HexToColor("#2D3240"))
+    box(14, MP_HEAD_H - 1, 60, 2, HexToColor("#50AAFF"))
+    local title = Turbine.UI.Label()
+    title:SetParent(win)
+    title:SetPosition(16, 0)
+    title:SetSize(w - 60, MP_HEAD_H)
+    title:SetFont(MPFont("Verdana14", "Verdana12"))
+    title:SetForeColor(HexToColor("#F5F8FF"))
+    title:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+    title:SetMouseVisible(false)
+    -- arrastrar desde la barra de titulo
+    local drag = Turbine.UI.Control()
+    drag:SetParent(win)
+    drag:SetPosition(0, 0)
+    drag:SetSize(w - 40, MP_HEAD_H)
+    drag:SetMouseVisible(true)
+    local dragging, ox, oy = false, 0, 0
+    drag.MouseDown = function()
+        local mx, my = Turbine.UI.Display.GetMousePosition()
+        local wx, wy = win:GetPosition()
+        dragging, ox, oy = true, mx - wx, my - wy
+    end
+    drag.MouseMove = function()
+        if dragging then
+            local mx, my = Turbine.UI.Display.GetMousePosition()
+            win:SetPosition(mx - ox, my - oy)
+        end
+    end
+    drag.MouseUp = function()
+        dragging = false
+    end
+    -- cerrar
+    local close = Turbine.UI.Label()
+    close:SetParent(win)
+    close:SetPosition(w - 36, 5)
+    close:SetSize(26, 24)
+    close:SetFont(MPFont("Verdana16", "Verdana14"))
+    close:SetForeColor(HexToColor("#8C96AA"))
+    close:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
+    close:SetText("x")
+    close:SetMouseVisible(true)
+    close.MouseEnter = function() close:SetForeColor(HexToColor("#FF7070")) end
+    close.MouseLeave = function() close:SetForeColor(HexToColor("#8C96AA")) end
+    close.MouseClick = function() win:SetVisible(false) end
+    win.SetText = function(self, t) title:SetText(t) end
+    win.GetText = function(self) return title:GetText() end
+    win.modern = true
+    return win
+end
+-- v3.11: tambien para la ventana de opciones (worldmap_options.lua)
+WorldMapAddon.UI.ModernPanel = ModernPanel
+
 function WorldMapAddon.UI.WorldMap:_buildQuestPanel()
-    local panel = Turbine.UI.Lotro.Window()
-    panel:SetSize(QP_W, QP_H)
+    local okM, panel = pcall(ModernPanel, QP_W, QP_H)
+    if not okM or panel == nil then
+        panel = Turbine.UI.Lotro.Window()
+        panel:SetSize(QP_W, QP_H)
+    end
     panel:SetText("Misiones activas")
     panel:SetVisible(false)
     self.questPanel = panel
@@ -2638,8 +2821,8 @@ function WorldMapAddon.UI.WorldMap:_buildQuestPanel()
     self.qpTitle:SetParent(panel)
     self.qpTitle:SetPosition(QP_PAD, QP_TOP)
     self.qpTitle:SetSize(innerW, 22)
-    self.qpTitle:SetFont(Turbine.UI.Lotro.Font.TrajanPro16)
-    self.qpTitle:SetForeColor(HexToColor("#F0D9A0"))
+    self.qpTitle:SetFont(MPFont("Verdana16", "TrajanPro16"))
+    self.qpTitle:SetForeColor(HexToColor("#F5F8FF"))
     self.qpTitle:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
     self.qpTitle:SetMouseVisible(false)
 
@@ -2650,7 +2833,7 @@ function WorldMapAddon.UI.WorldMap:_buildQuestPanel()
         tab:SetParent(panel)
         tab:SetPosition(x, QP_TABS_Y)
         tab:SetSize(tabW, 20)
-        tab:SetFont(Turbine.UI.Lotro.Font.TrajanPro14)
+        tab:SetFont(MPFont("Verdana14", "TrajanPro14"))
         tab:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
         tab:SetMouseVisible(true)
         tab.MouseClick = function()
@@ -2686,13 +2869,13 @@ function WorldMapAddon.UI.WorldMap:_buildQuestPanel()
     self.qpBarBg:SetParent(panel)
     self.qpBarBg:SetPosition(QP_PAD, QP_BAR_Y + 3)
     self.qpBarBg:SetSize(barW, 14)
-    self.qpBarBg:SetBackColor(HexToColor("#2A2418"))
+    self.qpBarBg:SetBackColor(HexToColor("#262C38"))
     self.qpBarBg:SetMouseVisible(false)
     self.qpBarFill = Turbine.UI.Control()
     self.qpBarFill:SetParent(self.qpBarBg)
     self.qpBarFill:SetPosition(1, 1)
     self.qpBarFill:SetSize(0, 12)
-    self.qpBarFill:SetBackColor(HexToColor("#C9A33B"))
+    self.qpBarFill:SetBackColor(HexToColor("#4FA0F0"))
     self.qpBarFill:SetMouseVisible(false)
     self.qpBarText = Turbine.UI.Label()
     self.qpBarText:SetParent(self.qpBarBg)
@@ -2711,7 +2894,7 @@ function WorldMapAddon.UI.WorldMap:_buildQuestPanel()
     self.qpFilter:SetSize(QP_FILTER_W, 20)
     self.qpFilter:SetFont(Turbine.UI.Lotro.Font.Verdana12)
     self.qpFilter:SetForeColor(HexToColor(QP_TAB_ON_HEX))
-    self.qpFilter:SetBackColor(HexToColor("#2A2418"))
+    self.qpFilter:SetBackColor(HexToColor("#262C38"))
     self.qpFilter:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
     self.qpFilter:SetMouseVisible(true)
     self.qpFilter.MouseClick = function()
@@ -2824,6 +3007,7 @@ function WorldMapAddon.UI.WorldMap:_fillQuestPanel()
 
     self.qpDeedChecks = {}
     self.qpDeedLabels = {}
+    self.qpDeedRowN = 0
     self.qpSectionLabels = {}
     if onQuests then
         self:_layoutQuestPanelList(QP_LIST_Y_QUESTS)
@@ -2893,9 +3077,27 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         -- de la instancia en español y en ingles (la fila crece)
         local instText = Quests.InstanceText and Quests.InstanceText(row.quest) or nil
         local item = Turbine.UI.Control()
-        item:SetSize(rowW, QP_ROW_H)
+        item:SetSize(rowW, QP_ROW_H + 3)
         item:SetMouseVisible(false)
-        local iconsW = 0
+        -- v3.11: fila como mini tarjeta (fondo, nivel en etiqueta azul)
+        local rowBg = Turbine.UI.Control()
+        rowBg:SetParent(item)
+        rowBg:SetPosition(0, 0)
+        rowBg:SetSize(rowW, QP_ROW_H + 1)
+        rowBg:SetBackColor(HexToColor((i % 2 == 1) and "#181B22" or "#1D2029"))
+        rowBg:SetMouseVisible(false)
+        item.rowBg = rowBg
+        local lvPill = Turbine.UI.Label()
+        lvPill:SetParent(item)
+        lvPill:SetPosition(3, 2)
+        lvPill:SetSize(30, QP_ROW_H - 4)
+        lvPill:SetBackColor(HexToColor("#1E2D46"))
+        lvPill:SetFont(Turbine.UI.Lotro.Font.Verdana10)
+        lvPill:SetForeColor(HexToColor("#A0C8FF"))
+        lvPill:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
+        lvPill:SetText(tostring(Quests.LevelText(row.quest)))
+        lvPill:SetMouseVisible(false)
+        local iconsW = 37
         for _, icon in ipairs(icons) do
             local ic = Turbine.UI.Control()
             ic:SetParent(item)
@@ -2906,13 +3108,34 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
             ic:SetMouseVisible(false)
             iconsW = iconsW + icon.size + 2
         end
-        if iconsW > 0 then
-            iconsW = iconsW + 2
-        end
+        iconsW = iconsW + 2
 
         local lblW = rowW - iconsW
         if canUnmark then
             lblW = lblW - QP_X_W - 4
+        end
+        -- v3.11: progreso guardado de la mision ("3 / 8") a la derecha
+        local progText = nil
+        pcall(function()
+            local QSM = _G.QuestStateManager
+            if QSM ~= nil and QSM.GetQuestProgress ~= nil then
+                local cur, tot = tostring(QSM.GetQuestProgress(row.ndx) or ""):match("(%d+)%s*/%s*(%d+)")
+                if cur ~= nil then
+                    progText = cur .. " / " .. tot
+                end
+            end
+        end)
+        if progText ~= nil then
+            local pr = Turbine.UI.Label()
+            pr:SetParent(item)
+            pr:SetPosition(iconsW + lblW - 46, 0)
+            pr:SetSize(44, QP_ROW_H)
+            pr:SetFont(Turbine.UI.Lotro.Font.Verdana10)
+            pr:SetForeColor(HexToColor("#8CC8FF"))
+            pr:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
+            pr:SetText(progText)
+            pr:SetMouseVisible(false)
+            lblW = lblW - 48
         end
         local lbl = Turbine.UI.Label()
         lbl:SetParent(item)
@@ -2921,9 +3144,9 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
         lbl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
         lbl:SetSelectable(false)
-        local text = "[" .. Quests.LevelText(row.quest) .. "]  " .. Quests.QuestName(row.ndx, row.quest)
+        local text = Quests.QuestName(row.ndx, row.quest)
         -- v2.9: antigua (sin cambios hace dias, ver boton Actualizar) = gris
-        lbl:SetForeColor(HexToColor(row.stale and "#8C8C8C" or "#F0D060"))
+        lbl:SetForeColor(HexToColor(row.stale and "#7C8494" or "#E8ECF4"))
         lbl:SetText(text)
         if canOpen then
             local ndx = row.ndx
@@ -2938,7 +3161,8 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         self:_attachQuestInfo(lbl, row.ndx, row.quest)
         if instText then
             local subLines = InstLines(instText, lblW - 8)
-            item:SetSize(rowW, QP_ROW_H + (subLines * QP_SUB_H) + 1)
+            item:SetSize(rowW, QP_ROW_H + (subLines * QP_SUB_H) + 4)
+            rowBg:SetSize(rowW, QP_ROW_H + (subLines * QP_SUB_H) + 2)
             local sub = Turbine.UI.Label()
             sub:SetParent(item)
             sub:SetPosition(iconsW + 8, QP_ROW_H - 3)
@@ -2946,7 +3170,7 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
             sub:SetMultiline(subLines > 1)
             sub:SetFont(Turbine.UI.Lotro.Font.Verdana10)
             sub:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
-            sub:SetForeColor(HexToColor("#D8A860"))
+            sub:SetForeColor(HexToColor("#B4A0E6"))
             sub:SetMouseVisible(false)
             sub:SetText(instText)
             item.instLbl = sub
@@ -3108,8 +3332,42 @@ end
 function WorldMapAddon.UI.WorldMap:_addDeedRow(rowW, id, name, done)
     local this = self
     local item = Turbine.UI.Control()
-    item:SetSize(rowW, QP_ROW_H)
+    item:SetSize(rowW, QP_ROW_H + 3)
     item:SetMouseVisible(false)
+    -- v3.11: fila como mini tarjeta + recompensas (Deed Tracker)
+    self.qpDeedRowN = (self.qpDeedRowN or 0) + 1
+    local rowBg = Turbine.UI.Control()
+    rowBg:SetParent(item)
+    rowBg:SetSize(rowW, QP_ROW_H + 1)
+    rowBg:SetBackColor(HexToColor((self.qpDeedRowN % 2 == 1) and "#181B22" or "#1D2029"))
+    rowBg:SetMouseVisible(false)
+    local rewardW = 0
+    pcall(function()
+        local I = WorldMapAddon.DeedInfo
+        local d = I ~= nil and I.D ~= nil and I.D[tonumber(id)] or nil
+        if d ~= nil then
+            local parts = {}
+            if (tonumber(d[5]) or 0) > 0 then
+                local v = tostring(math.floor(tonumber(d[5]))):reverse():gsub("(%d%d%d)", "%1."):reverse()
+                parts[#parts + 1] = (v:gsub("^%.", "")) .. " XP"
+            end
+            if (tonumber(d[6]) or 0) > 0 then
+                parts[#parts + 1] = d[6] .. " LP"
+            end
+            if #parts > 0 then
+                local rw = Turbine.UI.Label()
+                rw:SetParent(item)
+                rewardW = 96
+                rw:SetPosition(rowW - rewardW - 4, 0)
+                rw:SetSize(rewardW, QP_ROW_H)
+                rw:SetFont(Turbine.UI.Lotro.Font.Verdana10)
+                rw:SetForeColor(HexToColor("#8CC8FF"))
+                rw:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
+                rw:SetText(table.concat(parts, "  \194\183  "))
+                rw:SetMouseVisible(false)
+            end
+        end
+    end)
 
     local cb = Turbine.UI.Lotro.CheckBox()
     cb:SetParent(item)
@@ -3121,7 +3379,7 @@ function WorldMapAddon.UI.WorldMap:_addDeedRow(rowW, id, name, done)
     local lbl = Turbine.UI.Label()
     lbl:SetParent(item)
     lbl:SetPosition(24, 0)
-    lbl:SetSize(rowW - 26, QP_ROW_H)
+    lbl:SetSize(rowW - 26 - (rewardW > 0 and (rewardW + 6) or 0), QP_ROW_H)
     lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
     lbl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
     lbl:SetSelectable(false)
@@ -3262,6 +3520,7 @@ end
 -- se redibuja lo que este a la vista, SIN volver a pedir datos
 function WorldMapAddon.UI.WorldMap:_onDeedStatus()
     self.tooltipQuestsZone = false  -- el cartel de la zona se recalcula
+    pcall(function() self:_refreshDeedBars() end)
     if self.questPanel == nil or self.questPanel:IsVisible() ~= true or self.qpZone == nil then
         return
     end
@@ -3381,9 +3640,16 @@ function WorldMapAddon.UI.WorldMap:_hideQuestResults()
     end
 end
 
-function WorldMapAddon.UI.WorldMap:_showQuestResults(results, total)
+function WorldMapAddon.UI.WorldMap:_showQuestResults(results, total, places, ptotal)
     if self.qrBox == nil then
         self:_buildQuestResults()
+    end
+    -- v3.11: los lugares / hazañas van despues de las misiones
+    if places ~= nil and #places > 0 then
+        local all = {}
+        for _, r in ipairs(results) do all[#all + 1] = r end
+        for _, r in ipairs(places) do all[#all + 1] = r end
+        results = all
     end
     local this = self
     local x, y = self.searchBox:GetPosition()
@@ -3397,8 +3663,12 @@ function WorldMapAddon.UI.WorldMap:_showQuestResults(results, total)
     local subW = rowW - 8 - (canOpen and QR_OPEN_W + 4 or 0)
     local instTexts, instLines = {}, {}
     for i, r in ipairs(results) do
-        instTexts[i] = Quests.InstanceText and Quests.InstanceText(r.quest) or nil
-        instLines[i] = instTexts[i] and InstLines(instTexts[i], subW) or 0
+        if r.place then
+            instLines[i] = 1
+        else
+            instTexts[i] = Quests.InstanceText and Quests.InstanceText(r.quest) or nil
+            instLines[i] = instTexts[i] and InstLines(instTexts[i], subW) or 0
+        end
     end
     local listH = 0
     for i = 1, rows do
@@ -3416,12 +3686,19 @@ function WorldMapAddon.UI.WorldMap:_showQuestResults(results, total)
     self.qrScroll:SetSize(10, listH)
     self.qrScroll:SetVisible(#results > QR_MAX_VISIBLE)
 
-    local more = total > #results and (" (se muestran " .. #results .. ")") or ""
-    self.qrHeader:SetText("Misiones: " .. total .. more .. "  \194\183  clic = ir a la zona")
+    if places ~= nil and #places > 0 then
+        self.qrHeader:SetText("Misiones: " .. total .. "  \194\183  Lugares y haza\195\177as: " .. (ptotal or #places))
+    else
+        local more = total > #results and (" (se muestran " .. #results .. ")") or ""
+        self.qrHeader:SetText("Misiones: " .. total .. more .. "  \194\183  clic = ir a la zona")
+    end
 
     self:_hideQuestInfo()
     self.qrList:ClearItems()
     for i, r in ipairs(results) do
+      if r.place then
+        self:_addPlaceRow(r, rowW)
+      else
         local instText = instTexts[i]
         local item = Turbine.UI.Control()
         item:SetSize(rowW, QR_ROW_H + (instLines[i] * QR_SUB_H))
@@ -3478,6 +3755,7 @@ function WorldMapAddon.UI.WorldMap:_showQuestResults(results, total)
             end
         end
         self.qrList:AddItem(item)
+      end
     end
     self.qrBox:SetVisible(true)
     -- busqueda nueva: el pin de la busqueda anterior se va
@@ -3616,6 +3894,57 @@ end
 
 -- ir a la zona de la mision: centrar, resaltar SOLO esa zona y poner el
 -- pin sobre su nombre (clic en el pin = abrirla en Quest Assistant)
+-- v3.11: fila de un lugar / hazaña encontrado (nombre - zona; abajo el
+-- tipo y la hazaña). Clic = abre su mapa y una flecha lo señala.
+function WorldMapAddon.UI.WorldMap:_addPlaceRow(r, rowW)
+    local this = self
+    local item = Turbine.UI.Control()
+    item:SetSize(rowW, QR_ROW_H + QR_SUB_H)
+    item:SetMouseVisible(false)
+    local lbl = Turbine.UI.Label()
+    lbl:SetParent(item)
+    lbl:SetPosition(0, 0)
+    lbl:SetSize(rowW, QR_ROW_H)
+    lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
+    lbl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+    lbl:SetSelectable(false)
+    lbl:SetText(r.name .. ((r.zoneName ~= nil and r.zoneName ~= "") and ("  -  " .. r.zoneName) or ""))
+    lbl:SetForeColor(HexToColor(r.deed and "#7CE07C" or "#8CC8FF"))
+    lbl:SetMouseVisible(true)
+    lbl.MouseClick = function()
+        this:_goToPlace(r)
+    end
+    local sub = Turbine.UI.Label()
+    sub:SetParent(item)
+    sub:SetPosition(8, QR_ROW_H - 3)
+    sub:SetSize(rowW - 8, QR_SUB_H + 2)
+    sub:SetFont(Turbine.UI.Lotro.Font.Verdana10)
+    sub:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+    sub:SetForeColor(HexToColor("#8C96AA"))
+    sub:SetMouseVisible(false)
+    local s = r.kindText or ""
+    if r.sub ~= nil and r.sub ~= "" and r.sub ~= r.name then
+        s = s .. ": " .. r.sub
+    end
+    sub:SetText(s)
+    self.qrList:AddItem(item)
+end
+
+function WorldMapAddon.UI.WorldMap:_goToPlace(r)
+    if self.zoneView == nil or not self.zoneMode then
+        self:_showZoneView(r.zone or false)
+    end
+    if self.zoneView == nil then
+        return
+    end
+    local ok, done = pcall(self.zoneView.FindAt, self.zoneView, r.mid, r.x, r.y)
+    if ok and done then
+        self.qrBox:SetVisible(false)
+    else
+        self.qrHeader:SetText("No se pudo abrir ese mapa")
+    end
+end
+
 function WorldMapAddon.UI.WorldMap:_goToQuest(r, zone)
     if zone == nil then
         self.qrHeader:SetText("Esa misi\195\179n no pertenece a ninguna zona del mapa")
@@ -3702,7 +4031,7 @@ end
 function WorldMapAddon.UI.WorldMap:_buildInstTip()
     local tip = Turbine.UI.Window()
     tip:SetSize(TIP_W, 60)
-    tip:SetBackColor(HexToColor(BORDER_HEX))
+    tip:SetBackColor(HexToColor("#3C4250"))
     tip:SetZOrder(0x7FFFFFFF)
     tip:SetMouseVisible(false)
     tip:SetVisible(false)
@@ -3711,15 +4040,15 @@ function WorldMapAddon.UI.WorldMap:_buildInstTip()
     inner:SetParent(tip)
     inner:SetPosition(1, 1)
     inner:SetSize(TIP_W - 2, 58)
-    inner:SetBackColor(Turbine.UI.Color(0.06, 0.05, 0.03))
+    inner:SetBackColor(Turbine.UI.Color(16 / 255, 18 / 255, 24 / 255))
     inner:SetMouseVisible(false)
 
     local title = Turbine.UI.Label()
     title:SetParent(tip)
     title:SetPosition(TIP_PAD, 6)
     title:SetSize(TIP_W - (2 * TIP_PAD), TIP_TITLE_H)
-    title:SetFont(Turbine.UI.Lotro.Font.TrajanPro16)
-    title:SetForeColor(HexToColor("#F0D9A0"))
+    title:SetFont(Turbine.UI.Lotro.Font.Verdana16 or Turbine.UI.Lotro.Font.TrajanPro16)
+    title:SetForeColor(HexToColor("#F5F8FF"))
     title:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
     title:SetMouseVisible(false)
 
@@ -3728,7 +4057,7 @@ function WorldMapAddon.UI.WorldMap:_buildInstTip()
     body:SetPosition(TIP_PAD, 6 + TIP_TITLE_H + 4)
     body:SetSize(TIP_W - (2 * TIP_PAD), 20)
     body:SetFont(Turbine.UI.Lotro.Font.Verdana12)
-    body:SetForeColor(HexToColor("#E8DDBF"))
+    body:SetForeColor(HexToColor("#C8CEDA"))
     body:SetMultiline(true)
     body:SetMouseVisible(false)
 

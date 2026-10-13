@@ -25,6 +25,13 @@
 -- SetMultiline(true) (ajusta el texto solo, dentro del ancho ya fijado por
 -- SetSize -- no hace falta medir texto a mano ni una API de word-wrap
 -- separada). Se reemplazo SetWordWrap por SetMultiline en el Constructor.
+--
+-- v2 (2026-10-13, pedido del usuario): misma "tarjeta moderna" que los
+-- carteles del Mapa del Mundo: fondo oscuro con esquinas redondeadas, barra
+-- de color a la izquierda (dorada; de grupo si es mision de grupo), icono,
+-- nombre, "Nivel N · zona", etiquetas (estado, diaria/semanal, apropiada
+-- para tu nivel), resumen, objetivo y barra de progreso fina. Mismos datos
+-- que antes (nada inventado) y la misma API: GetInstance / ShowFor / Hide.
 import "Turbine"
 import "Turbine.UI"
 import "Turbine.UI.Lotro"
@@ -38,14 +45,33 @@ function QuestInfoTooltip.GetInstance()
 end
 
 local RES_BASE = "LOTRO_Quest_Assistant/Resources/"
+local CARD = RES_BASE .. "Card/"
 
 local WIDTH = 320
-local BORDER = 2
-local HEADER_H = 26
-local BODY_MIN_H = 20
+local R = 12            -- radio de las esquinas
+local PAD = 18          -- margen izquierdo (despues de la barra de color)
+local TEXT_X = 54       -- titulo al lado del icono
 local BODY_MAX_H = 240
-local PROGRESS_H = 18 -- alto real de ProgressBar_Back.tga
-local PAD_BOTTOM = 8
+local BG = Turbine.UI.Color(0.96, 16 / 255, 18 / 255, 24 / 255)
+local BORDER_C = Turbine.UI.Color(1, 60 / 255, 66 / 255, 80 / 255)
+local ACCENT = Turbine.UI.Color(1, 1, 208 / 255, 64 / 255)
+local PILL = {
+    green = { "green", Turbine.UI.Color(1, 140 / 255, 240 / 255, 170 / 255), Turbine.UI.Color(1, 22 / 255, 70 / 255, 40 / 255) },
+    amber = { "amber", Turbine.UI.Color(1, 1, 200 / 255, 90 / 255), Turbine.UI.Color(1, 90 / 255, 60 / 255, 10 / 255) },
+    blue = { "blue", Turbine.UI.Color(1, 160 / 255, 200 / 255, 1), Turbine.UI.Color(1, 30 / 255, 45 / 255, 70 / 255) },
+}
+
+local function Font(name, fallback)
+    local F = Turbine.UI.Lotro.Font
+    return F[name] or F[fallback] or F.Verdana12
+end
+
+-- ancho aproximado (el juego no deja medir el texto)
+local function TextW(text, px)
+    local n = 0
+    for _ in tostring(text or ""):gmatch("[^\128-\191]") do n = n + 1 end
+    return math.floor(n * (px or 6.6) + 0.5)
+end
 
 function QuestInfoTooltip:Constructor()
     if QuestInfoTooltip.instance then return end
@@ -53,85 +79,65 @@ function QuestInfoTooltip:Constructor()
     QuestInfoTooltip.instance = self
 
     self:SetZOrder(0x7FFFFFFF)
-    -- El color de la VENTANA es el "marco" visible (mismo rol que el
-    -- SetBackColor gris de DeedTooltipWindow) -- acá el dorado-marron que
-    -- ya usa QuestSyncWindow.lua para sus divisores/encabezados, no gris.
-    self:SetBackColor(Turbine.UI.Color(0.5, 0.42, 0.25))
-    self:SetOpacity(0.92)
+    self:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+    self:SetMouseVisible(false)
     self:SetVisible(false)
 
-    -- Relleno interior oscuro, inset BORDER px -- mismo truco estructural
-    -- que el "self.border" de DeedTooltipWindow (que en realidad es el
-    -- RELLENO, no el marco: el marco es el color de la ventana detras de
-    -- el). Nombrado "inner" aca para que el rol quede claro.
-    self.inner = Turbine.UI.Control()
-    self.inner:SetParent(self)
-    self.inner:SetPosition(BORDER, BORDER)
-    self.inner:SetBackColor(Turbine.UI.Color(0.08, 0.07, 0.05))
-    self.inner:SetMouseVisible(false)
-
-    local innerW = WIDTH - BORDER * 2
-
-    self.lblTitle = Turbine.UI.Label()
-    self.lblTitle:SetParent(self.inner)
-    self.lblTitle:SetPosition(8, 6)
-    self.lblTitle:SetSize(innerW - 16, 20)
-    self.lblTitle:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiquaBold14) -- rediseño "libro" 2026-08-28
-    self.lblTitle:SetForeColor(Turbine.UI.Color(1, 0.82, 0.3))
-    self.lblTitle:SetMouseVisible(false)
-
-    self.lblBody = Turbine.UI.Label()
-    self.lblBody:SetParent(self.inner)
-    self.lblBody:SetPosition(8, HEADER_H)
-    self.lblBody:SetSize(innerW - 16, BODY_MIN_H)
-    self.lblBody:SetFont(Turbine.UI.Lotro.Font.Verdana12)
-    self.lblBody:SetForeColor(Turbine.UI.Color(0.85, 0.85, 0.85))
-    self.lblBody:SetMouseVisible(false)
-    self.lblBody:SetMultiline(true)
-
-    -- Barra de porcentaje de progreso, pedido explicito del usuario --
-    -- ahora con las imagenes REALES de CubePlugins/DeedTracker/Resources/
-    -- (ProgressBar_Back.tga 200x18, ProgressBar.tga 179x9,
-    -- ProgressBarComplete.tga 179x9), copiadas a Resources/ con
-    -- autorizacion explicita del usuario (dueño/autor de DeedTracker,
-    -- igual que ya lo era de WarbandsSlayer). Mismo mecanismo real
-    -- confirmado leyendo MainWin.lua:UpdateTabProgress/SetProgressBarCompleted:
-    -- un Control con el fondo del track (ProgressBar_Back) y un Control HIJO
-    -- mas chico con el fondo del relleno (ProgressBar) cuyo SetWidth se
-    -- reescala proporcional a completado/total (179 * pct) -- el relleno se
-    -- ve "cortado" en vez de estirado porque SetBackground no escala la
-    -- imagen al tamaño del control, la recorta. Solo se muestra si la mision
-    -- esta ACTIVA y su progreso guardado tiene forma "N/M" real (nunca se
-    -- inventa un porcentaje sin dato detras).
-    self.progressBack = Turbine.UI.Control()
-    self.progressBack:SetParent(self.inner)
-    self.progressBack:SetSize(200, 18)
-    self.progressBack:SetBackground(RES_BASE .. "ProgressBar_Back.tga")
-    self.progressBack:SetBlendMode(Turbine.UI.BlendMode.Overlay)
-    self.progressBack:SetMouseVisible(false)
-    self.progressBack:SetVisible(false)
-
-    self.progressFill = Turbine.UI.Control()
-    self.progressFill:SetParent(self.progressBack)
-    self.progressFill:SetPosition(10, 5)
-    self.progressFill:SetSize(0, 9)
-    self.progressFill:SetBackground(RES_BASE .. "ProgressBar.tga")
-    self.progressFill:SetBlendMode(Turbine.UI.BlendMode.Overlay)
-    self.progressFill:SetMouseVisible(false)
-
-    -- Texto "N/M" centrado SOBRE la barra (mismo patron que
-    -- lblOverallProgress en MainWin.lua: outline en vez de fondo solido
-    -- para que se lea encima de la imagen del track).
-    self.lblProgress = Turbine.UI.Label()
-    self.lblProgress:SetParent(self.progressBack)
-    self.lblProgress:SetPosition(0, 0)
-    self.lblProgress:SetSize(200, 18)
-    self.lblProgress:SetFont(Turbine.UI.Lotro.Font.Verdana12)
-    self.lblProgress:SetForeColor(Turbine.UI.Color.Beige)
-    self.lblProgress:SetOutlineColor(Turbine.UI.Color(0.1, 0.1, 0.1))
-    self.lblProgress:SetFontStyle(Turbine.UI.FontStyle.Outline)
-    self.lblProgress:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
-    self.lblProgress:SetMouseVisible(false)
+    local this = self
+    local function box(color)
+        local k = Turbine.UI.Control()
+        k:SetParent(this)
+        k:SetMouseVisible(false)
+        if color then k:SetBackColor(color) end
+        return k
+    end
+    local function img(file, w, h)
+        local k = Turbine.UI.Control()
+        k:SetParent(this)
+        k:SetSize(w, h)
+        if file then k:SetBackground(file) end
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function label(font, color, align, multi)
+        local l = Turbine.UI.Label()
+        l:SetParent(this)
+        l:SetFont(font)
+        l:SetForeColor(color)
+        l:SetTextAlignment(align or Turbine.UI.ContentAlignment.TopLeft)
+        l:SetMultiline(multi == true)
+        l:SetMouseVisible(false)
+        return l
+    end
+    -- marco
+    self.tl = img(CARD .. "card_tl.tga", R, R)
+    self.tr = img(CARD .. "card_tr.tga", R, R)
+    self.bl = img(CARD .. "card_bl.tga", R, R)
+    self.br = img(CARD .. "card_br.tga", R, R)
+    self.top, self.mid, self.bot = box(BG), box(BG), box(BG)
+    self.lineT, self.lineB, self.lineL, self.lineR = box(BORDER_C), box(BORDER_C), box(BORDER_C), box(BORDER_C)
+    self.accent = box(ACCENT)
+    self.icon = img(CARD .. "quest_32.tga", 32, 32)
+    self.icon:SetPosition(14, 12)
+    -- textos
+    local V12 = Turbine.UI.Lotro.Font.Verdana12
+    local V10 = Font("Verdana10", "Verdana12")
+    self.lblTitle = label(Font("Verdana16", "Verdana14"), Turbine.UI.Color(1, 245 / 255, 248 / 255, 1))
+    self.lblSub = label(V12, Turbine.UI.Color(1, 140 / 255, 170 / 255, 210 / 255))
+    self.pills = {}
+    for i = 1, 3 do
+        self.pills[i] = { l = img(nil, 9, 18), r = img(nil, 9, 18), m = box(), t = label(V10, Turbine.UI.Color.White, Turbine.UI.ContentAlignment.MiddleCenter) }
+    end
+    self.lblGroup = label(V12, Turbine.UI.Color(1, 200 / 255, 160 / 255, 1), nil, true)
+    self.lblBody = label(V12, Turbine.UI.Color(1, 190 / 255, 196 / 255, 210 / 255), nil, true)
+    self.lblObjHead = label(V10, Turbine.UI.Color(1, 140 / 255, 150 / 255, 170 / 255))
+    self.lblObj = label(V12, Turbine.UI.Color(1, 240 / 255, 220 / 255, 150 / 255), nil, true)
+    -- progreso: barra fina + "N / M"
+    self.barBack = box(Turbine.UI.Color(1, 38 / 255, 44 / 255, 56 / 255))
+    self.barFill = box(ACCENT)
+    self.lblProgress = label(V12, Turbine.UI.Color(1, 160 / 255, 200 / 255, 1), Turbine.UI.ContentAlignment.TopRight)
+    self.lblProgName = label(V12, Turbine.UI.Color(1, 245 / 255, 248 / 255, 1))
 end
 
 -- Recorta un texto largo a maxLen caracteres, cortando en un espacio para no
@@ -145,95 +151,6 @@ local function Truncate(text, maxLen)
         if string.sub(cut, i, i) == " " then lastSpace = i break end
     end
     return string.sub(cut, 1, lastSpace and (lastSpace - 1) or maxLen) .. "..."
-end
-
--- BUG CORREGIDO (2026-08-20, visible en la misma captura del usuario):
--- algunas entradas de objectivesES traen placeholders de plantilla del
--- propio LOTRO sin resolver, p.ej. "Reúne Fichas de Heroísmo
--- (${NUMBER}/${TOTAL})" -- el cliente real los reemplaza en tiempo real con
--- el progreso vivo, algo que este addon no calcula para ese texto (no es lo
--- mismo que el contador "(N/M)" que SI capturamos del chat va
--- QuestStateManager). Mostrar el "${...}" crudo se ve roto, asi que esas
--- lineas se descartan enteras en vez de mostrarse a medio resolver.
--- Movido a Core/QuestLocResolver.lua (2026-08-28) como IsFlavorText, para que
--- UI/QuestBookWindow.lua use el mismo filtro sin duplicar la logica -- ver la
--- nota junto a esa funcion.
-
--- BUG CORREGIDO (2026-08-20, captura de pantalla del usuario: el tooltip de
--- "Libro 3, Capitulo 4, Parte III de III: Los Enanos Vendran" [ndx 2077]
--- mostraba "Objetivo: '¡Mi mano ansía tomar mi hacha y partir a los orcos en
--- dos!'" -- una frase de dialogo/grito de batalla de un PNJ, no una
--- instruccion real). La suposicion "objectivesES[1]=resumen,
--- objectivesES[2]=objetivo corto" (sesion ~38) era una generalizacion
--- incorrecta: para ndx 2077, QuestLocalization_Full.lua trae objectivesES =
--- {"Halbarad se encuentra en Esteldín...Hannar te pidio que informaras...",
--- "'¡Mi mano ansía...!'", "Libro 3...(nombre repetido)", "'¡Malditos
--- Duramano...!'", ...} -- el INDICE [1] SI es el objetivo real (coincide
--- palabra por palabra con el campo "o" = "Obj 1: ..." de
--- CompendiumQuestsDB.lua para esa mision), pero [2] en adelante son
--- exclamaciones de PNJ que aparecen en el diario de mision al completar cada
--- etapa, no instrucciones. Medido contra las 14.824 misiones: el PRIMER
--- elemento del array tambien es una frase de dialogo (empieza con comilla/
--- exclamacion/interrogacion) en 3.459 casos (23.5%) -- osea, ni siquiera el
--- indice [1] es confiable el 100% de las veces. Se reemplazo la seleccion
--- por indice fijo por un filtro de contenido: se descarta cualquier entrada
--- que empiece con ' " ¡ ¿ (marcas tipicas de dialogo citado en la
--- traduccion profesional) y se usan los primeros 2 elementos LIMPIOS del
--- array, en el orden en que aparezcan -- nunca se inventa texto nuevo, solo
--- se filtra mejor lo que LOTRO Companion ya extrajo.
--- BUG CORREGIDO (encontrado en auditoria propia, mismo dia): string.sub()
--- en Lua opera por BYTES, no por caracteres -- "¡"/"¿" ocupan 2 bytes en
--- UTF-8 (0xC2 0xA1 / 0xC2 0xBF), asi que comparar string.sub(s,1,1) (1 solo
--- byte) contra el literal "¡" (2 bytes) nunca podia dar verdadero. Misma
--- clase de bug ya vista en QuestLocResolver.toLowerES (sesion 6, "misi?n").
--- Se compara el primer byte solo contra las comillas (ASCII, 1 byte) y los
--- primeros 2 bytes contra ¡/¿ (ambos comparten el byte inicial 0xC2, asi
--- que el prefijo de 2 bytes es la comparacion correcta).
--- Arma el cuerpo del tooltip con lo que YA existe en el addon: nivel + area
--- (siempre disponibles) y, si el DAT profesional trajo texto de objetivo
--- para esta mision (QuestLocES[ndx].objectivesES, ver Main.lua 2b), hasta 2
--- lineas limpias (QuestLocResolver.GetCleanObjectiveLines, ver la nota junto
--- a esa funcion): la primera sin etiqueta (texto general/resumen), la
--- segunda como "Objetivo:" si es distinta de la primera.
-local function BuildQuestBody(ndx, quest)
-    local lines = {}
-    local infoLine = "Nivel " .. tostring(quest.level or "?")
-    local area = (quest.area and quest.area ~= "" and quest.area) or quest.zone
-    if area then infoLine = infoLine .. "  -  " .. tostring(area) end
-    table.insert(lines, infoLine)
-
-    -- Mision de GRUPO (2026-09-22, ver Core/GroupQuest.lua): tamaño de
-    -- grupo + a que mazmorra/incursion/zona hay que ir, justo debajo de
-    -- la linea de nivel. El alto del cuerpo ya se mide solo
-    -- (AutoFitLabelHeight), 2 lineas mas no desbordan nada.
-    local groupEntry = _G.GroupQuest and GroupQuest.Get(quest)
-    if groupEntry then
-        table.insert(lines, GroupQuest.Statement(groupEntry))
-    end
-
-    -- Diaria/Semanal y "apropiada para tu nivel" (2026-09-22, ver
-    -- Core/QuestTags.lua). Cada linea solo aparece si aplica.
-    if _G.QuestTags then
-        local lockText = QuestTags.LockText(quest)
-        if lockText then
-            table.insert(lines, lockText)
-        end
-        local playerLevel = QuestTags.GetPlayerLevel()
-        if QuestTags.IsLevelAppropriate(quest, playerLevel) then
-            table.insert(lines, QuestTags.LevelText(playerLevel))
-        end
-    end
-
-    local clean = QuestLocResolver.GetCleanObjectiveLines(ndx, quest, 2)
-    if clean[1] then
-        table.insert(lines, "")
-        table.insert(lines, Truncate(clean[1], 220))
-    end
-    if clean[2] and clean[2] ~= clean[1] then
-        table.insert(lines, "")
-        table.insert(lines, "Objetivo: " .. Truncate(clean[2], 160))
-    end
-    return table.concat(lines, "\n")
 end
 
 -- BUG CORREGIDO (2026-08-20, segunda captura del usuario): un texto de
@@ -280,54 +197,181 @@ local function ParseProgressFraction(text)
     return nil, nil
 end
 
+local function Show(ctl, on)
+    ctl:SetVisible(on == true)
+end
+
 function QuestInfoTooltip:ShowFor(ndx, quest, displayName)
     if not quest then return end
     self.currentNdx = ndx
-    self.lblTitle:SetText(displayName or quest.nameEN or "")
-    -- Titulo en color de grupo si corresponde; si no, el dorado de siempre
-    -- (se resetea en cada ShowFor -- la instancia del tooltip es unica y se
-    -- reusa entre misiones).
-    if _G.GroupQuest and GroupQuest.IsGroup(quest) then
-        self.lblTitle:SetForeColor(GroupQuest.Color.Dark)
-    else
-        self.lblTitle:SetForeColor(Turbine.UI.Color(1, 0.82, 0.3))
+    local W = WIDTH
+    local inner = W - PAD - 16
+    -- color de la barra: grupo o dorado
+    local accent = ACCENT
+    local isGroup = _G.GroupQuest and GroupQuest.IsGroup(quest)
+    if isGroup and GroupQuest.Color and GroupQuest.Color.Dark then
+        accent = GroupQuest.Color.Dark
     end
-    self.lblBody:SetText(BuildQuestBody(ndx, quest))
-
-    local innerW = WIDTH - BORDER * 2
-    local bodyH = AutoFitLabelHeight(self.lblBody, BODY_MIN_H, BODY_MAX_H)
-    local yAfterBody = HEADER_H + bodyH + 6
-
-    local state = QuestStateManager and QuestStateManager.GetQuestState(ndx)
+    self.icon:SetBackground(CARD .. (isGroup and "group_32.tga" or "quest_32.tga"))
+    -- cabecera
+    local title = displayName or quest.nameEN or ""
+    local titleW = W - TEXT_X - 12
+    -- nombres largos: hasta 2 lineas
+    local twoLines = TextW(title, 8.6) > titleW
+    self.lblTitle:SetMultiline(twoLines)
+    self.lblTitle:SetText(twoLines and Truncate(title, 58) or title)
+    self.lblTitle:SetPosition(TEXT_X, twoLines and 6 or 12)
+    self.lblTitle:SetSize(titleW, twoLines and 40 or 20)
+    local subY = twoLines and 48 or 34
+    local area = (quest.area and quest.area ~= "" and quest.area) or quest.zone
+    local lvl = quest.level
+    local sub = (lvl == "Scaling" or lvl == "scaling") and "Nivel: escala" or ("Nivel " .. tostring(lvl or "?"))
+    if area then sub = sub .. "  \194\183  " .. tostring(area) end
+    self.lblSub:SetText(Truncate(sub, 44))
+    self.lblSub:SetPosition(TEXT_X, subY)
+    self.lblSub:SetSize(W - TEXT_X - 12, 16)
+    local y = subY + 22
+    -- etiquetas: estado, diaria/semanal, apropiada para tu nivel
+    local pills = {}
+    local state = QuestStateManager and QuestStateManager.GetQuestState and QuestStateManager.GetQuestState(ndx)
+    if state == "ACTIVE" then
+        pills[#pills + 1] = { "Activa", "amber" }
+    elseif state == "COMPLETED" then
+        pills[#pills + 1] = { "Completada", "green" }
+    end
+    local extraLines = {}
+    if _G.QuestTags then
+        local okL, lockText = pcall(QuestTags.LockText, quest)
+        if okL and lockText then pills[#pills + 1] = { lockText, "blue" } end
+        local okP, playerLevel = pcall(QuestTags.GetPlayerLevel)
+        if okP and QuestTags.IsLevelAppropriate(quest, playerLevel) then
+            local lt = QuestTags.LevelText(playerLevel)
+            if lt then pills[#pills + 1] = { lt, "green" } end
+        end
+    end
+    local px = PAD
+    local npill = 0
+    for i, pl in ipairs(self.pills) do
+        local d = pills[i]
+        local st = d and PILL[d[2]]
+        local w = d and (TextW(d[1], 6.2) + 8) or 0
+        local on = st ~= nil and (px + w + 18 <= PAD + inner)
+        Show(pl.l, on); Show(pl.r, on); Show(pl.m, on); Show(pl.t, on)
+        if on then
+            npill = npill + 1
+            pl.l:SetBackground(CARD .. "card_" .. st[1] .. "_l.tga")
+            pl.r:SetBackground(CARD .. "card_" .. st[1] .. "_r.tga")
+            pl.m:SetBackColor(st[3])
+            pl.l:SetPosition(px, y)
+            pl.m:SetPosition(px + 9, y)
+            pl.m:SetSize(w, 18)
+            pl.r:SetPosition(px + 9 + w, y)
+            pl.t:SetText(d[1])
+            pl.t:SetForeColor(st[2])
+            pl.t:SetPosition(px + 9, y)
+            pl.t:SetSize(w, 18)
+            px = px + w + 18 + 6
+        elseif d then
+            extraLines[#extraLines + 1] = d[1]
+        end
+    end
+    if npill > 0 then y = y + 26 end
+    -- mision de grupo: tamaño y a donde ir (+ etiquetas que no entraron)
+    local groupText = ""
+    local groupEntry = _G.GroupQuest and GroupQuest.Get(quest)
+    if groupEntry then groupText = GroupQuest.Statement(groupEntry) or "" end
+    if #extraLines > 0 then
+        groupText = (groupText ~= "" and (groupText .. "\n") or "") .. table.concat(extraLines, "\n")
+    end
+    if groupText ~= "" then
+        self.lblGroup:SetText(groupText)
+        self.lblGroup:SetPosition(PAD, y)
+        self.lblGroup:SetWidth(inner)
+        local h = AutoFitLabelHeight(self.lblGroup, 16, 120)
+        self.lblGroup:SetVisible(true)
+        y = y + h + 6
+    else
+        self.lblGroup:SetVisible(false)
+    end
+    -- resumen y objetivo (lineas limpias del DAT profesional)
+    local clean = QuestLocResolver.GetCleanObjectiveLines(ndx, quest, 2)
+    if clean[1] then
+        self.lblBody:SetText(Truncate(clean[1], 220))
+        self.lblBody:SetPosition(PAD, y)
+        self.lblBody:SetWidth(inner)
+        local h = AutoFitLabelHeight(self.lblBody, 16, BODY_MAX_H)
+        self.lblBody:SetVisible(true)
+        y = y + h + 8
+    else
+        self.lblBody:SetVisible(false)
+    end
+    if clean[2] and clean[2] ~= clean[1] then
+        self.lblObjHead:SetText("OBJETIVO")
+        self.lblObjHead:SetPosition(PAD, y)
+        self.lblObjHead:SetSize(inner, 14)
+        self.lblObjHead:SetVisible(true)
+        y = y + 16
+        self.lblObj:SetText(Truncate(clean[2], 160))
+        self.lblObj:SetPosition(PAD, y)
+        self.lblObj:SetWidth(inner)
+        local h = AutoFitLabelHeight(self.lblObj, 16, 120)
+        self.lblObj:SetVisible(true)
+        y = y + h + 8
+    else
+        self.lblObjHead:SetVisible(false)
+        self.lblObj:SetVisible(false)
+    end
+    -- progreso guardado "N/M" (solo si la mision esta activa y lo trae)
     local cur, total
     if state == "ACTIVE" then
         cur, total = ParseProgressFraction(QuestStateManager.GetQuestProgress(ndx))
     end
-
-    local totalH
     if cur and total and total > 0 then
         local pct = math.min(1, cur / total)
-        self.progressFill:SetBackground(cur >= total and (RES_BASE .. "ProgressBarComplete.tga") or (RES_BASE .. "ProgressBar.tga"))
-        self.progressFill:SetWidth(math.max(2, math.floor(179 * pct)))
-        self.lblProgress:SetText(cur .. "/" .. total)
-        self.progressBack:SetPosition(8, yAfterBody)
-        self.progressBack:SetVisible(true)
-
-        totalH = yAfterBody + PROGRESS_H + PAD_BOTTOM
+        self.lblProgName:SetText("Progreso")
+        self.lblProgName:SetPosition(PAD, y)
+        self.lblProgName:SetSize(inner - 70, 16)
+        self.lblProgress:SetText(cur .. " / " .. total)
+        self.lblProgress:SetPosition(W - 16 - 70, y)
+        self.lblProgress:SetSize(70, 16)
+        y = y + 19
+        self.barBack:SetPosition(PAD, y)
+        self.barBack:SetSize(inner, 6)
+        self.barFill:SetBackColor(cur >= total and Turbine.UI.Color(1, 90 / 255, 210 / 255, 120 / 255) or accent)
+        self.barFill:SetPosition(PAD, y)
+        self.barFill:SetSize(math.max(4, math.floor(inner * pct)), 6)
+        Show(self.lblProgName, true); Show(self.lblProgress, true); Show(self.barBack, true); Show(self.barFill, true)
+        y = y + 14
     else
-        self.progressBack:SetVisible(false)
-        totalH = yAfterBody + PAD_BOTTOM
+        Show(self.lblProgName, false); Show(self.lblProgress, false); Show(self.barBack, false); Show(self.barFill, false)
     end
-
-    self:SetSize(WIDTH, totalH + BORDER * 2)
-    self.inner:SetSize(innerW, totalH)
-
-    -- Posicion en pantalla real (no relativa a la fila, que vive anidada
-    -- dentro de un ListBox) -- mismo enfoque que DisplayTooltip en
-    -- DeedTooltipWindow.lua, desplazado de la punta del mouse para no
-    -- quedar tapado por el propio cursor.
+    -- marco a la medida
+    local H = math.max(y + 6, 2 * R + 40)
+    self:SetSize(W, H)
+    self.tl:SetPosition(0, 0)
+    self.tr:SetPosition(W - R, 0)
+    self.bl:SetPosition(0, H - R)
+    self.br:SetPosition(W - R, H - R)
+    self.top:SetPosition(R, 0); self.top:SetSize(W - 2 * R, R)
+    self.mid:SetPosition(0, R); self.mid:SetSize(W, H - 2 * R)
+    self.bot:SetPosition(R, H - R); self.bot:SetSize(W - 2 * R, R)
+    self.lineT:SetPosition(R, 0); self.lineT:SetSize(W - 2 * R, 1)
+    self.lineB:SetPosition(R, H - 1); self.lineB:SetSize(W - 2 * R, 1)
+    self.lineL:SetPosition(0, R); self.lineL:SetSize(1, H - 2 * R)
+    self.lineR:SetPosition(W - 1, R); self.lineR:SetSize(1, H - 2 * R)
+    self.accent:SetBackColor(accent)
+    self.accent:SetPosition(1, R)
+    self.accent:SetSize(4, H - 2 * R)
+    -- al lado del mouse (sin salirse de la pantalla)
     local screenX, screenY = Turbine.UI.Display.GetMousePosition()
-    self:SetPosition(screenX + 20, screenY + 20)
+    local x, yy = screenX + 20, screenY + 20
+    local maxX = Turbine.UI.Display.GetWidth() - W
+    local maxY = Turbine.UI.Display.GetHeight() - H
+    if x > maxX then x = screenX - W - 10 end
+    if yy > maxY then yy = maxY end
+    if x < 0 then x = 0 end
+    if yy < 0 then yy = 0 end
+    self:SetPosition(x, yy)
     self:SetVisible(true)
 end
 

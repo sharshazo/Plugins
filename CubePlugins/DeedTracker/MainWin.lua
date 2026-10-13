@@ -1,6 +1,20 @@
 DeedTrackerWin = class(Turbine.UI.Lotro.Window);
 DeedTrackerWin.instance = nil;
 
+-- 2026-10 (Mapa del Mundo): colores modernos (mismo estilo oscuro de las
+-- tarjetas). Solo colores: nada de la logica cambia.
+DT_MODERN = {
+    BACK = Turbine.UI.Color(0.94, 16/255, 18/255, 24/255),
+    REGION_BACK = Turbine.UI.Color(1, 30/255, 34/255, 44/255),
+    REGION_TEXT = Turbine.UI.Color(240/255, 208/255, 96/255),
+    CATEGORY_BACK = Turbine.UI.Color(1, 30/255, 45/255, 70/255),
+    CATEGORY_TEXT = Turbine.UI.Color(160/255, 200/255, 255/255),
+    TEXT = Turbine.UI.Color(232/255, 236/255, 244/255),
+    SUBTEXT = Turbine.UI.Color(140/255, 170/255, 210/255),
+    DONE = Turbine.UI.Color(127/255, 208/255, 140/255),
+    HIGHLIGHT = Turbine.UI.Color(0.85, 40/255, 62/255, 96/255),
+};
+
 totalDeedCount = 0;
 totalDeedCompletedCount = 0;
 totalLpAvailable = 0;
@@ -130,7 +144,21 @@ function DeedTrackerWin:CreateMainWindow()
     self:SetVisible(SETTINGS.MAINWIN.VISIBLE);
     self:SetResizable(true);
 
+    -- fondo oscuro moderno (creado primero: queda debajo de todo, sin mouse)
+    self.modernBack = Turbine.UI.Control();
+    self.modernBack:SetParent(self);
+    self.modernBack:SetBackColor(DT_MODERN.BACK);
+    self.modernBack:SetMouseVisible(false);
+    self:ResizeModernBack();
+
     Onscreen(self); -- Makes sure the window is still onscreen (perhaps user changed resolution since last playing)
+end
+
+function DeedTrackerWin:ResizeModernBack()
+    if (self.modernBack == nil) then return; end
+    local w, h = self:GetSize();
+    self.modernBack:SetPosition(10, 36);
+    self.modernBack:SetSize(math.max(1, w - 20), math.max(1, h - 46));
 end
 
 function DeedTrackerWin:AddTabButton(parent, label, position, size, tabIndex)
@@ -222,7 +250,7 @@ function DeedTrackerWin:DrawInfoBar(sectionY)
     self.lblOverallProgress:SetParent(self.cOverallDeedProgressBarBack);
     self.lblOverallProgress:SetSize(200,18);
     self.lblOverallProgress:SetPosition(0,0);
-    self.lblOverallProgress:SetForeColor(Turbine.UI.Color.Beige);
+    self.lblOverallProgress:SetForeColor(DT_MODERN.TEXT);
     self.lblOverallProgress:SetFont(Verdana12);
     self.lblOverallProgress:SetOutlineColor(Turbine.UI.Color(0.1,0.1,0.1));
     self.lblOverallProgress:SetFontStyle(Turbine.UI.FontStyle.Outline);
@@ -249,7 +277,7 @@ function DeedTrackerWin:DrawInfoBar(sectionY)
     self.lblProgress:SetParent(self.cProgressBarBack);
     self.lblProgress:SetSize(200,18);
     self.lblProgress:SetPosition(0,0);
-    self.lblProgress:SetForeColor(Turbine.UI.Color.Beige);
+    self.lblProgress:SetForeColor(DT_MODERN.TEXT);
     self.lblProgress:SetFont(Verdana12);
     self.lblProgress:SetOutlineColor(Turbine.UI.Color(0.1,0.1,0.1));
     self.lblProgress:SetFontStyle(Turbine.UI.FontStyle.Outline);
@@ -619,6 +647,7 @@ function DeedTrackerWin:ResizeSearchTextBox()
 end
 
 function DeedTrackerWin:RepositionElementsAfterResize()
+    self:ResizeModernBack();
     self:ResizeCharacterDropDown();
     self:ResizeOverallProgressBar();
     self:ResizeShowRecentButton();
@@ -891,6 +920,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
         local deedsTabTreeNode = Turbine.UI.TreeNode();
         self.deedsTabTreeNodes[i] = deedsTabTreeNode;
         deedsTabTreeNode:SetSize(self.treeDeeds:GetWidth(),36);
+        deedsTabTreeNode:SetBackColor(DT_MODERN.REGION_BACK);
 
         self.deedsTabTreeNodes[i].MouseDown = function(sender, args)
             self.clickedNode = i;
@@ -960,7 +990,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
         lblDeedTabName:SetParent(deedsTabTreeNode);
         lblDeedTabName:SetPosition(left,0);
         lblDeedTabName:SetSize(300,32);
-        lblDeedTabName:SetForeColor(Turbine.UI.Color.Yellow);
+        lblDeedTabName:SetForeColor(DT_MODERN.REGION_TEXT);
         if (LANGUAGE == "RU") then
             lblDeedTabName:SetFont(Turbine.UI.Lotro.Font.Verdana18);
         else
@@ -990,7 +1020,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
         self.lblDeedsTabProgresses[i]:SetParent(cDeedTabProgressBarBack);
         self.lblDeedsTabProgresses[i]:SetSize(200,18);
         self.lblDeedsTabProgresses[i]:SetPosition(0,0);
-        self.lblDeedsTabProgresses[i]:SetForeColor(Turbine.UI.Color.Beige);
+        self.lblDeedsTabProgresses[i]:SetForeColor(DT_MODERN.TEXT);
         self.lblDeedsTabProgresses[i]:SetFont(Verdana12);
         self.lblDeedsTabProgresses[i]:SetOutlineColor(Turbine.UI.Color(0.1,0.1,0.1));
         self.lblDeedsTabProgresses[i]:SetFontStyle(Turbine.UI.FontStyle.Outline);
@@ -1112,7 +1142,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
             curHighlight:SetMouseVisible(false);
             curHighlight:SetVisible(false);
             curHighlight:SetEnabled(false);
-            curHighlight:SetBackColor(DEED_HIGHLIGHT_COLOR);
+            curHighlight:SetBackColor(DT_MODERN.HIGHLIGHT);
 
             -- begin: LOTRO Points
             local imgDeedLotroPoints = Turbine.UI.Control();
@@ -1188,7 +1218,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
             lblDeedName:SetPosition(CURLEFT,3);
             lblDeedName.uncompletedWidth = deedLabelWidth;
             lblDeedName:SetSize(deedLabelWidth,20);
-            lblDeedName.deedForeColor = Turbine.UI.Color.Beige;
+            lblDeedName.deedForeColor = DT_MODERN.TEXT;
             lblDeedName:SetFont(Verdana14);
             lblDeedName:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft);
             if (deedSkipInfo.deedLvlTooHigh) then -- marks that we're below the deed level
@@ -1224,7 +1254,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
                 lblDeedName.MouseLeave = (function() self:HideDeedTooltip(); end);
             end
 
-            if deedSkipInfo.isCompleted then lblDeedName:SetForeColor(Turbine.UI.Color(0,1,0)) end;
+            if deedSkipInfo.isCompleted then lblDeedName:SetForeColor(DT_MODERN.DONE) end;
 
             CURLEFT = imgDeedLotroPoints:GetWidth() + imgDeedVirtueXP:GetWidth() + tierIndent + lblDeedName:GetWidth() + 52;
 
@@ -1232,7 +1262,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
             lblRep:SetParent(CurChildNode);
             lblRep:SetPosition(CURLEFT,3);
             lblRep:SetSize(200,20);
-            lblRep:SetForeColor(Turbine.UI.Color.Beige);
+            lblRep:SetForeColor(DT_MODERN.SUBTEXT);
             lblRep:SetFont(Verdana12);
             lblRep:SetMarkupEnabled(true);
             lblRep:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft);
@@ -1242,11 +1272,11 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
             if (deedSkipInfo.isCategory) then
                 CurChildNode:SetSize(CurChildNode:GetWidth(),32);
                 lblDeedName:SetSize(CurChildNode:GetWidth() / 2, 32);
-                lblDeedName:SetForeColor(Turbine.UI.Color.Yellow);
+                lblDeedName:SetForeColor(DT_MODERN.CATEGORY_TEXT);
                 lblDeedName:SetFont(TrajanPro18);
                 lblDeedName:SetFontStyle(Turbine.UI.FontStyle.Outline);
                 lblDeedName:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter);
-                lblDeedName:SetBackColor(Turbine.UI.Color.Gray);
+                lblDeedName:SetBackColor(DT_MODERN.CATEGORY_BACK);
             else
                 AutoFitLabelHeight(lblDeedName, 50);
             end
@@ -1327,7 +1357,7 @@ function DeedTrackerWin:RefreshDeedView(CHARACTER)
                             totalVxpAvailable = totalVxpAvailable - currentDeedVirtueXP;
                         end
                         lblDeedTabName:SetText(DataFiles._DEED_LOG_PAGE_TAB_NAMES[DataFiles._DEED_LOG_PAGE_TABS[self.selectedTab][i]]);
-                        lblDeedName:SetForeColor(Turbine.UI.Color(0,1,0));
+                        lblDeedName:SetForeColor(DT_MODERN.DONE);
                         self:UpdateDeedTokens(i);
                         self:UpdateProgress();
                     else

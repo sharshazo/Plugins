@@ -1,8 +1,18 @@
 # Addons de LOTRO en español
 
+[![LOTRO](https://img.shields.io/badge/LOTRO-Lord%20of%20the%20Rings%20Online-8b6d2f)](https://github.com/topics/lotro) [![Plugins](https://img.shields.io/badge/LOTRO-plugins-2f5d8b)](https://github.com/topics/lotro-plugins) [![Idioma](https://img.shields.io/badge/idioma-espa%C3%B1ol-c0392b)](#)
+
 Colección de addons para **The Lord of the Rings Online** en español, pensados para funcionar juntos: un mapa del mundo interactivo, una interfaz con efectos animados, un asistente de misiones traducido y un seguimiento de hazañas. Cada carpeta ya tiene el **nombre exacto** que el juego necesita.
 
 > Las animaciones de este README y de los README de cada addon son **recreaciones hechas con los gráficos reales de cada addon**. Las imágenes llamadas `captura_*` son **capturas del juego**.
+
+---
+
+## English summary
+
+**Spanish-language LOTRO plugins (Lord of the Rings Online addons / Lua plugins)**: an interactive World Map with quest and deed markers, LUI (Geldahr's UI) with animated banners, QuestSync quest assistant with 14,000+ quests translated into Spanish, and Deed Tracker in Spanish. Install by copying the folders into `Documents\The Lord of the Rings Online\Plugins`.
+
+*Palabras clave: LOTRO, The Lord of the Rings Online, El Señor de los Anillos Online, plugins, addons, Lua, español, Spanish, mapa, misiones, hazañas, deeds, quests, world map, UI.*
 
 ---
 

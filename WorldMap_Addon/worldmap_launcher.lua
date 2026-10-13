@@ -354,6 +354,12 @@ function WorldMapAddon.MapCommand:Execute(command, arguments)
         end
         return
     end
+    -- v3.11: "/mapa opciones" abre la ventana de opciones
+    local low = query:lower()
+    if (low == "opciones" or low == "options") and WorldMapAddon.Options ~= nil and WorldMapAddon.Options.Show ~= nil then
+        WorldMapAddon.Options.Show()
+        return
+    end
 
     if not WorldMapAddon.instance then
         WorldMapAddon.instance = WorldMapAddon.UI.WorldMap()

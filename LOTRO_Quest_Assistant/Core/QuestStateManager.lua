@@ -207,6 +207,12 @@ function QuestStateManager.GetTrackedQuest()
 end
 
 function QuestStateManager.SetTrackedQuest(ndx)
+    -- (2026-10-13) la mision elegida se guarda al momento: antes solo se
+    -- guardaba si despues cambiaba otra cosa, y al volver a entrar se perdia
+    local changed = QuestStateManager.State.tracked ~= ndx
     QuestStateManager.State.tracked = ndx
+    if changed then
+        pcall(QuestStateManager.Save)
+    end
     LQA.Core.EventBus:Publish("QUEST_TRACKED", {ndx=ndx})
 end

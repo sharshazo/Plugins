@@ -26,15 +26,16 @@ function StringTooltipWindow:Constructor()
     self.maxContentHeight = self.maxWindowHeight - (self.borderWidth * 2);
 
     self:SetZOrder(0x7FFFFFFF); -- Most on-top we can get
-    self:SetBackColor(Turbine.UI.Color(0.58, 0.58, 0.58));
+    -- 2026-10: estilo moderno (borde gris azulado, fondo oscuro)
+    self:SetBackColor(Turbine.UI.Color(60/255, 66/255, 80/255));
     self:SetWantsKeyEvents(true);
     self.isDetached = false;
-    self:SetOpacity(.90);
+    self:SetOpacity(.96);
 
     -- Create simple border:
     self.border = Turbine.UI.Control();
     self.border:SetParent(self);
-    self.border:SetBackColor(Turbine.UI.Color(6/255, 9/255, 17/255));
+    self.border:SetBackColor(Turbine.UI.Color(16/255, 18/255, 24/255));
     self.border:SetMouseVisible(false);
     self.border:SetPosition(self.borderWidth, self.borderWidth);
 
@@ -75,6 +76,7 @@ function StringTooltipWindow:LoadText(text)
     if (LANGUAGE == "RU") then
         self.tooltipControl:SetFont(Turbine.UI.Lotro.Font.Verdana14);
     end
+    self.tooltipControl:SetForeColor(Turbine.UI.Color(232/255, 236/255, 244/255));
     self.tooltipControl:SetText(self.text);
     self.tooltipControl:SetSize(5,5);
     AutoFitLabelWidth(self.tooltipControl, self.maxContentWidth - 16);
