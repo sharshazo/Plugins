@@ -1,0 +1,328 @@
+-- -- MOVEMENT
+-- Turbine.UI.Lotro.Action.RotateCharacter = 19
+
+-- -- QUICKSLOTS
+-- Turbine.UI.Lotro.Action.QuickslotPageDown = 268436021
+-- Turbine.UI.Lotro.Action.QuickslotPageUp = 268436022
+-- Turbine.UI.Lotro.Action.Quickslot_1 = 268435498
+-- Turbine.UI.Lotro.Action.Quickslot_2 = 268435506
+-- Turbine.UI.Lotro.Action.Quickslot_3 = 268435518
+-- Turbine.UI.Lotro.Action.Quickslot_4 = 268435527
+-- Turbine.UI.Lotro.Action.Quickslot_5 = 268435536
+-- Turbine.UI.Lotro.Action.Quickslot_6 = 268435543
+-- Turbine.UI.Lotro.Action.Quickslot_7 = 268435551
+-- Turbine.UI.Lotro.Action.Quickslot_8 = 268435559
+-- Turbine.UI.Lotro.Action.Quickslot_9 = 268435569
+-- Turbine.UI.Lotro.Action.Quickslot_10 = 268435535
+-- Turbine.UI.Lotro.Action.Quickslot_11 = 268435542
+-- Turbine.UI.Lotro.Action.Quickslot_12 = 268435550
+
+-- -- QUICKSLOT BAR 1
+-- Turbine.UI.Lotro.Action.Quickbar1Visibility = 268435575
+-- Turbine.UI.Lotro.Action.Quickslot_13 = 268435558
+-- Turbine.UI.Lotro.Action.Quickslot_14 = 268435568
+-- Turbine.UI.Lotro.Action.Quickslot_15 = 268435576
+-- Turbine.UI.Lotro.Action.Quickslot_16 = 268435586
+-- Turbine.UI.Lotro.Action.Quickslot_17 = 268435598
+-- Turbine.UI.Lotro.Action.Quickslot_18 = 268435606
+-- Turbine.UI.Lotro.Action.Quickslot_19 = 268435614
+-- Turbine.UI.Lotro.Action.Quickslot_20 = 268435473
+-- Turbine.UI.Lotro.Action.Quickslot_21 = 268435481
+-- Turbine.UI.Lotro.Action.Quickslot_22 = 268435490
+-- Turbine.UI.Lotro.Action.Quickslot_23 = 268435497
+-- Turbine.UI.Lotro.Action.Quickslot_24 = 268435505
+
+-- -- QUICKSLOT BAR 2
+-- Turbine.UI.Lotro.Action.Quickbar2Visibility = 268435556
+-- Turbine.UI.Lotro.Action.Quickslot_25 = 268435517
+-- Turbine.UI.Lotro.Action.Quickslot_26 = 268435526
+-- Turbine.UI.Lotro.Action.Quickslot_27 = 268435534
+-- Turbine.UI.Lotro.Action.Quickslot_28 = 268435541
+-- Turbine.UI.Lotro.Action.Quickslot_29 = 268435549
+-- Turbine.UI.Lotro.Action.Quickslot_30 = 268435461
+-- Turbine.UI.Lotro.Action.Quickslot_31 = 268435467
+-- Turbine.UI.Lotro.Action.Quickslot_32 = 268435472
+-- Turbine.UI.Lotro.Action.Quickslot_33 = 268435480
+-- Turbine.UI.Lotro.Action.Quickslot_34 = 268435489
+-- Turbine.UI.Lotro.Action.Quickslot_35 = 268435496
+-- Turbine.UI.Lotro.Action.Quickslot_36 = 268435504
+
+-- -- QUICKSLOT BAR 3
+-- Turbine.UI.Lotro.Action.Quickbar3Visibility = 268435458
+-- Turbine.UI.Lotro.Action.Quickslot_37 = 268435516
+-- Turbine.UI.Lotro.Action.Quickslot_38 = 268435525
+-- Turbine.UI.Lotro.Action.Quickslot_39 = 268435533
+-- Turbine.UI.Lotro.Action.Quickslot_40 = 268435597
+-- Turbine.UI.Lotro.Action.Quickslot_41 = 268435605
+-- Turbine.UI.Lotro.Action.Quickslot_42 = 268435613
+-- Turbine.UI.Lotro.Action.Quickslot_43 = 268435619
+-- Turbine.UI.Lotro.Action.Quickslot_44 = 268435629
+-- Turbine.UI.Lotro.Action.Quickslot_45 = 268435632
+-- Turbine.UI.Lotro.Action.Quickslot_46 = 268435641
+-- Turbine.UI.Lotro.Action.Quickslot_47 = 268435460
+-- Turbine.UI.Lotro.Action.Quickslot_48 = 268435466
+
+-- -- QUICKSLOT BAR 4
+-- Turbine.UI.Lotro.Action.Quickbar4Visibility = 268435485
+-- Turbine.UI.Lotro.Action.Quickslot_49 = 268435471
+-- Turbine.UI.Lotro.Action.Quickslot_50 = 268435488
+-- Turbine.UI.Lotro.Action.Quickslot_51 = 268435495
+-- Turbine.UI.Lotro.Action.Quickslot_52 = 268435503
+-- Turbine.UI.Lotro.Action.Quickslot_53 = 268435515
+-- Turbine.UI.Lotro.Action.Quickslot_54 = 268435524
+-- Turbine.UI.Lotro.Action.Quickslot_55 = 268435532
+-- Turbine.UI.Lotro.Action.Quickslot_56 = 268435540
+-- Turbine.UI.Lotro.Action.Quickslot_57 = 268435548
+-- Turbine.UI.Lotro.Action.Quickslot_58 = 268435557
+-- Turbine.UI.Lotro.Action.Quickslot_59 = 268435567
+-- Turbine.UI.Lotro.Action.Quickslot_60 = 268435628
+
+-- -- QUICKSLOT BAR 5
+-- Turbine.UI.Lotro.Action.Quickbar5Visibility = 268435539
+-- Turbine.UI.Lotro.Action.Quickslot_61 = 268435631
+-- Turbine.UI.Lotro.Action.Quickslot_62 = 268435640
+-- Turbine.UI.Lotro.Action.Quickslot_63 = 268435459
+-- Turbine.UI.Lotro.Action.Quickslot_64 = 268435465
+-- Turbine.UI.Lotro.Action.Quickslot_65 = 268435470
+-- Turbine.UI.Lotro.Action.Quickslot_66 = 268435479
+-- Turbine.UI.Lotro.Action.Quickslot_67 = 268435487
+-- Turbine.UI.Lotro.Action.Quickslot_68 = 268435494
+-- Turbine.UI.Lotro.Action.Quickslot_69 = 268435502
+-- Turbine.UI.Lotro.Action.Quickslot_70 = 268435612
+-- Turbine.UI.Lotro.Action.Quickslot_71 = 268435618
+-- Turbine.UI.Lotro.Action.Quickslot_72 = 268435627
+
+-- -- SELECTION
+-- Turbine.UI.Lotro.Action.SelectionSelf = 268435508
+-- Turbine.UI.Lotro.Action.SelectionNearestFoe = 268435607
+-- Turbine.UI.Lotro.Action.SelectionNextFoe = 268435622
+-- Turbine.UI.Lotro.Action.SelectionPreviousFoe = 268435491
+-- Turbine.UI.Lotro.Action.SelectionNextTracked = 268435684
+-- Turbine.UI.Lotro.Action.SelectionPreviousTracked = 268435685
+-- Turbine.UI.Lotro.Action.SelectFellowOne = 268435500
+-- Turbine.UI.Lotro.Action.SelectFellowTwo = 268435596
+-- Turbine.UI.Lotro.Action.SelectFellowThree = 268435538
+-- Turbine.UI.Lotro.Action.SelectFellowFour = 268435595
+-- Turbine.UI.Lotro.Action.SelectFellowFive = 268435464
+-- Turbine.UI.Lotro.Action.SelectFellowSix = 268435523
+-- Turbine.UI.Lotro.Action.AssistFellowTwo = 268435689
+-- Turbine.UI.Lotro.Action.AssistFellowThree = 268435688
+-- Turbine.UI.Lotro.Action.AssistFellowFour = 268435692
+-- Turbine.UI.Lotro.Action.AssistFellowFive = 268435691
+-- Turbine.UI.Lotro.Action.AssistFellowSix = 268435690
+-- Turbine.UI.Lotro.Action.SelectionNearestFellow = 268435544
+-- Turbine.UI.Lotro.Action.SelectionNearestPlayer = 268435469
+-- Turbine.UI.Lotro.Action.SelectionNextPlayer = 268435475
+-- Turbine.UI.Lotro.Action.SelectionPreviousPlayer = 268435608
+-- Turbine.UI.Lotro.Action.SelectionNearestCreature = 268435577
+-- Turbine.UI.Lotro.Action.SelectionNextCreature = 268435588
+-- Turbine.UI.Lotro.Action.SelectionPreviousCreature = 268435507
+-- Turbine.UI.Lotro.Action.SelectionNearestItem = 268435633
+-- Turbine.UI.Lotro.Action.SelectionNextItem = 268435634
+-- Turbine.UI.Lotro.Action.SelectionPreviousItem = 268435519
+-- Turbine.UI.Lotro.Action.PreviousSelection = 268435599
+-- Turbine.UI.Lotro.Action.PreviousAttacker = 268435474
+-- Turbine.UI.Lotro.Action.SelectionAssist = 268435468
+
+-- -- PANELS
+-- Turbine.UI.Lotro.Action.ToggleSkillPanel = 268435483
+-- Turbine.UI.Lotro.Action.ToggleTraitPanel = 268435510
+-- Turbine.UI.Lotro.Action.HousingPanel = 268435707
+-- Turbine.UI.Lotro.Action.ToggleCraftingPanel = 268435520
+-- Turbine.UI.Lotro.Action.MapPanel = 268435521
+-- Turbine.UI.Lotro.Action.ToggleJournalPanel = 268435529
+-- Turbine.UI.Lotro.Action.TitlesPanel = 268435528
+-- Turbine.UI.Lotro.Action.ToggleSocialPanel = 268435509
+-- Turbine.UI.Lotro.Action.ToggleBags = 268435604
+-- Turbine.UI.Lotro.Action.ToggleBag1 = 268435478
+-- Turbine.UI.Lotro.Action.ToggleBag2 = 268435486
+-- Turbine.UI.Lotro.Action.ToggleBag3 = 268435493
+-- Turbine.UI.Lotro.Action.ToggleBag4 = 268435501
+-- Turbine.UI.Lotro.Action.ToggleBag5 = 268435513
+-- Turbine.UI.Lotro.Action.ToggleBag6 = 268436015
+-- Turbine.UI.Lotro.Action.DressingRoom = 268435643
+-- Turbine.UI.Lotro.Action.ItemLinkToChat = 268435808
+-- Turbine.UI.Lotro.Action.MultiUseItem = 268436036
+-- Turbine.UI.Lotro.Action.ToggleOptionsPanel = 268435512
+-- Turbine.UI.Lotro.Action.ToggleAssistancePanel = 268435637
+-- Turbine.UI.Lotro.Action.ToggleRadar = 268435476
+-- Turbine.UI.Lotro.Action.ToggleQuestPanel = 268435530
+-- Turbine.UI.Lotro.Action.ToggleAccomplishmentPanel = 268435562
+-- Turbine.UI.Lotro.Action.ToggleItemAdvancementPanel = 268435754
+-- Turbine.UI.Lotro.Action.ToggleMountsPanel = 268435901
+-- Turbine.UI.Lotro.Action.ToggleInstanceFinderPanel = 268435924
+-- Turbine.UI.Lotro.Action.ToggleSkirmishPanel = 268435854
+-- Turbine.UI.Lotro.Action.ToggleMountedCombatUI = 268436016
+-- Turbine.UI.Lotro.Action.MyLOTROPanel = 268435499
+-- Turbine.UI.Lotro.Action.ToggleWebStore = 268435889
+-- Turbine.UI.Lotro.Action.ReputationPanel = 268435696
+-- Turbine.UI.Lotro.Action.HobbyPanel = 268435910
+-- Turbine.UI.Lotro.Action.DestinyPointPerksPanel = 268435913
+-- Turbine.UI.Lotro.Action.ToggleSocialFellowingPanel = 268435907
+-- Turbine.UI.Lotro.Action.FriendsPanel = 268435909
+-- Turbine.UI.Lotro.Action.KinshipPanel = 268435905
+-- Turbine.UI.Lotro.Action.RaidPanel = 268435908
+-- Turbine.UI.Lotro.Action.GroupStagePanel = 268435906
+-- Turbine.UI.Lotro.Action.TogglePaperItemPanel = 268435917
+-- Turbine.UI.Lotro.Action.ToggleRandomItemRewardUI = 268436032
+-- Turbine.UI.Lotro.Action.TogglePendingLoot = 268436023
+-- Turbine.UI.Lotro.Action.TogglePluginManager = 268435928
+-- Turbine.UI.Lotro.Action.ToggleCollectionUI = 268436035
+-- Turbine.UI.Lotro.Action.ToggleFilterUI = 268436037
+
+-- -- CHAT
+-- Turbine.UI.Lotro.Action.ChatModeReply = 268435546
+-- Turbine.UI.Lotro.Action.SetFocusToChatOutput = 162
+
+-- -- MISCELLANEOUS
+-- Turbine.UI.Lotro.Action.QuickSlot_SkillMode = 268435639
+-- Turbine.UI.Lotro.Action.Use = 268435589
+-- Turbine.UI.Lotro.Action.FollowSelection = 268436029
+-- Turbine.UI.Lotro.Action.FindItems = 268436030
+-- Turbine.UI.Lotro.Action.ToggleBigBattlesUI = 268436033
+-- Turbine.UI.Lotro.Action.ToggleMailUI = 268436034
+-- Turbine.UI.Lotro.Action.Show_Names = 268435642
+-- Turbine.UI.Lotro.Action.ShowDamage = 268435561
+-- Turbine.UI.Lotro.Action.CaptureScreenshot = 116
+-- Turbine.UI.Lotro.Action.Tooltip_Detach = 268435482
+Turbine.UI.Lotro.Action.ToggleHiddenDragBoxes = 268435579
+-- Turbine.UI.Lotro.Action.ToggleQuickslotLock = 268435462
+Turbine.UI.Lotro.Action.UI_Toggle = 268435635
+-- Turbine.UI.Lotro.Action.Logout = 268435552
+-- Turbine.UI.Lotro.Action.ExitGame = 268435570
+-- Turbine.UI.Lotro.Action.VoiceChat_Talk = 268435555
+-- Turbine.UI.Lotro.Action.ToggleItemSellLock = 268435590
+-- Turbine.UI.Lotro.Action.DismountRemount = 268435916
+-- Turbine.UI.Lotro.Action.ShowRemoteQuestActions = 268436019
+-- Turbine.UI.Lotro.Action.TrackNearbyQuests = 268435929
+-- Turbine.UI.Lotro.Action.ClearAllFilters = 268435918
+
+-- -- MUSIC
+-- Turbine.UI.Lotro.Action.ToggleMusicMode = 268435683
+-- Turbine.UI.Lotro.Action.MusicEndSong = 268435695
+-- Turbine.UI.Lotro.Action.Music_C2 = 268435676
+-- Turbine.UI.Lotro.Action.Music_Db2 = 268435656
+-- Turbine.UI.Lotro.Action.Music_D2 = 268435666
+-- Turbine.UI.Lotro.Action.Music_Eb2 = 268435662
+-- Turbine.UI.Lotro.Action.Music_E2 = 268435674
+-- Turbine.UI.Lotro.Action.Music_F2 = 268435661
+-- Turbine.UI.Lotro.Action.Music_Gb2 = 268435671
+-- Turbine.UI.Lotro.Action.Music_G2 = 268435652
+-- Turbine.UI.Lotro.Action.Music_Ab2 = 268435680
+-- Turbine.UI.Lotro.Action.Music_A2 = 268435659
+-- Turbine.UI.Lotro.Action.Music_Bb2 = 268435647
+-- Turbine.UI.Lotro.Action.Music_B2 = 268435649
+-- Turbine.UI.Lotro.Action.Music_C3 = 268435678
+-- Turbine.UI.Lotro.Action.Music_Db3 = 268435657
+-- Turbine.UI.Lotro.Action.Music_D3 = 268435669
+-- Turbine.UI.Lotro.Action.Music_Eb3 = 268435665
+-- Turbine.UI.Lotro.Action.Music_E3 = 268435675
+-- Turbine.UI.Lotro.Action.Music_F3 = 268435664
+-- Turbine.UI.Lotro.Action.Music_Gb3 = 268435672
+-- Turbine.UI.Lotro.Action.Music_G3 = 268435654
+-- Turbine.UI.Lotro.Action.Music_Ab3 = 268435682
+-- Turbine.UI.Lotro.Action.Music_A3 = 268435660
+-- Turbine.UI.Lotro.Action.Music_Bb3 = 268435648
+-- Turbine.UI.Lotro.Action.Music_B3 = 268435651
+-- Turbine.UI.Lotro.Action.Music_C4 = 268435679
+-- Turbine.UI.Lotro.Action.Music_Db4 = 268435658
+-- Turbine.UI.Lotro.Action.Music_D4 = 268435670
+-- Turbine.UI.Lotro.Action.Music_Eb4 = 268435668
+-- Turbine.UI.Lotro.Action.Music_E4 = 268435677
+-- Turbine.UI.Lotro.Action.Music_F4 = 268435667
+-- Turbine.UI.Lotro.Action.Music_Gb4 = 268435673
+-- Turbine.UI.Lotro.Action.Music_G4 = 268435655
+-- Turbine.UI.Lotro.Action.Music_Ab4 = 268435646
+-- Turbine.UI.Lotro.Action.Music_A4 = 268435663
+-- Turbine.UI.Lotro.Action.Music_Bb4 = 268435650
+-- Turbine.UI.Lotro.Action.Music_B4 = 268435653
+-- Turbine.UI.Lotro.Action.Music_C5 = 268435681
+
+-- -- FELLOWSHIP MANOEUVRES
+-- Turbine.UI.Lotro.Action.FellowshipSkillAssist = 268435686
+-- Turbine.UI.Lotro.Action.TopFellowshipManoeuvre = 268435609
+-- Turbine.UI.Lotro.Action.BottomFellowshipManoeuvre = 268435615
+-- Turbine.UI.Lotro.Action.LeftFellowshipManoeuvre = 268435624
+-- Turbine.UI.Lotro.Action.RightFellowshipManoeuvre = 268435630
+
+-- -- FELLOWSHIP TARGET MARKING
+-- Turbine.UI.Lotro.Action.ShieldMark = 268435706
+-- Turbine.UI.Lotro.Action.SpearMark = 268435697
+-- Turbine.UI.Lotro.Action.ArrowMark = 268435698
+-- Turbine.UI.Lotro.Action.SunMark = 268435699
+-- Turbine.UI.Lotro.Action.SwordsMark = 268435700
+-- Turbine.UI.Lotro.Action.MoonMark = 268435701
+-- Turbine.UI.Lotro.Action.StarMark = 268435702
+-- Turbine.UI.Lotro.Action.ClawMark = 268435703
+-- Turbine.UI.Lotro.Action.SkullMark = 268435704
+-- Turbine.UI.Lotro.Action.LeafMark = 268435705
+
+-- -- COSMETIC OUTFIT SELECTION
+-- Turbine.UI.Lotro.Action.PresentMainInventory = 268435710
+-- Turbine.UI.Lotro.Action.PresentOutfit1 = 268435708
+-- Turbine.UI.Lotro.Action.PresentOutfit2 = 268435709
+-- Turbine.UI.Lotro.Action.PresentOutfit3 = 268435921
+-- Turbine.UI.Lotro.Action.PresentOutfit4 = 268435922
+-- Turbine.UI.Lotro.Action.PresentOutfit5 = 268435923
+-- Turbine.UI.Lotro.Action.PresentOutfit6 = 268435925
+-- Turbine.UI.Lotro.Action.PresentOutfit7 = 268435926
+-- Turbine.UI.Lotro.Action.PresentOutfit8 = 268436038
+
+-- -- OTHER ACTIONS
+-- Turbine.UI.Lotro.Action.CameraInstantMouseLook = 92
+Turbine.UI.Lotro.Action.Escape = 145
+-- Turbine.UI.Lotro.Action.Start_Command = 268435578
+-- Turbine.UI.Lotro.Action.ToggleAlertOverflow = 268436031
+-- Turbine.UI.Lotro.Action.ToggleBioPanel = 268435920
+-- Turbine.UI.Lotro.Action.TogglePVPPanel = 268435919
+-- Turbine.UI.Lotro.Action.VendorFullStack = 268435463
+-- Turbine.UI.Lotro.Action.VendorQuantity = 268435835
+-- Turbine.UI.Lotro.Action.ToggleStackDisplay = 268435836
+
+-- -- UNDOCUMENTED VALUES
+-- Turbine.UI.Lotro.Action.RightMouseButton = 19
+-- Turbine.UI.Lotro.Action.ToggleDebugHUD = 42
+-- Turbine.UI.Lotro.Action.ToggleDebugConsole = 43
+-- Turbine.UI.Lotro.Action.BackspaceKey = 99
+-- Turbine.UI.Lotro.Action.EnterKey = 162
+-- Turbine.UI.Lotro.Action.CursorPreviousLine = 29
+-- Turbine.UI.Lotro.Action.CursorCharRight = 108
+-- Turbine.UI.Lotro.Action.CursorCharLeft = 127
+-- Turbine.UI.Lotro.Action.CursorNextLine = 113
+-- Turbine.UI.Lotro.Action.CursorPreviousPage = 146
+-- Turbine.UI.Lotro.Action.CursorNextPage = 49
+-- Turbine.UI.Lotro.Action.CursorStartOfLine = 58
+-- Turbine.UI.Lotro.Action.CursorEndOfLine = 57
+-- Turbine.UI.Lotro.Action.CursorWordLeft = 163
+-- Turbine.UI.Lotro.Action.CursorWordRight = 37
+-- Turbine.UI.Lotro.Action.DeleteKey = 75
+-- Turbine.UI.Lotro.Action.CutText = 8
+-- Turbine.UI.Lotro.Action.CopyText = 170
+-- Turbine.UI.Lotro.Action.PasteText  = 100
+
+-- -- INERT VALUES
+-- Turbine.UI.Lotro.Action.SelectionNextFellow = 268435621
+-- Turbine.UI.Lotro.Action.SelectionOff = 268435620
+-- Turbine.UI.Lotro.Action.SelectionPreviousFellow = 268435587
+-- Turbine.UI.Lotro.Action.AutoLootAll = 268435645
+-- Turbine.UI.Lotro.Action.EnterChatMode = 268435636
+-- Turbine.UI.Lotro.Action.MainMenu = 268435899
+-- Turbine.UI.Lotro.Action.QuickSlot_Chat = 268435514
+-- Turbine.UI.Lotro.Action.SystemMenu = 268435900
+-- Turbine.UI.Lotro.Action.ToggleComboUI = 268435553
+-- Turbine.UI.Lotro.Action.ToggleCraftingProf1Panel = 268435903
+-- Turbine.UI.Lotro.Action.ToggleCraftingProf2Panel = 268435902
+-- Turbine.UI.Lotro.Action.ToggleCraftingProf3Panel = 268435904
+-- Turbine.UI.Lotro.Action.ToggleGambitPanel = 268435807
+-- Turbine.UI.Lotro.Action.ToggleInputPanel = 268435580
+-- Turbine.UI.Lotro.Action.ToggleMithrilCoinsAuctionUI = 268436026
+-- Turbine.UI.Lotro.Action.ToggleMithrilCoinsMenu = 268436024
+-- Turbine.UI.Lotro.Action.ToggleMountedXpUI = 268436028
+-- Turbine.UI.Lotro.Action.TogglePluginManagerUI = 268435927
+-- Turbine.UI.Lotro.Action.ToggleQuestJournal = 268435591
+-- Turbine.UI.Lotro.Action.ToggleStatusbarPanel = 268435477
+-- Turbine.UI.Lotro.Action.ToggleThreatTrackerPanel = 268435853
+-- Turbine.UI.Lotro.Action.ToggleToolbar = 268435585
+-- Turbine.UI.Lotro.Action.ToggleToolbarPanel = 268435600
+-- Turbine.UI.Lotro.Action.ToggleWorldJoin = 268435888
+-- Turbine.UI.Lotro.Action.Undefined = 0

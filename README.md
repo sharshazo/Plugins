@@ -2,7 +2,7 @@
 
 [![LOTRO](https://img.shields.io/badge/LOTRO-Lord%20of%20the%20Rings%20Online-8b6d2f)](https://github.com/topics/lotro) [![Plugins](https://img.shields.io/badge/LOTRO-plugins-2f5d8b)](https://github.com/topics/lotro-plugins) [![Idioma](https://img.shields.io/badge/idioma-espa%C3%B1ol-c0392b)](#)
 
-Colección de addons para **The Lord of the Rings Online** en español, pensados para funcionar juntos: un mapa del mundo interactivo, una interfaz con efectos animados, un asistente de misiones traducido y un seguimiento de hazañas. Cada carpeta ya tiene el **nombre exacto** que el juego necesita.
+Colección de addons para **The Lord of the Rings Online** en español, pensados para funcionar juntos: un mapa del mundo interactivo, una interfaz con efectos animados, un asistente de misiones traducido, un seguimiento de hazañas y un addon de JcJ (PvMP). Cada carpeta ya tiene el **nombre exacto** que el juego necesita.
 
 > Las animaciones de este README y de los README de cada addon son **recreaciones hechas con los gráficos reales de cada addon**. Las imágenes llamadas `captura_*` son **capturas del juego**.
 
@@ -46,6 +46,13 @@ Asistente de misiones con más de 14.000 misiones traducidas (nombre, diálogo y
 El seguimiento de hazañas de Cube en español, con página «Por zona» y sincronizado con el Mapa del Mundo.
 **[Ver todas las funciones →](CubePlugins/DeedTracker/README.md)**
 
+### ⚔️ PvMP+ Revisited — [`PvMP_Plus_Revisited`](PvMP_Plus_Revisited/README.md)
+
+<a href="PvMP_Plus_Revisited/README.md"><img src="PvMP_Plus_Revisited/media/barra_progreso.gif" width="480" alt="Barra de progreso de PvMP+ Revisited con rango y renombre"></a>
+
+Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landas de Etten (rango, renombre/infamia y menciones), fortalezas y puestos con auras, avisos de asedio, botón Help! con tu posición en el mapa y temporizador de Gaergoth. En español o inglés.
+**[Ver todas las funciones →](PvMP_Plus_Revisited/README.md)**
+
 ---
 
 ## Qué hay en cada carpeta
@@ -56,6 +63,7 @@ El seguimiento de hazañas de Cube en español, con página «Por zona» y sincr
 | `LUI` | Interfaz LUI (de Geldahr, MPL-2.0) en español | LUI |
 | `LOTRO_Quest_Assistant` | QuestSync: asistente de misiones en español | QuestSync |
 | `CubePlugins` | Deed Tracker: seguimiento de hazañas | Deed Tracker |
+| `PvMP_Plus_Revisited` | PvMP+ Revisited: progreso en JcJ (basado en el de Urundus) | PvMP+ |
 | `Turbine` | Librería que necesitan QuestSync y el Mapa del Mundo | (no se activa, solo se copia) |
 
 ---
@@ -64,7 +72,7 @@ El seguimiento de hazañas de Cube en español, con página «Por zona» y sincr
 
 1. Botón verde **Code → Download ZIP**.
 2. Abre el ZIP. Dentro hay una sola carpeta (`Plugins-main`). Entra en ella.
-3. Copia las **5 carpetas** que hay dentro (`LOTRO_Quest_Assistant`, `LUI`, `WorldMap_Addon`, `Turbine`, `CubePlugins`) y pégalas en:
+3. Copia las **6 carpetas** que hay dentro (`LOTRO_Quest_Assistant`, `LUI`, `WorldMap_Addon`, `Turbine`, `CubePlugins`, `PvMP_Plus_Revisited`) y pégalas en:
 
    ```
    Documentos\The Lord of the Rings Online\Plugins\
@@ -73,13 +81,14 @@ El seguimiento de hazañas de Cube en español, con página «Por zona» y sincr
    (con OneDrive: `OneDrive\Documentos\The Lord of the Rings Online\Plugins\`).
    Si Windows pregunta, acepta **combinar** carpetas y **reemplazar** archivos.
 
-   **No copies la carpeta `Plugins-main` entera**, solo las 5 de dentro. Debe quedar, por ejemplo:
+   **No copies la carpeta `Plugins-main` entera**, solo las 6 de dentro. Debe quedar, por ejemplo:
 
    ```
    Plugins\LUI\LUI.plugin
    Plugins\LOTRO_Quest_Assistant\QuestSync.plugin
    Plugins\WorldMap_Addon\MapaDelMundo.plugin
    Plugins\CubePlugins\DeedTracker.plugin
+   Plugins\PvMP_Plus_Revisited\PvMP+.plugin
    Plugins\Turbine\Class.lua
    ```
 
@@ -115,3 +124,4 @@ Los botones «Narrar» de QuestSync necesitan el programa [Narrador_IA](https://
 
 `LUI` es un trabajo derivado del [LUI original de Geldahr](https://github.com/Geldahr/LUI) bajo licencia MPL-2.0 (ver `LUI/LICENSE` y `LUI/ATTRIBUTIONS.md`).
 Deed Tracker está basado en el addon original de Cube.
+PvMP+ Revisited está basado en PvMP+ 4.3.2 de Urundus.

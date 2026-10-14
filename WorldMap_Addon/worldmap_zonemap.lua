@@ -184,7 +184,20 @@ local function Split(text)
 end
 
 -- renglones aproximados de un texto en Verdana12 (~6.6 px por letra)
-local function TipLines(text, w)
+local TipLines
+-- v3.13: renglones para otra letra (px = ancho aproximado por letra)
+local function TipLinesPx(text, w, px)
+    return TipLines(text, math.floor(w * 6.9 / (px or 6.9)))
+end
+function TipLines(text, w)
+    -- v3.13: cada salto de linea cuenta (antes se cortaba el final)
+    if tostring(text or ""):find("\n", 1, true) then
+        local total = 0
+        for part in (tostring(text) .. "\n"):gmatch("(.-)\n") do
+            total = total + TipLines(part, w)
+        end
+        return math.max(1, total)
+    end
     -- v3.8: se simula el corte por palabras (los textos largos de saber
     -- cortaban la ultima linea si solo se contaban letras)
     local perLine = math.max(1, math.floor(w / 6.9))
@@ -308,6 +321,11 @@ local function LayerTip(p, es)
             break
         end
         local esn = ess[i]
+        if en == "TBD" then
+            -- v3.14.1: lugar sin nombre en los datos: el de su hazaña
+            en = sens[i] or sens[1] or ""
+            esn = sess[i] or sess[1]
+        end
         if esn == nil or esn == "" or esn == en then
             esn = NameES(en)
         end
@@ -436,9 +454,17 @@ local function DeedInfoData(p, es)
             id = id, name = pick(d[1], d[2]), tipo = tp and (es and tp[1] or tp[2]) or nil,
             nivel = tonumber(d[4]) or 0, vxp = tonumber(d[5]) or 0, lp = tonumber(d[6]) or 0, rep = tonumber(d[7]) or 0,
             faccion = pick(d[8], d[12]), titulo = pick(d[9], d[13]), nobj = objs and #objs or 0, objetivo = nil,
+            resumen = pick(d[14], d[15]), objetivos = {},
         }
         if objs ~= nil and #objs > 0 and (tonumber(d[3]) == 106 or #objs == 1) then
             e.objetivo = pick(objs[1][1], objs[1][2])
+        end
+        -- v3.13 (pedido del jugador): todos los objetivos (lo que hay que hacer)
+        for _, o in ipairs(objs or {}) do
+            local t = pick(o[1], o[2])
+            if t ~= "" then
+                e.objetivos[#e.objetivos + 1] = t
+            end
         end
         info.deeds[#info.deeds + 1] = e
         if i == 1 and info.lore == "" then
@@ -734,6 +760,9 @@ function ZV:Layout()
     self.mapName:SetSize(math.max(20, midW - 56), BAR_H - 4)
     self:_clampPan()
     self:_applyPan()
+    if self.deedPanel ~= nil then
+        self.deedPanel.win:SetPosition(math.max(8, vw - self.deedPanel.win:GetWidth() - 8), BAR_H + 8)
+    end
 end
 
 -- el mapa se ve en el area DEBAJO de la barra (de BAR_H a vh)
@@ -1195,6 +1224,7 @@ function ZV:_questPinData()
                     for _, q in ipairs(out) do
                         if math.abs(q.x - x) <= 10 and math.abs(q.y - y) <= 10 then
                             if #q.en < LAYER_MAX_LINES and not q.seen[tostring(e.ndx)] then
+                                q.ndx[#q.ndx + 1] = e.ndx
                                 q.en[#q.en + 1] = nameEN; q.es[#q.es + 1] = nameES
                                 q.sen[#q.sen + 1] = stEN; q.ses[#q.ses + 1] = stES
                                 q.seen[tostring(e.ndx)] = true
@@ -1206,7 +1236,7 @@ function ZV:_questPinData()
                     if not merged and #out < QPIN_MAX then
                         local seen = {}
                         seen[tostring(e.ndx)] = true
-                        out[#out + 1] = { x = x, y = y, en = { nameEN }, es = { nameES }, sen = { stEN }, ses = { stES }, seen = seen }
+                        out[#out + 1] = { x = x, y = y, en = { nameEN }, es = { nameES }, sen = { stEN }, ses = { stES }, seen = seen, ndx = { e.ndx } }
                     end
                 end
             end
@@ -1234,6 +1264,7 @@ function ZV:_fillQuestPins()
         end
         local p = { "mis", math.floor(q.x + 0.5), math.floor(q.y + 0.5), table.concat(q.en, "\n"), table.concat(q.es, "\n"),
             table.concat(q.sen, "\n"), table.concat(q.ses, "\n") }
+        p.ndx = q.ndx  -- v3.13: para mostrar que hay que hacer en la tarjeta
         self:_showLayer(item, p)
     end
 end
@@ -1714,6 +1745,12 @@ function ZV:_enterItem(item)
         local es = self.lang
         if item.quest then
             -- (pin de mision: siempre activa)
+            -- v3.13 (pedido del jugador): progreso, de que trata y que hacer
+            pcall(function()
+                for _, l in ipairs(self:_questPinDetails(item.poi)) do
+                    lines[#lines + 1] = l
+                end
+            end)
         elseif item.status == "done" then
             lines[#lines + 1] = es and "[Completada]" or "[Completed]"
         elseif item.status == "active" then
@@ -2048,6 +2085,7 @@ function ZV:_loadMap()
     self:_applyPan()
     self:_refreshTexts()
     pcall(function() self:_refreshInstInfo() end)
+    pcall(function() self:_refreshDeedPanel() end)
 end
 
 -- cambia al mapa mid; push = guardar el actual para volver con clic derecho
@@ -2904,22 +2942,32 @@ function ZV:_openDeedCard(item)
         end
         title = e1
     end
+    -- v3.14.1: algunos lugares vienen sin nombre ("TBD") en los datos:
+    -- se usa el nombre de la hazaña
+    if title == "" or title == "TBD" then
+        title = info.deeds[1].name
+    end
     if #ens > 1 then
         title = title .. "  (+" .. (#ens - 1) .. ")"
     end
     local textX = (iconName ~= nil) and 54 or CARD_PAD
     local textW = W - textX - 12
-    c.title:SetText(Cut(title, textW, 8.4))
+    -- v3.13 (pedido del jugador: sin "..."): titulo y subtitulo completos
+    local tLines = math.min(3, TipLinesPx(title, textW, 8.4))
+    c.title:SetMultiline(tLines > 1)
+    c.title:SetText(title)
     c.title:SetPosition(textX, 12)
-    c.title:SetSize(textW, 20)
+    c.title:SetSize(textW, tLines * 20)
     local sub = kindName
     if info.deeds[1].name ~= "" and info.deeds[1].name ~= title then
         sub = (sub ~= "" and (sub .. DOT) or "") .. info.deeds[1].name
     end
-    c.sub:SetText(Cut(sub, textW))
-    c.sub:SetPosition(textX, 34)
-    c.sub:SetSize(textW, 16)
-    local y = 56
+    local sLines = math.min(3, TipLines(sub, textW))
+    c.sub:SetMultiline(sLines > 1)
+    c.sub:SetText(sub)
+    c.sub:SetPosition(textX, 14 + tLines * 20)
+    c.sub:SetSize(textW, sLines * 16)
+    local y = math.max(56, 14 + tLines * 20 + sLines * 16 + 8)
     -- etiquetas: estado y nivel
     local pills = {}
     if item.status == "done" then
@@ -3017,15 +3065,19 @@ function ZV:_openDeedCard(item)
             if i > 1 and e.tipo ~= nil then
                 nameTxt = nameTxt .. " (" .. e.tipo .. ")"
             end
-            d.name:SetText(Cut(nameTxt, inner - 60))
+            -- v3.13: nombre completo (varias lineas si hace falta)
+            local nLines = TipLines(nameTxt, inner - 60)
+            d.name:SetMultiline(nLines > 1)
+            d.name:SetText(nameTxt)
             d.name:SetPosition(CARD_PAD, y)
-            d.name:SetSize(inner - 56, 16)
+            d.name:SetSize(inner - 56, nLines * 16)
+            local nameExtra = (nLines - 1) * 16
             if n ~= nil and tot ~= nil and tonumber(tot) ~= nil and tonumber(tot) > 0 then
                 d.count:SetText(n .. " / " .. tot)
                 d.count:SetPosition(W - 16 - 56, y)
                 d.count:SetSize(56, 16)
                 d.count:SetVisible(true)
-                y = y + 19
+                y = y + 19 + nameExtra
                 d.barBg:SetPosition(CARD_PAD, y)
                 d.barBg:SetSize(inner, 6)
                 d.bar:SetBackColor(RGB(accent))
@@ -3044,7 +3096,7 @@ function ZV:_openDeedCard(item)
                 end
                 d.barBg:SetVisible(false)
                 d.bar:SetVisible(false)
-                y = y + 22
+                y = y + 22 + nameExtra
             end
             -- recompensas con su icono
             local chips = {}
@@ -3053,9 +3105,16 @@ function ZV:_openDeedCard(item)
                 -- (opcion: sin recompensas)
             elseif e.vxp > 0 then chips[#chips + 1] = { "card_vxp.tga", Thousands(e.vxp, es) .. (es and " XP virtud" or " virtue XP"), CHIP_TEXT.vxp } end
             if rw and e.lp > 0 then chips[#chips + 1] = { "card_lp.tga", e.lp .. " LOTRO", CHIP_TEXT.lp } end
+            local repLine = nil
             if rw and e.rep > 0 then
                 local fac = (e.faccion ~= "") and e.faccion or (es and "reputaci\195\179n" or "reputation")
-                chips[#chips + 1] = { "card_rep.tga", "+" .. Thousands(e.rep, es) .. " " .. fac, CHIP_TEXT.rep }
+                local full = "+" .. Thousands(e.rep, es) .. " " .. fac
+                if TextW(full, 6.2) > inner - 40 then
+                    -- v3.13: la faccion completa va en su propia linea
+                    full = "+" .. Thousands(e.rep, es) .. (es and " reputaci\195\179n" or " reputation")
+                    repLine = (es and "Con: " or "With: ") .. fac
+                end
+                chips[#chips + 1] = { "card_rep.tga", full, CHIP_TEXT.rep }
             end
             local cx = CARD_PAD
             for j, ch in ipairs(d.chips) do
@@ -3063,7 +3122,7 @@ function ZV:_openDeedCard(item)
                 local con = cd ~= nil
                 Show(ch.l, con); Show(ch.r, con); Show(ch.m, con); Show(ch.icon, con); Show(ch.t, con)
                 if con then
-                    local txt = Cut(cd[2], inner - 40, 6.2)
+                    local txt = cd[2]
                     local w = TextW(txt, 6.2) + 28
                     if cx > CARD_PAD and cx + w + 24 > CARD_PAD + inner then
                         cx = CARD_PAD
@@ -3087,11 +3146,37 @@ function ZV:_openDeedCard(item)
             end
             -- titulo y objetivo
             local extra = {}
+            if repLine ~= nil then
+                extra[#extra + 1] = repLine
+            end
+            -- v3.13 (pedido del jugador): que hay que hacer y sus objetivos
+            if e.resumen ~= nil and e.resumen ~= "" and e.resumen ~= info.lore then
+                extra[#extra + 1] = (es and "Qu\195\169 hacer: " or "To do: ") .. e.resumen
+            end
+            -- (lista solo si son nombres cortos de lugares; si los objetivos
+            -- son textos largos, alcanza con "Que hacer" y el contador)
+            local shortObjs = #e.objetivos > 1
+            for _, o in ipairs(e.objetivos) do
+                if TextW(o, 6.6) > inner * 1.5 then
+                    shortObjs = false
+                    break
+                end
+            end
+            if shortObjs then
+                local list = {}
+                for k = 1, math.min(#e.objetivos, 12) do
+                    list[#list + 1] = e.objetivos[k]
+                end
+                local txt = (es and "Objetivos: " or "Objectives: ") .. table.concat(list, DOT)
+                if #e.objetivos > 12 then
+                    txt = txt .. (es and (" y " .. (#e.objetivos - 12) .. " m\195\161s") or (" and " .. (#e.objetivos - 12) .. " more"))
+                end
+                extra[#extra + 1] = txt
+            elseif #e.objetivos <= 1 and (e.objetivo ~= nil or #e.objetivos == 1) then
+                extra[#extra + 1] = (es and "Objetivo: " or "Objective: ") .. (e.objetivo or e.objetivos[1])
+            end
             if e.titulo ~= "" then
                 extra[#extra + 1] = (es and "T\195\173tulo: " or "Title: ") .. e.titulo
-            end
-            if e.objetivo ~= nil then
-                extra[#extra + 1] = (es and "Objetivo: " or "Objective: ") .. e.objetivo
             end
             if #extra > 0 then
                 local txt = table.concat(extra, "\n")
@@ -3212,6 +3297,10 @@ local function LineStyle(l)
     if l:match('^"') then
         return "#BEC4D2", false
     end
+    -- v3.13: lo que hay que hacer, resaltado
+    if l:match("^Qu\195\169 hacer:") or l:match("^To do:") then
+        return "#8CF0AA", true
+    end
     return "#C8CEDA", false
 end
 
@@ -3320,6 +3409,11 @@ function ZV:_cardSpec(item, title, lines)
         local sens, sess = Split(p[6]), Split(p[7])
         local function nameOf(i)
             local en, esn = ens[i] or "", ess[i]
+            if en == "TBD" then
+                -- v3.14.1: lugar sin nombre en los datos: el de su hazaña
+                en = sens[i] or sens[1] or ""
+                esn = sess[i] or sess[1]
+            end
             if esn == nil or esn == "" or esn == en then
                 esn = NameES(en)
             end
@@ -3462,14 +3556,19 @@ function ZV:_openGCard(item, spec)
     end
     local textW = W - textX - 12
     local hasSub = spec.sub ~= nil and spec.sub ~= "" and spec.sub ~= spec.title
-    c.title:SetText(Cut(spec.title, textW, 8.4))
-    c.title:SetPosition(textX, hasSub and 12 or 18)
-    c.title:SetSize(textW, 20)
-    c.sub:SetText(Cut(spec.sub or "", textW))
-    c.sub:SetPosition(textX, 34)
-    c.sub:SetSize(textW, 16)
+    -- v3.13 (pedido del jugador: sin "..."): titulo y subtitulo completos
+    local tLines = math.min(3, TipLinesPx(spec.title, textW, 8.4))
+    c.title:SetMultiline(tLines > 1)
+    c.title:SetText(spec.title)
+    c.title:SetPosition(textX, (hasSub or tLines > 1) and 12 or 18)
+    c.title:SetSize(textW, tLines * 20)
+    local sLines = hasSub and math.min(3, TipLines(spec.sub, textW)) or 1
+    c.sub:SetMultiline(sLines > 1)
+    c.sub:SetText(spec.sub or "")
+    c.sub:SetPosition(textX, 14 + tLines * 20)
+    c.sub:SetSize(textW, sLines * 16)
     c.sub:SetVisible(hasSub)
-    local y = 56
+    local y = math.max(56, 14 + tLines * 20 + (hasSub and (sLines * 16) or 0) + 8)
     local px = CARD_PAD
     local npill = 0
     for i, pl in ipairs(c.pills) do
@@ -3608,7 +3707,7 @@ local function FindIndex()
                     ses = NameES(sen)
                 end
             end
-            if en ~= "" or es ~= "" then
+            if (en ~= "" or es ~= "") and en ~= "TBD" then
                 idx[#idx + 1] = {
                     mid = mid, x = p[2], y = p[3], en = en, es = es, sen = sen, ses = ses,
                     kind = kind, layer = layer, deed = deed,
@@ -3786,4 +3885,158 @@ function ZV:_animateFind(now)
         self.findAura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
         self.findRing:SetBackground(RES .. "fl_qaura_" .. tostring(f) .. ".tga")
     end
+end
+
+-- ---------------------------------------------------------------------
+-- v3.13 (pedido del jugador: "las misiones no entregan que hay que hacer"):
+-- para la tarjeta del pin de mision: progreso guardado, de que trata y el
+-- objetivo (textos limpios de Quest Assistant). Solo la primera mision del
+-- pin trae el detalle; las demas ya estan en la lista de nombres.
+-- ---------------------------------------------------------------------
+function ZV:_questPinDetails(p)
+    local out = {}
+    local ndx = type(p) == "table" and type(p.ndx) == "table" and p.ndx[1] or nil
+    if ndx == nil or type(_G.QuestDB) ~= "table" or type(QuestDB.quests) ~= "table" then
+        return out
+    end
+    local quest = QuestDB.quests[ndx]
+    if quest == nil then
+        return out
+    end
+    local es = self.lang
+    local QSM = _G.QuestStateManager
+    if QSM ~= nil and QSM.GetQuestProgress ~= nil then
+        local okP, prog = pcall(QSM.GetQuestProgress, ndx)
+        if okP and type(prog) == "string" and prog ~= "" then
+            out[#out + 1] = (es and "Progreso: " or "Progress: ") .. prog
+        end
+    end
+    local QLR = _G.QuestLocResolver
+    local clean = {}
+    if QLR ~= nil and QLR.GetCleanObjectiveLines ~= nil then
+        local okC, c = pcall(QLR.GetCleanObjectiveLines, ndx, quest, 2)
+        if okC and type(c) == "table" then
+            clean = c
+        end
+    end
+    if clean[1] ~= nil and clean[1] ~= "" then
+        out[#out + 1] = (tostring(clean[1]):gsub("%s*\n%s*", " "))
+    end
+    if clean[2] ~= nil and clean[2] ~= "" and clean[2] ~= clean[1] then
+        local todo = tostring(clean[2]):gsub("%s*\n%s*", " ")
+        out[#out + 1] = (es and "Qu\195\169 hacer: " or "To do: ") .. todo
+    end
+    return out
+end
+
+-- ---------------------------------------------------------------------
+-- v3.14 (pedido del jugador): el % de hazañas de la zona ya no va en el
+-- mapa del mundo; va AQUI, al entrar a la zona: tarjeta arriba a la
+-- derecha con barra dorada con marco (marcas cada 10%), "23 / 47" y lo
+-- que falta ganar. Sin mouse (no molesta para arrastrar el mapa).
+-- ---------------------------------------------------------------------
+local DP_W, DP_H = 300, 76
+local DP_BAR_X, DP_BAR_W = 50, 190
+
+function ZV:_buildDeedPanel()
+    local t = {}
+    local win = Turbine.UI.Control()
+    win:SetParent(self.root)
+    win:SetSize(DP_W, DP_H)
+    win:SetMouseVisible(false)
+    win:SetVisible(false)
+    t.win = win
+    local function box(color)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetMouseVisible(false)
+        k:SetBackColor(color)
+        return k
+    end
+    local function img(file, w, h)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetSize(w, h)
+        k:SetBackground(RES .. file)
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function label(font, hex, align)
+        local l = Turbine.UI.Label()
+        l:SetParent(win)
+        l:SetFont(font)
+        l:SetForeColor(HexToColor(hex))
+        l:SetTextAlignment(align or Turbine.UI.ContentAlignment.MiddleLeft)
+        l:SetMouseVisible(false)
+        return l
+    end
+    local R, W, H = CARD_R, DP_W, DP_H
+    local border = HexToColor(CARD_BORDER_HEX)
+    t.tl = img("card_tl.tga", R, R); t.tl:SetPosition(0, 0)
+    t.tr = img("card_tr.tga", R, R); t.tr:SetPosition(W - R, 0)
+    t.bl = img("card_bl.tga", R, R); t.bl:SetPosition(0, H - R)
+    t.br = img("card_br.tga", R, R); t.br:SetPosition(W - R, H - R)
+    local top, mid, bot = box(CARD_BG), box(CARD_BG), box(CARD_BG)
+    top:SetPosition(R, 0); top:SetSize(W - 2 * R, R)
+    mid:SetPosition(0, R); mid:SetSize(W, H - 2 * R)
+    bot:SetPosition(R, H - R); bot:SetSize(W - 2 * R, R)
+    local lT, lB, lL, lR = box(border), box(border), box(border), box(border)
+    lT:SetPosition(R, 0); lT:SetSize(W - 2 * R, 1)
+    lB:SetPosition(R, H - 1); lB:SetSize(W - 2 * R, 1)
+    lL:SetPosition(0, R); lL:SetSize(1, H - 2 * R)
+    lR:SetPosition(W - 1, R); lR:SetSize(1, H - 2 * R)
+    t.accent = box(HexToColor("#E6B450"))
+    t.accent:SetPosition(1, R); t.accent:SetSize(4, H - 2 * R)
+    t.icon = img("fl_hazana_32.tga", 32, 32); t.icon:SetPosition(11, 10)
+    t.title = label(CardFont("Verdana14", "Verdana12"), "#F5F8FF")
+    t.title:SetPosition(DP_BAR_X, 6); t.title:SetSize(W - DP_BAR_X - 56, 20)
+    t.pct = label(CardFont("Verdana16", "Verdana14"), "#F0C850", Turbine.UI.ContentAlignment.MiddleRight)
+    t.pct:SetPosition(W - 60, 5); t.pct:SetSize(48, 22)
+    -- barra: fondo oscuro + relleno dorado (se recorta) + marco encima
+    t.track = box(HexToColor("#1E1810"))
+    t.track:SetPosition(DP_BAR_X + 3, 32); t.track:SetSize(DP_BAR_W - 6, 10)
+    t.fill = img("zbar_fill.tga", 0, 10); t.fill:SetPosition(DP_BAR_X + 3, 32)
+    t.frame = img("zbar_frame.tga", 190, 14); t.frame:SetPosition(DP_BAR_X - 3, 30)
+    t.count = label(CardFont("Verdana12", "Verdana12"), "#C8CEDA")
+    t.count:SetPosition(DP_BAR_X, 46); t.count:SetSize(W - DP_BAR_X - 10, 14)
+    t.rest = label(CardFont("Verdana10", "Verdana12"), "#8CAAD2")
+    t.rest:SetPosition(DP_BAR_X, 59); t.rest:SetSize(W - DP_BAR_X - 10, 13)
+    self.deedPanel = t
+end
+
+function ZV:_refreshDeedPanel()
+    local D = WorldMapAddon.Deeds
+    local on = Opt("deedbars", true) ~= false and D ~= nil and D.Counts ~= nil
+        and self.zone ~= false and self.zone ~= nil and not self:_isInstMap(self.mapId) and self.mapOk == true
+    local c = on and D.Counts(self.zone) or nil
+    if c == nil or c.total <= 0 then
+        if self.deedPanel ~= nil then
+            self.deedPanel.win:SetVisible(false)
+        end
+        return
+    end
+    if self.deedPanel == nil then
+        self:_buildDeedPanel()
+    end
+    local t = self.deedPanel
+    local es = self.lang
+    local pct = D.Percent(c.done, c.total)
+    local done = c.done >= c.total
+    t.title:SetText(tostring((es and self.zone.nombre or self.zone.nombre_original) or self.zone.nombre or ""))
+    t.pct:SetText(pct .. "%")
+    t.pct:SetForeColor(HexToColor(done and "#8CF0AA" or "#F0C850"))
+    local w = math.floor((DP_BAR_W - 6) * math.min(1, c.done / c.total) + 0.5)
+    t.fill:SetBackground(RES .. (done and "zbar_fill_done.tga" or "zbar_fill.tga"))
+    t.fill:SetSize(w, 10)
+    t.fill:SetVisible(w > 0)
+    t.count:SetText(c.done .. " / " .. c.total .. (es and " haza\195\177as completadas" or " deeds completed"))
+    local rt = D.RemainingText ~= nil and D.RemainingText(self.zone) or ""
+    if not es then
+        rt = rt:gsub("^Faltan:", "Left:"):gsub("XP virtud", "virtue XP")
+    end
+    t.rest:SetText(done and (es and "\194\161Zona completa!" or "Zone complete!") or rt)
+    local vw = self.viewport:GetSize()
+    t.win:SetPosition(math.max(8, (vw or DP_W + 16) - DP_W - 8), BAR_H + 8)
+    t.win:SetVisible(true)
 end

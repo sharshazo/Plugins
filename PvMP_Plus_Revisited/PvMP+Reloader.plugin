@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<Plugin>
+  <Information>
+    <Name>PvMP+ Reloader</Name>
+    <Author>Urundus</Author>
+    <Version>1.0</Version>
+    <Description>PvMP+ Reloader</Description>
+  </Information>
+  <Package>PvMP_Plus_Revisited.PvMP_Plus.Reloader</Package>
+    <Configuration Apartment="PvMP+Reloader" />
+</Plugin>

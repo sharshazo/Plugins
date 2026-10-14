@@ -1193,9 +1193,9 @@ function QuestSyncWindow:AddQuestListRow(ndx, quest, displayNameOverride)
     local state = QuestStateManager.GetQuestState(ndx)
     local esName = displayNameOverride or GetQuestDisplayName(ndx, quest)
 
-    if quest.level then
-        esName = esName .. " [" .. tostring(quest.level) .. "]"
-    end
+    -- (2026-10-14: el nivel ya no va como "[N]" en el texto, va en la
+    -- pastilla de color de abajo)
+    local hasLevel = quest.level ~= nil  -- (las que escalan: con tu nivel)
 
     -- Etiqueta Diaria/Semanal/Quincenal (2026-09-22, ver Core/QuestTags.lua
     -- -- dato oficial de Data/QuestLockDB.lua). No se agrega si el nombre
@@ -1237,10 +1237,17 @@ function QuestSyncWindow:AddQuestListRow(ndx, quest, displayNameOverride)
     -- groupEntry es nil y la fila queda EXACTAMENTE como antes.
     local groupEntry = _G.GroupQuest and GroupQuest.Get(quest)
 
+    local textX = 36
+    if hasLevel and _G.QuestTags and QuestTags.MakeLevelPill then
+        -- 2026-10-14: pastilla redondeada (Core/QuestTags.lua)
+        local pw = QuestTags.MakeLevelPill(item, 36, 10, quest, function() self:SelectQuest(ndx) end)
+        textX = 36 + pw + 4
+    end
+
     local lbl = Turbine.UI.Label()
     lbl:SetParent(item)
-    lbl:SetPosition(36, 0)
-    lbl:SetSize(LEFT_W - 36, 58)
+    lbl:SetPosition(textX, 0)
+    lbl:SetSize(LEFT_W - textX, 58)
     lbl:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiqua16)
     lbl:SetMultiline(true)
     lbl:SetText(esName)

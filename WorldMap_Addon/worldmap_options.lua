@@ -18,6 +18,7 @@ local DEFAULTS = {
     lore = true,        -- saber (texto de historia) en las tarjetas
     rewards = true,     -- recompensas (XP de virtud, puntos LOTRO, reputacion)
     deedbars = true,    -- barritas de % de hazañas en el mapa del mundo
+    zonetoast = true,   -- v3.12: aviso de hazañas al entrar a una zona
 }
 local WIDTHS = { 300, 360 }
 local OPACITIES = { 100, 90, 80, 70 }
@@ -60,6 +61,9 @@ local function Applied()
     local map = WorldMapAddon.instance
     if map ~= nil and type(map._refreshDeedBars) == "function" then
         pcall(map._refreshDeedBars, map)
+    end
+    if map ~= nil and map.zoneView ~= nil and type(map.zoneView._refreshDeedPanel) == "function" then
+        pcall(map.zoneView._refreshDeedPanel, map.zoneView)
     end
     if type(O.onChange) == "function" then
         pcall(O.onChange)
@@ -117,7 +121,8 @@ local ROWS = {
     { key = "opacity", text = "Opacidad de las tarjetas", values = OPACITIES },
     { key = "lore", text = "Mostrar el saber (historia)" },
     { key = "rewards", text = "Mostrar recompensas (XP, LOTRO, rep.)" },
-    { key = "deedbars", text = "% de haza\195\177as en el mapa del mundo" },
+    { key = "deedbars", text = "% de haza\195\177as al entrar a una zona" },
+    { key = "zonetoast", text = "Aviso de haza\195\177as al entrar a una zona" },
 }
 
 local function Hex(hex)

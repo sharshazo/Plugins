@@ -276,6 +276,63 @@ local function InitQuestTypeColors()
     }
 end
 
+-- ---------------------------------------------------------------------
+-- 2026-10-14 (pedido del jugador: "letras mas legibles, color por
+-- dificultad, tracker mas ordenado"). Mismo pergamino; cambia solo el
+-- interior de cada fila:
+--   linea 1: pastilla con el NIVEL (color de dificultad como en el juego)
+--            + logo de grupo + nombre en la letra de siempre, color claro con contorno negro
+--            (2 lineas como maximo, el resto con "...")
+--   linea 2: boton Narrar + progreso "2/5" + barrita dorada
+--   la X siempre en la misma columna, centrada en la fila.
+-- Si algo falla al armar una fila, se usa la fila de antes (ver
+-- AddQuestRowOld).
+-- ---------------------------------------------------------------------
+local HUD_TYPE_LIGHT = {
+    epic = Turbine.UI.Color(1, 160 / 255, 130 / 255),        -- salmon: epica
+    group = Turbine.UI.Color(1, 190 / 255, 90 / 255),        -- naranja: grupo
+    repeatable = Turbine.UI.Color(130 / 255, 230 / 255, 200 / 255), -- verde agua
+    normal = Turbine.UI.Color(1, 244 / 255, 214 / 255),      -- crema
+}
+local HUD_SUB = Turbine.UI.Color(232 / 255, 220 / 255, 190 / 255)
+local HUD_NAME_PX = 7.6     -- ancho aproximado por letra (misma letra de siempre, ~7.4 px)
+
+local function HudFont(name, fallback)
+    local F = Turbine.UI.Lotro.Font
+    return F[name] or fallback or F.Verdana12
+end
+
+-- nombre cortado a "lineas" renglones de "px" de ancho (con "...")
+local function FitName(text, widthPx, lines)
+    local perLine = math.max(6, math.floor(widthPx / HUD_NAME_PX))
+    local words, out, cur = {}, {}, ""
+    for w in tostring(text or ""):gmatch("%S+") do words[#words + 1] = w end
+    local i = 1
+    while i <= #words do
+        local w = words[i]
+        local n = 0
+        for _ in (cur == "" and w or (cur .. " " .. w)):gmatch("[^\128-\191]") do n = n + 1 end
+        if n <= perLine or cur == "" then
+            cur = (cur == "" and w) or (cur .. " " .. w)
+            i = i + 1
+        else
+            out[#out + 1] = cur
+            cur = ""
+            if #out >= lines then break end
+        end
+    end
+    if cur ~= "" and #out < lines then out[#out + 1] = cur; cur = "" end
+    local cut = i <= #words
+    if cut and #out > 0 then
+        local last = out[#out]
+        local chars = {}
+        for ch in last:gmatch("[%z\1-\127\194-\244][\128-\191]*") do chars[#chars + 1] = ch end
+        while #chars > 0 and #chars > perLine - 1 do table.remove(chars) end
+        out[#out] = table.concat(chars):gsub("%s+$", "") .. "\226\128\166"
+    end
+    return table.concat(out, "\n"), math.max(1, #out)
+end
+
 function LQA.UI.QuestTrackerHUD:Constructor()
     Turbine.UI.Lotro.Window.Constructor(self)
 
@@ -680,6 +737,103 @@ function LQA.UI.QuestTrackerHUD:PopulateActive()
                     -- ademas un toque mas grande -- no existe una variante
                     -- "Bold16" real en MEMCommon/Fonts.lua, Bold18 es la
                     -- mas cercana disponible).
+                    -- 2026-10-14: fila nueva (ver nota grande de DiffColor
+                    -- arriba); si falla, la fila de antes (AddQuestRowOld)
+                    local okRow = pcall(function()
+                        self:AddQuestRowModern(ndx, quest, data, esName)
+                    end)
+                    if not okRow then
+                        self:AddQuestRowOld(ndx, quest, data, esName)
+                    end
+                end
+            end
+        end
+    end
+
+    -- Sinergia con CubePlugins/DeedTracker (mismo dueño/autor, pedido
+    -- explicito del usuario): DeedTracker ya expone las proezas en curso en
+    -- el global compartido _G.LQA_InProgressDeeds[deedID]=true (ver
+    -- ChatLogger.lua) -- se muestran aca con una insignia de color distinta
+    -- (violeta) para diferenciarlas de las misiones (azul/verde). Guardado
+    -- defensivo con DataFiles and DataFiles._DEED_DATA: si DeedTracker no
+    -- esta instalado/activo, este bloque simplemente no agrega nada.
+    -- LIMITACION CONOCIDA: _G.LQA_InProgressDeeds nunca se limpia cuando una
+    -- proeza se completa (grep confirmado, no hay ninguna asignacion a nil
+    -- de esa clave en todo DeedTracker) -- una proeza que ya se completo puede seguir apareciendo
+    -- aca como "en curso" hasta que se cierre sesion. No se intento resolver
+    -- eso en esta pasada (requeriria exponer el estado real de completado de
+    -- DeedTracker via otro global, que hoy no existe).
+    if _G.LQA_InProgressDeeds and _G.DataFiles and _G.DataFiles._DEED_DATA then
+        for deedID, _ in pairs(_G.LQA_InProgressDeeds) do
+            local deed = _G.DataFiles._DEED_DATA[deedID]
+            if deed and deed.NAME then
+                count = count + 1
+
+                local item = Turbine.UI.Control()
+                item:SetSize(SAFE_RIGHT - 10, ROW_HEIGHT)
+
+                -- V4: pegado arriba (y=6), mismo criterio que la fila de
+                -- misiones (ver nota grande mas arriba).
+                -- V6: badge e texto ahora usan el MISMO violeta oscuro
+                -- (antes el badge era un lila claro (0.7,0.45,0.9) que no
+                -- coincidia con el texto oscuro -- se ven como si fueran
+                -- 2 colores de "deed" distintos). BookAntiqua16 ->
+                -- BookAntiquaBold18, mismo criterio de negrita/tamaño que
+                -- la fila de misiones.
+                local deedColor = Turbine.UI.Color(0.35, 0.20, 0.45)
+                local badge = Turbine.UI.Control()
+                badge:SetParent(item)
+                badge:SetPosition(SAFE_LEFT - 10, 6)
+                badge:SetSize(10, 10)
+                badge:SetBackColor(deedColor)
+
+                local lbl = Turbine.UI.Label()
+                lbl:SetParent(item)
+                lbl:SetPosition(SAFE_LEFT - 10 + 16, 0)
+                lbl:SetSize(SAFE_RIGHT - SAFE_LEFT - 16, ROW_HEIGHT)
+                lbl:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiquaBold18)
+                -- 2026-10-14: violeta CLARO (con contorno se lee mejor)
+                lbl:SetForeColor(Turbine.UI.Color(210 / 255, 170 / 255, 1))
+                -- V15 (2026-09-05, mismo motivo/pedido que la fila de
+                -- misiones mas arriba): contorno vuelto a poner, el fondo
+                -- nuevo tiene demasiado detalle propio para leer color
+                -- solo.
+                lbl:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
+                lbl:SetFontStyle(Turbine.UI.FontStyle.Outline)
+                lbl:SetText(tostring(deed.NAME))
+
+                self.listBox:AddItem(item)
+            end
+        end
+    end
+
+    if count == 0 then
+        local empty = Turbine.UI.Control()
+        empty:SetSize(SAFE_RIGHT - 10, 26)
+
+        local lbl = Turbine.UI.Label()
+        lbl:SetParent(empty)
+        lbl:SetPosition(SAFE_LEFT - 10, 0)
+        lbl:SetSize(SAFE_RIGHT - SAFE_LEFT, 26)
+        lbl:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiqua12)
+        -- V2: gris (0.6,0.6,0.6) tenia buen contraste sobre el panel OSCURO
+        -- de antes -- sobre pergamino claro es casi invisible. HeadingGray
+        -- de MEMBookStyle (140,140,140) tampoco alcanzaria aca (pensado
+        -- para otro fondo); se usa un gris mas oscuro a mano, mismo
+        -- criterio que BodyText pero un poco mas claro para que se note
+        -- que es un estado "vacio", no una fila real.
+        lbl:SetForeColor(HUD_SUB) -- 2026-10-14: claro con contorno
+        -- V15 (2026-09-05, mismo motivo que las filas de arriba).
+        lbl:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
+        lbl:SetFontStyle(Turbine.UI.FontStyle.Outline)
+        lbl:SetText(HT("empty"))
+
+        self.listBox:AddItem(empty)
+    end
+end
+
+-- fila de antes (2026-10-14: queda de respaldo)
+function LQA.UI.QuestTrackerHUD:AddQuestRowOld(ndx, quest, data, esName)
                     local qType = ClassifyQuest(quest)
                     local qColor = QUEST_TYPE_COLOR[qType]
 
@@ -903,88 +1057,125 @@ function LQA.UI.QuestTrackerHUD:PopulateActive()
                     end
 
                     self.listBox:AddItem(item)
+end
+
+-- fila nueva (2026-10-14)
+function LQA.UI.QuestTrackerHUD:AddQuestRowModern(ndx, quest, data, esName)
+    local qType = ClassifyQuest(quest)
+    local nameColor = HUD_TYPE_LIGHT[qType] or HUD_TYPE_LIGHT.normal
+    local isGroup = qType == "group" and _G.GroupQuest ~= nil and GroupQuest.IsGroup(quest)
+    local rowW = SAFE_RIGHT - 10
+    local left = SAFE_LEFT - 10
+    local xBtnX = SAFE_RIGHT - 48
+    -- linea 1: pastilla de nivel (+ logo de grupo) + nombre
+    -- (ancho de la pastilla: se calcula igual que QuestTags.MakeLevelPill)
+    local pillW = (_G.QuestTags and QuestTags.LevelPillWidth) and QuestTags.LevelPillWidth(quest) or 0
+    local nameX = left + (pillW > 0 and (pillW + 4) or 0) + (isGroup and 18 or 0)
+    local nameW = xBtnX - 2 - nameX
+    local nameText, nameLines = FitName(esName, nameW, 2)
+    local nameH = nameLines * 20 + 2
+    local rowH = nameH + 2 + 24 + 4
+    local item = Turbine.UI.Control()
+    item:SetSize(rowW, rowH)
+    local clickOpen = function()
+        if _G.MainWindow then
+            _G.MainWindow:SetVisible(true)
+            _G.MainWindow:FocusQuest(ndx)
+        end
+    end
+    item.MouseClick = clickOpen
+
+    -- 2026-10-14: pastilla redondeada (Core/QuestTags.lua)
+    if _G.QuestTags and QuestTags.MakeLevelPill then
+        QuestTags.MakeLevelPill(item, left, 1, quest, clickOpen)
+    end
+
+    if isGroup then
+        local gi = Turbine.UI.Control()
+        gi:SetParent(item)
+        gi:SetPosition(left + (pillW > 0 and (pillW + 2) or 0), 3)
+        gi:SetSize(16, 16)
+        gi:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        gi:SetBackground(GroupQuest.ICON_16)
+        gi.MouseClick = clickOpen
+    end
+
+    local lbl = Turbine.UI.Label()
+    lbl:SetParent(item)
+    lbl:SetPosition(nameX, 0)
+    lbl:SetSize(nameW, nameH)
+    lbl:SetMultiline(nameLines > 1)
+    lbl:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiquaBold18)
+    lbl:SetForeColor(nameColor)
+    lbl:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
+    lbl:SetFontStyle(Turbine.UI.FontStyle.Outline)
+    lbl:SetTextAlignment(Turbine.UI.ContentAlignment.TopLeft)
+    lbl:SetText(nameText)
+    lbl.MouseClick = clickOpen
+    lbl.MouseHover = function()
+        QuestInfoTooltip.GetInstance():ShowFor(ndx, quest, esName)
+    end
+    lbl.MouseLeave = function()
+        QuestInfoTooltip.GetInstance():Hide()
+    end
+
+    -- linea 2: Narrar + progreso + barrita
+    local y2 = nameH + 2
+    local btnNarrar = LQA.UI.MEMBookStyle.CreateIconButtonAlpha("narrar_icon", 24, 24)
+    btnNarrar:SetParent(item)
+    btnNarrar:SetPosition(left, y2)
+    btnNarrar.ButtonClicked = function()
+        NarratorBridge.PlayQuestText(ndx, quest, esName)
+    end
+    local prog = data.progress
+    local cur, tot = nil, nil
+    if type(prog) == "string" then
+        cur, tot = prog:match("(%d+)%s*/%s*(%d+)")
+        cur, tot = tonumber(cur), tonumber(tot)
+    end
+    if prog ~= nil and prog ~= "" then
+        local pl = Turbine.UI.Label()
+        pl:SetParent(item)
+        pl:SetPosition(left + 30, y2 + 3)
+        pl:SetSize(46, 18)
+        pl:SetFont(HudFont("TrajanPro14", HudFont("Verdana12")))
+        pl:SetForeColor(Turbine.UI.Color(1, 215 / 255, 110 / 255))
+        pl:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
+        pl:SetFontStyle(Turbine.UI.FontStyle.Outline)
+        pl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+        pl:SetText(tostring(prog))
+        pl:SetMouseVisible(false)
+        if cur ~= nil and tot ~= nil and tot > 0 then
+            local bx, bw = left + 78, xBtnX - 6 - (left + 78)
+            if bw > 20 then
+                local track = Turbine.UI.Control()
+                track:SetParent(item)
+                track:SetPosition(bx, y2 + 10)
+                track:SetSize(bw, 5)
+                track:SetBackColor(Turbine.UI.Color(60 / 255, 44 / 255, 24 / 255))
+                track:SetMouseVisible(false)
+                local fw = math.floor((bw - 2) * math.min(1, cur / tot) + 0.5)
+                if fw > 0 then
+                    local fill = Turbine.UI.Control()
+                    fill:SetParent(track)
+                    fill:SetPosition(1, 1)
+                    fill:SetSize(fw, 3)
+                    fill:SetBackColor(Turbine.UI.Color(1, 205 / 255, 80 / 255))
+                    fill:SetMouseVisible(false)
                 end
             end
         end
     end
 
-    -- Sinergia con CubePlugins/DeedTracker (mismo dueño/autor, pedido
-    -- explicito del usuario): DeedTracker ya expone las proezas en curso en
-    -- el global compartido _G.LQA_InProgressDeeds[deedID]=true (ver
-    -- ChatLogger.lua) -- se muestran aca con una insignia de color distinta
-    -- (violeta) para diferenciarlas de las misiones (azul/verde). Guardado
-    -- defensivo con DataFiles and DataFiles._DEED_DATA: si DeedTracker no
-    -- esta instalado/activo, este bloque simplemente no agrega nada.
-    -- LIMITACION CONOCIDA: _G.LQA_InProgressDeeds nunca se limpia cuando una
-    -- proeza se completa (grep confirmado, no hay ninguna asignacion a nil
-    -- de esa clave en todo DeedTracker) -- una proeza que ya se completo puede seguir apareciendo
-    -- aca como "en curso" hasta que se cierre sesion. No se intento resolver
-    -- eso en esta pasada (requeriria exponer el estado real de completado de
-    -- DeedTracker via otro global, que hoy no existe).
-    if _G.LQA_InProgressDeeds and _G.DataFiles and _G.DataFiles._DEED_DATA then
-        for deedID, _ in pairs(_G.LQA_InProgressDeeds) do
-            local deed = _G.DataFiles._DEED_DATA[deedID]
-            if deed and deed.NAME then
-                count = count + 1
-
-                local item = Turbine.UI.Control()
-                item:SetSize(SAFE_RIGHT - 10, ROW_HEIGHT)
-
-                -- V4: pegado arriba (y=6), mismo criterio que la fila de
-                -- misiones (ver nota grande mas arriba).
-                -- V6: badge e texto ahora usan el MISMO violeta oscuro
-                -- (antes el badge era un lila claro (0.7,0.45,0.9) que no
-                -- coincidia con el texto oscuro -- se ven como si fueran
-                -- 2 colores de "deed" distintos). BookAntiqua16 ->
-                -- BookAntiquaBold18, mismo criterio de negrita/tamaño que
-                -- la fila de misiones.
-                local deedColor = Turbine.UI.Color(0.35, 0.20, 0.45)
-                local badge = Turbine.UI.Control()
-                badge:SetParent(item)
-                badge:SetPosition(SAFE_LEFT - 10, 6)
-                badge:SetSize(10, 10)
-                badge:SetBackColor(deedColor)
-
-                local lbl = Turbine.UI.Label()
-                lbl:SetParent(item)
-                lbl:SetPosition(SAFE_LEFT - 10 + 16, 0)
-                lbl:SetSize(SAFE_RIGHT - SAFE_LEFT - 16, ROW_HEIGHT)
-                lbl:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiquaBold18)
-                lbl:SetForeColor(deedColor)
-                -- V15 (2026-09-05, mismo motivo/pedido que la fila de
-                -- misiones mas arriba): contorno vuelto a poner, el fondo
-                -- nuevo tiene demasiado detalle propio para leer color
-                -- solo.
-                lbl:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
-                lbl:SetFontStyle(Turbine.UI.FontStyle.Outline)
-                lbl:SetText(tostring(deed.NAME))
-
-                self.listBox:AddItem(item)
-            end
-        end
+    -- X: misma columna siempre, centrada en la fila
+    local btnHide = LQA.UI.MEMBookStyle.CreateIconButtonAlpha("desmarcar_icon", 32, 32)
+    btnHide:SetParent(item)
+    btnHide:SetPosition(xBtnX, math.floor((rowH - 32) / 2))
+    btnHide.ButtonClicked = function()
+        data.hidden = true
+        QuestStateManager.Save()
+        self:PopulateActive()
     end
 
-    if count == 0 then
-        local empty = Turbine.UI.Control()
-        empty:SetSize(SAFE_RIGHT - 10, 26)
-
-        local lbl = Turbine.UI.Label()
-        lbl:SetParent(empty)
-        lbl:SetPosition(SAFE_LEFT - 10, 0)
-        lbl:SetSize(SAFE_RIGHT - SAFE_LEFT, 26)
-        lbl:SetFont(LQA.UI.MEMBookStyle.Font.BookAntiqua12)
-        -- V2: gris (0.6,0.6,0.6) tenia buen contraste sobre el panel OSCURO
-        -- de antes -- sobre pergamino claro es casi invisible. HeadingGray
-        -- de MEMBookStyle (140,140,140) tampoco alcanzaria aca (pensado
-        -- para otro fondo); se usa un gris mas oscuro a mano, mismo
-        -- criterio que BodyText pero un poco mas claro para que se note
-        -- que es un estado "vacio", no una fila real.
-        lbl:SetForeColor(Turbine.UI.Color(0.45, 0.42, 0.38))
-        -- V15 (2026-09-05, mismo motivo que las filas de arriba).
-        lbl:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
-        lbl:SetFontStyle(Turbine.UI.FontStyle.Outline)
-        lbl:SetText(HT("empty"))
-
-        self.listBox:AddItem(empty)
-    end
+    self.listBox:AddItem(item)
 end

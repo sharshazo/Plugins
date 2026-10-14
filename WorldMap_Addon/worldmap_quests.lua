@@ -829,6 +829,13 @@ local function PollRegional()
     if zn ~= nil then
         Q.player.zone = zn
     end
+    -- v3.12: aviso de hazañas al entrar a la zona
+    if zn ~= nil then
+        local D = WorldMapAddon.Deeds
+        if D ~= nil and type(D.OnEnterZone) == "function" then
+            pcall(D.OnEnterZone, zn)
+        end
+    end
 end
 
 -- primera zona al arrancar (solo si todavia no se sabe ninguna)

@@ -1097,6 +1097,9 @@ end
 -- en el centroide del poligono con un ancho amplio -- nunca falla.
 local LABEL_LINE_H = 16
 local DEEDBAR_W, DEEDBAR_H, DEEDBAR_TXT_W = 36, 5, 30
+-- v3.14 (pedido del jugador): el % de hazañas ya no va en el mapa del
+-- mundo; va dentro de cada zona (worldmap_zonemap.lua, _refreshDeedPanel)
+local WORLD_DEED_BARS = false
 local LABEL_NAME_HEX = "#FFFFFF"
 local LABEL_LEVEL_HEX = "#EEE0B4"
 
@@ -1159,7 +1162,7 @@ function WorldMapAddon.UI.WorldMap:_buildZoneLabels()
         -- v3.11 (pedido del jugador): barrita con el % de hazañas hechas
         -- (Deed Tracker) debajo del nivel de cada zona que tiene hazañas
         pcall(function()
-            if Deeds ~= nil and Deeds.ZoneData ~= nil and Deeds.ZoneData(zone) ~= nil then
+            if WORLD_DEED_BARS and Deeds ~= nil and Deeds.ZoneData ~= nil and Deeds.ZoneData(zone) ~= nil then
                 local by = top + nameH - 2 + (hasLevel and (LABEL_LINE_H + 2) or 0) + 1
                 local bx = math.floor(cx - (DEEDBAR_W + DEEDBAR_TXT_W + 3) / 2)
                 local bg = Turbine.UI.Control()
@@ -2344,8 +2347,9 @@ function WorldMapAddon.UI.WorldMap:_buildTooltip()
     -- dos adornos de las esquinas, fuera de los 5 huecos del marco)
     self.tooltipQuests = Turbine.UI.Label()
     self.tooltipQuests:SetParent(self.tooltip)
-    self.tooltipQuests:SetPosition(40, 288)
-    self.tooltipQuests:SetSize(TooltipData.CanvasWidth - 80, 30)
+    -- v3.12: 3 renglones (el tercero: recompensas que faltan)
+    self.tooltipQuests:SetPosition(40, 284)
+    self.tooltipQuests:SetSize(TooltipData.CanvasWidth - 80, 44)
     self.tooltipQuests:SetMultiline(true)
     self.tooltipQuests:SetFont(Turbine.UI.Lotro.Font.Verdana12)
     self.tooltipQuests:SetForeColor(HexToColor("#F0D9A0"))
@@ -2418,6 +2422,20 @@ function WorldMapAddon.UI.WorldMap:_showTooltipFor(zone, localX, localY)
             end
         elseif deedsTxt ~= "" then
             summary = deedsTxt .. "\nClic en la zona: verlas"
+        end
+        -- v3.12: recompensas de las hazañas que faltan en la zona
+        if Deeds ~= nil and Deeds.RemainingText ~= nil then
+            local okR, rt = pcall(Deeds.RemainingText, zone)
+            if okR and type(rt) == "string" and rt ~= "" then
+                -- (v3.12.1: antes del "Clic en la zona", asi si el texto no
+                -- entra lo que se corta es la ayuda y no lo que falta)
+                local a, b = summary:find("\nClic en la zona", 1, true)
+                if a ~= nil then
+                    summary = summary:sub(1, a - 1) .. "\n" .. rt .. summary:sub(a)
+                else
+                    summary = (summary ~= "" and (summary .. "\n") or "") .. rt
+                end
+            end
         end
         self.tooltipQuests:SetText(summary)
     end
@@ -2790,6 +2808,16 @@ local function ModernPanel(w, h)
     win.SetText = function(self, t) title:SetText(t) end
     win.GetText = function(self) return title:GetText() end
     win.modern = true
+    -- v3.12 (pedido del jugador): Escape la cierra, como las ventanas del juego
+    pcall(function()
+        local esc = (Turbine.UI.Lotro.Action ~= nil and Turbine.UI.Lotro.Action.Escape) or 0x91
+        win:SetWantsKeyEvents(true)
+        win.KeyDown = function(sender, args)
+            if args ~= nil and (args.Action == esc or args.Action == 0x91) and win:IsVisible() then
+                win:SetVisible(false)
+            end
+        end
+    end)
     return win
 end
 -- v3.11: tambien para la ventana de opciones (worldmap_options.lua)
@@ -3492,7 +3520,15 @@ function WorldMapAddon.UI.WorldMap:_updateDeedProgress()
     end
     self:_setDeedBar(c.done, c.total)
     self.tooltipQuestsZone = false  -- el cartel de la zona se recalcula
-    self.qpSummary:SetText(c.total > 0 and ("Completadas " .. c.done .. " de " .. c.total) or "")
+    local sumTxt = c.total > 0 and ("Completadas " .. c.done .. " de " .. c.total) or ""
+    -- v3.12: lo que falta ganar en la zona
+    if sumTxt ~= "" and Deeds.RemainingText ~= nil then
+        local okR, rt = pcall(Deeds.RemainingText, zone)
+        if okR and type(rt) == "string" and rt ~= "" then
+            sumTxt = c.done .. "/" .. c.total .. "  \194\183  " .. rt
+        end
+    end
+    self.qpSummary:SetText(sumTxt)
     self.qpTabDeeds:SetText("Haza\195\177as (" .. Deeds.Percent(c.done, c.total) .. "%)")
     for s = 1, 3 do
         local head = self.qpSectionLabels and self.qpSectionLabels[s]
@@ -3521,6 +3557,12 @@ end
 function WorldMapAddon.UI.WorldMap:_onDeedStatus()
     self.tooltipQuestsZone = false  -- el cartel de la zona se recalcula
     pcall(function() self:_refreshDeedBars() end)
+    -- v3.14: la tarjeta de % de la zona abierta
+    pcall(function()
+        if self.zoneMode and self.zoneView ~= nil then
+            self.zoneView:_refreshDeedPanel()
+        end
+    end)
     if self.questPanel == nil or self.questPanel:IsVisible() ~= true or self.qpZone == nil then
         return
     end

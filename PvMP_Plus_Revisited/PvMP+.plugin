@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<Plugin>
+  <Information>
+    <Name>PvMP+</Name>
+    <Author>Urundus</Author>
+    <Version>4.3.3</Version>
+    <Description>PvMP+ keeps track of your PvMP progress. / PvMP+ sigue tu progreso en JcJ (PvMP).</Description>
+    <Image>PvMP_Plus_Revisited/PvMP_Plus/Resources/Icon.tga</Image>
+  </Information>
+  <Package>PvMP_Plus_Revisited.PvMP_Plus.Main</Package>
+    <Configuration Apartment="PvMP+" />
+</Plugin>

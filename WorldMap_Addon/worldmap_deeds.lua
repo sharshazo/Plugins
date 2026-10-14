@@ -77,6 +77,12 @@ local function Changed()
     if type(D.onChange) == "function" then
         pcall(D.onChange)
     end
+    -- v3.12.1: aviso de zona que esperaba los datos de Deed Tracker
+    if D.toastPending ~= nil and D.status ~= nil and D.ShowZoneToast ~= nil then
+        local z = D.toastPending
+        D.toastPending = nil
+        pcall(D.ShowZoneToast, z)
+    end
     local map = WorldMapAddon.instance
     if map ~= nil and type(map._onDeedStatus) == "function" then
         pcall(map._onDeedStatus, map)
@@ -374,12 +380,240 @@ function D.Open(id)
 end
 
 -- texto corto para el cartel de la zona ("" si la zona no tiene hazañas)
+-- v3.12 (pedido del jugador): recompensas que faltan en la zona (hazañas
+-- sin hacer): { vxp = XP de virtud, lp = puntos LOTRO, n = hazañas }.
+-- Datos de worldmap_deedinfo_data.lua; sin ese archivo, nil.
+function D.Remaining(zone)
+    local I = WorldMapAddon.DeedInfo
+    local data = D.ZoneData(zone)
+    if data == nil or type(I) ~= "table" or type(I.D) ~= "table" then
+        return nil
+    end
+    local res, seen = { vxp = 0, lp = 0, n = 0 }, {}
+    for s = 1, 3 do
+        for _, row in ipairs(data[s] or {}) do
+            local id = row.h == nil and row[1] or nil
+            if id ~= nil and not seen[id] then
+                seen[id] = true
+                if not D.IsDone(id) then
+                    local d = I.D[tonumber(id) or id]
+                    if d ~= nil then
+                        res.vxp = res.vxp + (tonumber(d[5]) or 0)
+                        res.lp = res.lp + (tonumber(d[6]) or 0)
+                        res.n = res.n + 1
+                    end
+                end
+            end
+        end
+    end
+    return res
+end
+
+-- "Faltan: 12.000 XP virtud · 45 LOTRO" (o "" si no falta nada)
+function D.RemainingText(zone)
+    local ok, r = pcall(D.Remaining, zone)
+    if not ok or r == nil or (r.vxp <= 0 and r.lp <= 0) then
+        return ""
+    end
+    local function th(n)
+        local t = tostring(math.floor(n))
+        local out = t:reverse():gsub("(%d%d%d)", "%1."):reverse()
+        return (out:gsub("^%.", ""))
+    end
+    local parts = {}
+    if r.vxp > 0 then parts[#parts + 1] = th(r.vxp) .. " XP virtud" end
+    if r.lp > 0 then parts[#parts + 1] = th(r.lp) .. " LOTRO" end
+    return "Faltan: " .. table.concat(parts, " \194\183 ")
+end
+
 function D.SummaryText(zone)
     local ok, c = pcall(D.Counts, zone)
     if not ok or c == nil or c.total == 0 then
         return ""
     end
     return "Haza\195\177as " .. c.done .. "/" .. c.total
+end
+
+-- ---------------------------------------------------------------------
+-- v3.12 (pedido del jugador): aviso al ENTRAR a una zona (canal Regional)
+-- con las hazañas que faltan ahi, las de exploracion y las recompensas.
+-- Tarjeta oscura arriba al centro, 8 s, sin mouse. Opcion "zonetoast".
+-- ---------------------------------------------------------------------
+local TOAST_RES = "WorldMap_Addon/assets/worldmap/icon/"
+local TOAST_W, TOAST_R, TOAST_SECS = 360, 12, 8
+local function TColor(r, g, b, a) return Turbine.UI.Color(a or 1, r / 255, g / 255, b / 255) end
+
+local function BuildToast()
+    local t = {}
+    local win = Turbine.UI.Window()
+    win:SetSize(TOAST_W, 96)
+    win:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+    win:SetZOrder(0x7FFFFFF0)
+    win:SetMouseVisible(false)
+    win:SetVisible(false)
+    t.win = win
+    local function box(color)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetMouseVisible(false)
+        k:SetBackColor(color)
+        return k
+    end
+    local function img(file, w, h)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetSize(w, h)
+        k:SetBackground(TOAST_RES .. file)
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function label(font, color)
+        local l = Turbine.UI.Label()
+        l:SetParent(win)
+        l:SetFont(font)
+        l:SetForeColor(color)
+        l:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+        l:SetMouseVisible(false)
+        return l
+    end
+    local bg, border = TColor(16, 18, 24, 0.96), TColor(60, 66, 80)
+    t.tl, t.tr = img("card_tl.tga", TOAST_R, TOAST_R), img("card_tr.tga", TOAST_R, TOAST_R)
+    t.bl, t.br = img("card_bl.tga", TOAST_R, TOAST_R), img("card_br.tga", TOAST_R, TOAST_R)
+    t.top, t.mid, t.bot = box(bg), box(bg), box(bg)
+    t.lineT, t.lineB, t.lineL, t.lineR = box(border), box(border), box(border), box(border)
+    t.accent = box(TColor(80, 170, 255))
+    t.icon = img("fl_exploracion_32.tga", 32, 32)
+    local F = Turbine.UI.Lotro.Font
+    t.title = label(F.Verdana16 or F.Verdana14, TColor(245, 248, 255))
+    t.l1 = label(F.Verdana12, TColor(140, 170, 210))
+    t.l2 = label(F.Verdana12, TColor(124, 224, 124))
+    t.l3 = label(F.Verdana12, TColor(240, 208, 96))
+    -- se esconde sola a los TOAST_SECS segundos
+    t.timer = Turbine.UI.Control()
+    t.timer.Update = function()
+        local okT, now = pcall(Turbine.Engine.GetGameTime)
+        if not okT or t.hideAt == nil or now >= t.hideAt then
+            t.hideAt = nil
+            pcall(function() win:SetVisible(false) end)
+            t.timer:SetWantsUpdates(false)
+        end
+    end
+    return t
+end
+
+local function LayoutToast(t, lines)
+    local W, R = TOAST_W, TOAST_R
+    local H = 16 + 22 + (#lines * 17) + 12
+    t.win:SetSize(W, H)
+    t.tl:SetPosition(0, 0); t.tr:SetPosition(W - R, 0)
+    t.bl:SetPosition(0, H - R); t.br:SetPosition(W - R, H - R)
+    t.top:SetPosition(R, 0); t.top:SetSize(W - 2 * R, R)
+    t.mid:SetPosition(0, R); t.mid:SetSize(W, H - 2 * R)
+    t.bot:SetPosition(R, H - R); t.bot:SetSize(W - 2 * R, R)
+    t.lineT:SetPosition(R, 0); t.lineT:SetSize(W - 2 * R, 1)
+    t.lineB:SetPosition(R, H - 1); t.lineB:SetSize(W - 2 * R, 1)
+    t.lineL:SetPosition(0, R); t.lineL:SetSize(1, H - 2 * R)
+    t.lineR:SetPosition(W - 1, R); t.lineR:SetSize(1, H - 2 * R)
+    t.accent:SetPosition(1, R); t.accent:SetSize(4, H - 2 * R)
+    t.icon:SetPosition(14, 14)
+    t.title:SetPosition(56, 12); t.title:SetSize(W - 70, 22)
+    local labels = { t.l1, t.l2, t.l3 }
+    for i, l in ipairs(labels) do
+        if lines[i] ~= nil then
+            l:SetPosition(56, 36 + (i - 1) * 17)
+            l:SetSize(W - 70, 16)
+            l:SetText(lines[i])
+            l:SetVisible(true)
+        else
+            l:SetVisible(false)
+        end
+    end
+    local dw = Turbine.UI.Display.GetWidth()
+    t.win:SetPosition(math.floor((dw - W) / 2), 110)
+end
+
+-- textos del aviso para una zona del mapa (o nil si no hay nada que avisar)
+function D.ToastLines(zone)
+    local c = D.Counts(zone)
+    if c == nil or c.total <= 0 or c.done >= c.total then
+        return nil
+    end
+    local lines = { "Te faltan " .. (c.total - c.done) .. " haza\195\177as (" .. D.Percent(c.done, c.total) .. "% hechas)" }
+    local I = WorldMapAddon.DeedInfo
+    local data = D.ZoneData(zone)
+    if type(I) == "table" and type(I.D) == "table" and data ~= nil then
+        local n, seen = 0, {}
+        for s = 1, 3 do
+            for _, row in ipairs(data[s] or {}) do
+                local id = row.h == nil and row[1] or nil
+                if id ~= nil and not seen[id] then
+                    seen[id] = true
+                    local d = I.D[tonumber(id) or id]
+                    if d ~= nil and tonumber(d[3]) == 103 and not D.IsDone(id) then
+                        n = n + 1
+                    end
+                end
+            end
+        end
+        if n > 0 then
+            lines[#lines + 1] = "Exploraci\195\179n sin hacer: " .. n
+        end
+    end
+    local rt = D.RemainingText(zone)
+    if rt ~= "" then
+        lines[#lines + 1] = rt
+    end
+    return lines
+end
+
+function D.ShowZoneToast(zone)
+    local O = WorldMapAddon.Options
+    if O ~= nil and O.Get ~= nil and O.Get("zonetoast") == false then
+        return false
+    end
+    if zone == nil or zone == D.toastZone then
+        return false
+    end
+    -- v3.12.1: hasta que llegue el guardado de Deed Tracker los conteos
+    -- saldrian en 0% (al entrar al juego): se espera y se muestra despues
+    if D.status == nil or D.loading == true then
+        D.toastPending = zone
+        pcall(D.RefreshStatus, false)
+        return false
+    end
+    local lines = D.ToastLines(zone)
+    if lines == nil then
+        return false
+    end
+    D.toastZone = zone
+    if D.toast == nil then
+        D.toast = BuildToast()
+    end
+    local t = D.toast
+    t.title:SetText(zone.nombre or zone.nombre_original or "")
+    LayoutToast(t, lines)
+    t.hideAt = Turbine.Engine.GetGameTime() + TOAST_SECS
+    t.win:SetVisible(true)
+    t.timer:SetWantsUpdates(true)
+    return true
+end
+
+-- lo llama worldmap_quests.lua cuando el canal Regional dice que se entro a
+-- otra zona (nombre_original del mapa)
+function D.OnEnterZone(zoneName)
+    pcall(function()
+        local Z = WorldMapAddon.Data and WorldMapAddon.Data.Zones or nil
+        if type(Z) ~= "table" or zoneName == nil then
+            return
+        end
+        for _, z in ipairs(Z) do
+            if z.nombre_original == zoneName then
+                D.ShowZoneToast(z)
+                return
+            end
+        end
+    end)
 end
 
 -- al cargar el plugin: primera lectura (asincronica) de todo
