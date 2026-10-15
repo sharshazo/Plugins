@@ -31,6 +31,17 @@ local ICONS = {
     server_clock = ICON_DIR .. "server_clock.tga",
     vault = ICON_DIR .. "vault.tga",
     shared = ICON_DIR .. "shared.tga",
+    hero = ICON_DIR .. "hero.tga",
+    equip = ICON_DIR .. "equip.tga",
+    lp = ICON_DIR .. "lotro_points.tga",
+    -- iconos originales del juego (los mismos que usa TitanBar)
+    game_sun = 0x4101f898,
+    game_moon = 0x4101f89a,
+}
+
+-- clases de Monster Play sin icono en LUI (ids de TitanBar)
+local CREEP_CLASS_ICONS = {
+    [52] = 0x41007dde, [71] = 0x41007ddd, [126] = 0x41007de1, [127] = 0x41007de0, [179] = 0x41007ddf,
 }
 StatusBarWidgets.TitanIcons = ICONS
 
@@ -70,12 +81,25 @@ local D = {
     vault_cap = nil,
     shared_used = nil,
     shared_cap = nil,
+    -- cuantos widgets usan cada dato: solo se lee lo que esta en la barra
+    pvp_users = 0,
+    vault_users = 0,
+    shared_users = 0,
+    -- puntos LOTRO: total (si lo pusiste en Opciones) y ganados en la sesion
+    lp = nil,
+    lp_loaded = false,
+    lp_pending = 0,
+    lp_session = 0,
+    -- ventanita de detalles (al pasar el raton o hacer clic)
+    tip = nil,
+    tip_owner = nil,
 }
 StatusBarWidgets.TitanData = D
 
 local REP_KEY = "LUI_TitanRep"
 local VAULT_KEY = "LUI_TitanVault"
 local SHARED_KEY = "LUI_TitanShared"
+local LP_KEY = "LUI_TitanLP"
 
 local function _num(text)
     local digits = string.gsub(tostring(text or ""), "[^%d]", "")
@@ -96,6 +120,46 @@ local REP_PATTERNS = {
     { "de la faction (.-) a augment\195\169 de ([%d,%.]+)", 1 },
     { "de la faction (.-) a diminu\195\169 de ([%d,%.]+)", -1 },
 }
+
+-- "You've earned 10 LOTRO Points" (en / fr / de; tambien el nombre viejo "Turbine Points")
+local LP_PATTERNS = {
+    "earned ([%d,%.]+) LOTRO Points",
+    "earned ([%d,%.]+) Turbine Points",
+    "gagn\195\169 ([%d,%.]+) points LOTRO",
+    "gagn\195\169 ([%d,%.]+) points Turbine",
+    "habt ([%d,%.]+) LOTRO%-Punkte",
+    "habt ([%d,%.]+) Punkte erhalten",
+}
+
+local function _save_lp()
+    if D.lp ~= nil then
+        _save(Turbine.DataScope.Account, LP_KEY, { points = tostring(D.lp) })
+    end
+end
+
+function D.add_lp(n)
+    D.lp_session = D.lp_session + n
+    if D.lp_loaded == true then
+        if D.lp ~= nil then
+            D.lp = D.lp + n
+            _save_lp()
+        end
+    else
+        D.lp_pending = D.lp_pending + n
+    end
+end
+
+-- desde Opciones: el total que muestra el juego (tienda); despues suma solo
+function D.set_lp(n)
+    n = tonumber(n)
+    if n == nil or n < 0 then
+        return
+    end
+    D.lp = math.floor(n)
+    D.lp_loaded = true
+    D.lp_pending = 0
+    _save_lp()
+end
 
 local PVP_WORDS = { "infamy points", "renown points", "Verrufenheit", "Ruhm", "infamie", "renomm\195\169e" }
 
@@ -119,6 +183,21 @@ local function _on_chat(_, args)
                     _save(Turbine.DataScope.Character, REP_KEY, { name = name, amount = tostring(n) })
                 end
                 break
+            end
+        end
+    end
+    if string.find(msg, "oints", 1, true) ~= nil or string.find(msg, "Punkte", 1, true) ~= nil then
+        local adv = Turbine.ChatType ~= nil and Turbine.ChatType.Advancement or nil
+        if adv == nil or args.ChatType == adv then
+            for i = 1, #LP_PATTERNS do
+                local amount = string.match(msg, LP_PATTERNS[i])
+                if amount ~= nil then
+                    local n = _num(amount)
+                    if n ~= nil and n > 0 and n < 100000 then
+                        D.add_lp(n)
+                    end
+                    break
+                end
             end
         end
     end
@@ -159,7 +238,23 @@ local function _load_saved()
             D.shared_used, D.shared_cap = tonumber(data.used), tonumber(data.cap)
         end
     end)
-    _load_pvp()
+    pcall(Turbine.PluginData.Load, Turbine.DataScope.Account, LP_KEY, function(data)
+        if D.lp_loaded == true then
+            return
+        end
+        D.lp_loaded = true
+        local saved = type(data) == "table" and tonumber(data.points) or nil
+        if saved ~= nil then
+            D.lp = saved + D.lp_pending
+            if D.lp_pending > 0 then
+                _save_lp()
+            end
+        end
+        D.lp_pending = 0
+    end)
+    if D.pvp_users > 0 then
+        _load_pvp()
+    end
 end
 
 -- baul / almacen: solo se pueden leer mientras estan abiertos (disponibles)
@@ -193,15 +288,19 @@ function D.tick(now)
     if D.load_at ~= nil and now >= D.load_at then
         D.load_at = nil
         _load_saved()
-        D.pvp_next_reload = now + 120
+        D.pvp_next_reload = now + 600
     end
-    if (D.pvp_reload_at ~= nil and now >= D.pvp_reload_at) or (D.load_at == nil and now >= D.pvp_next_reload) then
+    if D.pvp_users > 0 and ((D.pvp_reload_at ~= nil and now >= D.pvp_reload_at) or (D.load_at == nil and now >= D.pvp_next_reload)) then
         D.pvp_reload_at = nil
-        D.pvp_next_reload = now + 120
+        D.pvp_next_reload = now + 600   -- respaldo; lo normal es releer al ganar puntos
         _load_pvp()
     end
-    _read_storage("GetVault", "vault_used", "vault_cap", Turbine.DataScope.Character, VAULT_KEY)
-    _read_storage("GetSharedStorage", "shared_used", "shared_cap", Turbine.DataScope.Server, SHARED_KEY)
+    if D.vault_users > 0 then
+        _read_storage("GetVault", "vault_used", "vault_cap", Turbine.DataScope.Character, VAULT_KEY)
+    end
+    if D.shared_users > 0 then
+        _read_storage("GetSharedStorage", "shared_used", "shared_cap", Turbine.DataScope.Server, SHARED_KEY)
+    end
 end
 
 function D.acquire()
@@ -237,6 +336,43 @@ local function _fmt(n)
     return out
 end
 
+-- ventanita de detalles: una sola para todos, se crea la primera vez
+local function _tip()
+    if D.tip == nil then
+        local ok, tip = pcall(function()
+            local t = _G.LUI.UI.Widgets.LuiTooltip()
+            t:SetZOrder(2200)
+            return t
+        end)
+        if ok == true then
+            D.tip = tip
+        end
+    end
+    return D.tip
+end
+
+local function _show_tip(self)
+    if self._tips_on == false or self.tooltip_text == nil then
+        return
+    end
+    local ok, text = pcall(self.tooltip_text, self)
+    if ok ~= true or type(text) ~= "string" or text == "" then
+        return
+    end
+    local tip = _tip()
+    if tip ~= nil then
+        D.tip_owner = self
+        pcall(tip.ShowFor, tip, self, text)
+    end
+end
+
+local function _hide_tip(self)
+    if D.tip ~= nil and (self == nil or D.tip_owner == self) then
+        D.tip_owner = nil
+        pcall(D.tip.Hide, D.tip)
+    end
+end
+
 local function _init(self, key, widget_w, bar_h, font, content_alignment, icon_path, default_alignment)
     WidgetBase.Constructor(self, key, widget_w, bar_h, font, content_alignment or default_alignment, icon_path)
     self._has_icon = icon_path ~= nil
@@ -244,7 +380,28 @@ local function _init(self, key, widget_w, bar_h, font, content_alignment, icon_p
     self._base_color = font ~= nil and font.color or nil
     self._color_key = "base"
     self._next = 0
+    self._tips_on = true
+    -- la barra encadena estos eventos (clic derecho = menu, resaltado)
+    self.MouseEnter = function()
+        _show_tip(self)
+    end
+    self.MouseLeave = function()
+        _hide_tip(self)
+    end
+    self.MouseClick = function(_, args)
+        if args == nil or args.Button == Turbine.UI.MouseButton.Left then
+            _show_tip(self)
+        end
+    end
     D.acquire()
+end
+
+-- modo edicion de la barra: sin ventanita
+local function _set_interaction(self, enabled)
+    self._tips_on = enabled == true
+    if self._tips_on ~= true then
+        _hide_tip(self)
+    end
 end
 
 local function _set_color(self, key, color)
@@ -275,10 +432,14 @@ local function _throttle(self, now, every)
         return false
     end
     self._next = now + (every or 1)
+    if D.tip_owner == self then
+        _show_tip(self)   -- la ventanita abierta se actualiza sola
+    end
     return true
 end
 
 local function _destroy(self)
+    _hide_tip(self)
     D.release()
     WidgetBase.destroy(self)
 end
@@ -397,6 +558,10 @@ function PvpRankWidget:Constructor(widget_w, bar_h, font, icon_path, cfg)
         return Turbine.Gameplay.LocalPlayer.GetInstance():GetAlignment() == Turbine.Gameplay.Alignment.MonsterPlayer
     end)
     self._creep = ok and creep == true
+    D.pvp_users = D.pvp_users + 1
+    if D.pvp_points == nil and D.load_at == nil then
+        D.pvp_reload_at = Turbine.Engine.GetGameTime()   -- puesto despues de entrar: leer ya
+    end
     self:set_text("--")
 end
 
@@ -422,7 +587,10 @@ function PvpRankWidget:update(now)
     _set_icon(self, rank >= 1 and icons[rank] or ICONS.swords)
 end
 
-PvpRankWidget.destroy = _destroy
+function PvpRankWidget:destroy()
+    D.pvp_users = math.max(0, D.pvp_users - 1)
+    _destroy(self)
+end
 
 ---------------------------------------------------------------------
 -- Dia y noche de la Tierra Media (formula de TitanBar / PredictInGameTime)
@@ -473,7 +641,7 @@ function DayNightWidget:update(now)
     end
     self:set_text(text)
     _set_color(self, kind, COLORS[kind == "day" and "day" or (kind == "dusk" and "dusk" or "night")])
-    _set_icon(self, kind == "day" and ICONS.sun or (kind == "dusk" and ICONS.dusk or ICONS.moon))
+    _set_icon(self, (kind == "day" or name == "Dawn") and ICONS.game_sun or ICONS.game_moon)
 end
 
 DayNightWidget.destroy = _destroy
@@ -533,6 +701,7 @@ StatusBarWidgets.TitanVaultWidget = VaultWidget
 function VaultWidget:Constructor(widget_w, bar_h, font, icon_path, cfg)
     _init(self, "vault", widget_w, bar_h, font, cfg ~= nil and cfg.content_alignment or nil, icon_path,
         Turbine.UI.ContentAlignment.MiddleRight)
+    D.vault_users = D.vault_users + 1
     self:set_text("--/--")
 end
 
@@ -542,7 +711,10 @@ function VaultWidget:update(now)
     end
 end
 
-VaultWidget.destroy = _destroy
+function VaultWidget:destroy()
+    D.vault_users = math.max(0, D.vault_users - 1)
+    _destroy(self)
+end
 
 local SharedStorageWidget = class(WidgetBase)
 StatusBarWidgets.TitanSharedStorageWidget = SharedStorageWidget
@@ -550,6 +722,7 @@ StatusBarWidgets.TitanSharedStorageWidget = SharedStorageWidget
 function SharedStorageWidget:Constructor(widget_w, bar_h, font, icon_path, cfg)
     _init(self, "shared_storage", widget_w, bar_h, font, cfg ~= nil and cfg.content_alignment or nil, icon_path,
         Turbine.UI.ContentAlignment.MiddleRight)
+    D.shared_users = D.shared_users + 1
     self:set_text("--/--")
 end
 
@@ -559,4 +732,363 @@ function SharedStorageWidget:update(now)
     end
 end
 
-SharedStorageWidget.destroy = _destroy
+function SharedStorageWidget:destroy()
+    D.shared_users = math.max(0, D.shared_users - 1)
+    _destroy(self)
+end
+
+---------------------------------------------------------------------
+-- (2026-10-15) Info del personaje, puntuacion del equipo y puntos LOTRO
+---------------------------------------------------------------------
+
+local NICE_NAMES = {
+    LoreMaster = "Lore-master", RuneKeeper = "Rune-keeper", HighElf = "High Elf",
+    StoutAxe = "Stout-axe Dwarf", RiverHobbit = "River Hobbit", WarLeader = "Warleader",
+    BlackArrow = "Black Arrow", WeaverSpider = "Weaver", StalkerSpider = "Stalker",
+}
+
+-- nombre de un valor de un enum del juego (Turbine.Gameplay.Class.Guardian -> "Guardian")
+local function _enum_name(enum, value)
+    if type(enum) ~= "table" or value == nil then
+        return nil
+    end
+    local found = nil
+    pcall(function()
+        for k, v in pairs(enum) do
+            if v == value and type(k) == "string" then
+                found = k
+                break
+            end
+        end
+    end)
+    if found == nil then
+        return nil
+    end
+    return TR[NICE_NAMES[found] or found]
+end
+
+local function _player()
+    local ok, player = pcall(Turbine.Gameplay.LocalPlayer.GetInstance)
+    if ok == true then
+        return player
+    end
+    return nil
+end
+
+local function _call(obj, method)
+    if obj == nil or obj[method] == nil then
+        return nil
+    end
+    local ok, v = pcall(obj[method], obj)
+    if ok == true then
+        return v
+    end
+    return nil
+end
+
+-- Info del personaje: nivel y clase (detalles: nombre, raza)
+local CharInfoWidget = class(WidgetBase)
+StatusBarWidgets.TitanCharInfoWidget = CharInfoWidget
+
+function CharInfoWidget:Constructor(widget_w, bar_h, font, icon_path, cfg)
+    _init(self, "char_info", widget_w, bar_h, font, cfg ~= nil and cfg.content_alignment or nil, icon_path,
+        Turbine.UI.ContentAlignment.MiddleLeft)
+    self:set_text("--")
+end
+
+function CharInfoWidget:_read()
+    local p = _player()
+    local gp = Turbine.Gameplay
+    local cls = _call(p, "GetClass")
+    return {
+        name = _call(p, "GetName"),
+        level = tonumber(_call(p, "GetLevel")),
+        class = _enum_name(gp.Class, cls),
+        class_id = cls,
+        race = _enum_name(gp.Race, _call(p, "GetRace")),
+    }
+end
+
+-- icono original de la clase (el mismo de los marcos de grupo de LUI)
+local function _class_icon(cls)
+    if cls == nil then
+        return nil
+    end
+    local utils = _G.LUI.Utils
+    if utils ~= nil and utils.get_class_icon ~= nil then
+        local ok, icon = pcall(utils.get_class_icon, cls)
+        if ok == true and icon ~= nil then
+            return icon
+        end
+    end
+    return CREEP_CLASS_ICONS[cls]
+end
+
+function CharInfoWidget:update(now)
+    if not _throttle(self, now, 5) then
+        return
+    end
+    local i = self:_read()
+    if i.level == nil then
+        self:set_text("--")
+        return
+    end
+    if self._class_icon_for ~= i.class_id then
+        self._class_icon_for = i.class_id
+        local icon = _class_icon(i.class_id)
+        if icon ~= nil then
+            _set_icon(self, icon)
+        end
+    end
+    local text = TR["Lv."] .. " " .. i.level
+    if i.class ~= nil then
+        text = text .. " \194\183 " .. i.class
+    end
+    self:set_text(text)
+end
+
+function CharInfoWidget:tooltip_text()
+    local i = self:_read()
+    local lines = { i.name or TR["Character"] }
+    if i.level ~= nil then
+        lines[#lines + 1] = TR["Level"] .. ": " .. i.level
+    end
+    if i.race ~= nil then
+        lines[#lines + 1] = TR["Race"] .. ": " .. i.race
+    end
+    if i.class ~= nil then
+        lines[#lines + 1] = TR["Class"] .. ": " .. i.class
+    end
+    return table.concat(lines, "\n")
+end
+
+CharInfoWidget.destroy = _destroy
+
+-- Puntuacion del equipo (como TitanBar: calidad + durabilidad de cada pieza)
+local QUALITY_POINTS = { Legendary = 250, Incomparable = 200, Rare = 150, Uncommon = 100, Common = 50 }
+local QUALITY_ORDER = { "Legendary", "Incomparable", "Rare", "Uncommon", "Common" }
+local DURABILITY_POINTS = { Indestructible = 60, Tough = 40, Normal = 30, Substantial = 25, Brittle = 15,
+    Flimsy = 10, Weak = 5 }
+
+local function _enum_key(enum, value)
+    if type(enum) ~= "table" or value == nil then
+        return nil
+    end
+    local found = nil
+    pcall(function()
+        for k, v in pairs(enum) do
+            if v == value and type(k) == "string" then
+                found = k
+                break
+            end
+        end
+    end)
+    return found
+end
+
+local function _equip_score()
+    local p = _player()
+    local eq = _call(p, "GetEquipment")
+    if eq == nil or eq.GetItem == nil then
+        return nil
+    end
+    local gp = Turbine.Gameplay
+    local r = { score = 0, items = 0, by_quality = {} }
+    for i = 1, #S.EQUIPMENT_SLOTS do
+        local ok, item = pcall(eq.GetItem, eq, S.EQUIPMENT_SLOTS[i])
+        if ok == true and item ~= nil then
+            local info = _call(item, "GetItemInfo")
+            local q = _call(info, "GetQuality")
+            if q == nil then q = _call(item, "GetQuality") end
+            local d = _call(info, "GetDurability")
+            if d == nil then d = _call(item, "GetDurability") end
+            local qk = _enum_key(gp.ItemQuality, q)
+            local dk = _enum_key(gp.ItemDurability, d)
+            r.items = r.items + 1
+            r.score = r.score + (QUALITY_POINTS[qk] or 0) + (DURABILITY_POINTS[dk] or 0)
+            if qk ~= nil then
+                r.by_quality[qk] = (r.by_quality[qk] or 0) + 1
+            end
+        end
+    end
+    return r
+end
+
+local QUALITY_COLORS = {
+    Legendary = C(255, 128, 64), Incomparable = C(200, 120, 255), Rare = C(240, 120, 220),
+    Uncommon = C(255, 230, 90), Common = nil,
+}
+
+local EquipScoreWidget = class(WidgetBase)
+StatusBarWidgets.TitanEquipScoreWidget = EquipScoreWidget
+
+function EquipScoreWidget:Constructor(widget_w, bar_h, font, icon_path, cfg)
+    _init(self, "equip_score", widget_w, bar_h, font, cfg ~= nil and cfg.content_alignment or nil, icon_path,
+        Turbine.UI.ContentAlignment.MiddleLeft)
+    self:set_text("--")
+end
+
+function EquipScoreWidget:update(now)
+    if not _throttle(self, now, 10) then
+        return
+    end
+    local r = _equip_score()
+    self._last = r
+    if r == nil or r.items == 0 then
+        self:set_text("--")
+        _set_color(self, "base", nil)
+        return
+    end
+    self:set_text(TR["Gear"] .. " " .. _fmt(r.score))
+    -- color de la calidad que mas se repite
+    local best, best_n = nil, 0
+    for _, qk in ipairs(QUALITY_ORDER) do
+        local n = r.by_quality[qk] or 0
+        if n > best_n then
+            best, best_n = qk, n
+        end
+    end
+    _set_color(self, "q:" .. tostring(best), QUALITY_COLORS[best or ""])
+end
+
+function EquipScoreWidget:tooltip_text()
+    local r = self._last or _equip_score()
+    if r == nil then
+        return TR["Equipment score"]
+    end
+    local lines = { TR["Equipment score"] .. ": " .. _fmt(r.score), TR["Equipped items"] .. ": " .. r.items }
+    for _, qk in ipairs(QUALITY_ORDER) do
+        local n = r.by_quality[qk]
+        if n ~= nil and n > 0 then
+            lines[#lines + 1] = "  " .. TR[qk] .. ": " .. n
+        end
+    end
+    return table.concat(lines, "\n")
+end
+
+EquipScoreWidget.destroy = _destroy
+
+-- Puntos LOTRO (se suman solos con los mensajes del chat)
+local LotroPointsWidget = class(WidgetBase)
+StatusBarWidgets.TitanLotroPointsWidget = LotroPointsWidget
+
+function LotroPointsWidget:Constructor(widget_w, bar_h, font, icon_path, cfg)
+    _init(self, "lotro_points", widget_w, bar_h, font, cfg ~= nil and cfg.content_alignment or nil, icon_path,
+        Turbine.UI.ContentAlignment.MiddleLeft)
+    self:set_text("-- LP")
+end
+
+function LotroPointsWidget:update(now)
+    if not _throttle(self, now, 1) then
+        return
+    end
+    local text
+    if D.lp ~= nil then
+        text = _fmt(D.lp) .. " LP"
+    else
+        text = "? LP"
+    end
+    if D.lp_session > 0 then
+        text = text .. "  (+" .. _fmt(D.lp_session) .. ")"
+        _set_color(self, "gain", COLORS.gain)
+    else
+        _set_color(self, "base", nil)
+    end
+    self:set_text(text)
+end
+
+function LotroPointsWidget:tooltip_text()
+    local lines = { TR["LOTRO Points"] .. ": " .. (D.lp ~= nil and _fmt(D.lp) or "?") }
+    lines[#lines + 1] = TR["Earned this session"] .. ": +" .. _fmt(D.lp_session)
+    if D.lp == nil then
+        lines[#lines + 1] = TR["Set your total in Options > Status bar"]
+    end
+    return table.concat(lines, "\n")
+end
+
+LotroPointsWidget.destroy = _destroy
+
+---------------------------------------------------------------------
+-- Detalles (ventanita) de los widgets anteriores
+---------------------------------------------------------------------
+
+function LocationWidget:tooltip_text()
+    local zb = _G.LUI.Features ~= nil and _G.LUI.Features.ZoneBanner or nil
+    local zone = zb ~= nil and zb.current_zone or nil
+    if type(zone) ~= "string" or zone == "" then
+        return TR["Location"] .. ": --"
+    end
+    return TR["Location"] .. ": " .. zone
+end
+
+function ReputationWidget:tooltip_text()
+    local list = {}
+    for name, n in pairs(D.rep_session) do
+        list[#list + 1] = { name, n }
+    end
+    if #list == 0 and D.rep_last == nil then
+        return TR["No reputation yet"]
+    end
+    table.sort(list, function(a, b) return math.abs(a[2]) > math.abs(b[2]) end)
+    local lines = { TR["Reputation"] }
+    if D.rep_last ~= nil then
+        local n = D.rep_amount or 0
+        lines[#lines + 1] = TR["Last"] .. ": " .. D.rep_last .. " " .. (n < 0 and "-" or "+") .. _fmt(n)
+    end
+    if #list > 0 then
+        lines[#lines + 1] = TR["This session"] .. ":"
+        for i = 1, math.min(8, #list) do
+            local n = list[i][2]
+            lines[#lines + 1] = "  " .. list[i][1] .. " " .. (n < 0 and "-" or "+") .. _fmt(n)
+        end
+    end
+    return table.concat(lines, "\n")
+end
+
+function PvpRankWidget:tooltip_text()
+    local pts = D.pvp_points
+    if pts == nil then
+        return TR["Infamy / Renown"] .. ": --\n" .. TR["Needs the PvMP+ plugin"]
+    end
+    local rank, pct = _rank_of(pts)
+    local lines = { TR["Infamy / Renown"] .. ": " .. _fmt(pts), TR["Rank"] .. " " .. rank }
+    if rank < #RANKS then
+        lines[#lines + 1] = string.format("%.1f%%", pct * 100) .. " \194\183 " .. TR["Next rank in"] .. " " ..
+            _fmt(RANKS[rank + 1] - pts)
+    end
+    return table.concat(lines, "\n")
+end
+
+function DayNightWidget:tooltip_text()
+    local name, _, left, nxt = _phase(self._seed)
+    local m, s = math.floor(left / 60), left % 60
+    return TR[name] .. "\n" .. TR["Next"] .. ": " .. TR[nxt] .. " (" .. string.format("%d:%02d", m, s) .. ")"
+end
+
+function ServerTimeWidget:tooltip_text()
+    local d = Turbine.Engine.GetDate()
+    local local_text = S.format_hhmm({ Hour = d.Hour or 0, Minute = d.Minute or 0 }, self._format)
+    local off = self._offset or 0
+    return TR["Server time"] .. "\n" .. TR["Time (local)"] .. ": " .. local_text .. "\n" ..
+        TR["Hours from local time"] .. ": " .. (off >= 0 and "+" or "") .. tostring(off)
+end
+
+local function _storage_tip(title, used, cap)
+    if used == nil or cap == nil or cap <= 0 then
+        return title .. ": --\n" .. TR["Open it once to read it"]
+    end
+    return title .. ": " .. used .. "/" .. cap .. "\n" .. TR["Free"] .. ": " .. (cap - used)
+end
+
+function VaultWidget:tooltip_text()
+    return _storage_tip(TR["Personal vault"], D.vault_used, D.vault_cap)
+end
+
+function SharedStorageWidget:tooltip_text()
+    return _storage_tip(TR["Shared storage"], D.shared_used, D.shared_cap)
+end
+
+for _, cls in ipairs({ LocationWidget, ReputationWidget, PvpRankWidget, DayNightWidget, ServerTimeWidget,
+    VaultWidget, SharedStorageWidget, CharInfoWidget, EquipScoreWidget, LotroPointsWidget }) do
+    cls.set_interaction_enabled = _set_interaction
+end

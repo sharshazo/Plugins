@@ -19,6 +19,10 @@ local MIN_FIELD_W = 20
 
 local function _apply_font(label, font, alignment)
     label:SetMouseVisible(false)
+    -- (2026-10-15) una sola linea: un nombre largo no se parte en dos
+    if label.SetMultiline ~= nil then
+        pcall(label.SetMultiline, label, false)
+    end
     label:SetVisible(true)
     label:SetTextAlignment(alignment)
     if font ~= nil then
@@ -68,6 +72,8 @@ function WalletWidget:Constructor(widget_w, bar_h, font, content_alignment, item
     self._entries = S.get_wallet_selection_entries(items)
     self._item_controls = {}
     self._last_values = nil
+    self._font = font
+    self._tips_on = true
 
     self:SetMouseVisible(false)
     self:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
@@ -108,8 +114,58 @@ function WalletWidget:Constructor(widget_w, bar_h, font, content_alignment, item
         self:_layout()
     end
 
+    -- (2026-10-15) nombres completos y cantidades al pasar el raton
+    self.MouseEnter = function()
+        self:_show_tip()
+    end
+    self.MouseLeave = function()
+        self:_hide_tip()
+    end
+
     self:_layout()
     self:_apply_values(nil)
+end
+
+function WalletWidget:_tip_text()
+    local lines = {}
+    for i = 1, #self._item_controls do
+        local v = self._last_values ~= nil and S.format_wallet_quantity(self._last_values[i]) or "--"
+        lines[#lines + 1] = self._item_controls[i].name .. ": " .. v
+    end
+    return table.concat(lines, "\n")
+end
+
+function WalletWidget:_show_tip()
+    if self._tips_on ~= true or #self._item_controls == 0 then
+        return
+    end
+    if self._tip == nil then
+        local ok, tip = pcall(function()
+            local t = UI.Widgets.LuiTooltip()
+            t:SetZOrder(2200)
+            return t
+        end)
+        if ok ~= true then
+            return
+        end
+        self._tip = tip
+    end
+    self._tip_open = true
+    pcall(self._tip.ShowFor, self._tip, self, self:_tip_text())
+end
+
+function WalletWidget:_hide_tip()
+    self._tip_open = false
+    if self._tip ~= nil then
+        pcall(self._tip.Hide, self._tip)
+    end
+end
+
+function WalletWidget:set_interaction_enabled(enabled)
+    self._tips_on = enabled == true
+    if self._tips_on ~= true then
+        self:_hide_tip()
+    end
 end
 
 function WalletWidget:update(now)
@@ -123,6 +179,7 @@ function WalletWidget:update(now)
 end
 
 function WalletWidget:destroy()
+    self:_hide_tip()
     if self.placeholder ~= nil then
         self.placeholder:SetVisible(false)
         self.placeholder:SetParent(nil)
@@ -281,16 +338,21 @@ function WalletWidget:_layout()
         local icon_w = use_icons == true and (icon_widths[i] or 0) or 0
 
         local text = self._last_values ~= nil and S.format_wallet_quantity(self._last_values[i]) or "--"
-        if self._render_use_icons ~= true or item.icon_background == nil then
-            text = item.name .. " " .. text
-        end
-        item.label:SetText(text)
-
         local current_w = slot_w
         if extra > 0 then
             current_w = current_w + 1
             extra = extra - 1
         end
+
+        if self._render_use_icons ~= true or item.icon_background == nil then
+            local full = item.name .. " " .. text
+            -- (2026-10-15) sin icono y sin espacio: nombre corto (completo al pasar el raton)
+            if S.estimate_bar_text_width ~= nil and S.estimate_bar_text_width(full, self._font) > current_w then
+                full = S.short_item_name(item.name) .. " " .. text
+            end
+            text = full
+        end
+        item.label:SetText(text)
 
         local label_w = 0
         if text ~= "" then
@@ -353,4 +415,7 @@ end
 function WalletWidget:_apply_values(values)
     self._last_values = values
     self:_layout()
+    if self._tip_open == true then
+        self:_show_tip()
+    end
 end

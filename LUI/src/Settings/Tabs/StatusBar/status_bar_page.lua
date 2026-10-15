@@ -414,6 +414,62 @@ local function _new_widgets_section(window, settings_getter)
     local vault = titan_tab("vault", "sb_vault")
     local shared_storage = titan_tab("shared_storage", "sb_shared_storage")
 
+    -- (2026-10-15) personaje, equipo y puntos LOTRO: una sola pestana
+    local more = ConfigContent(window, 4)
+    local function more_block(key, prefix, title)
+        more:add_title(title)
+        more:add_line_edit(prefix .. "_width", TR["Width"],
+            function(value)
+                local width = tonumber(value)
+                if width ~= nil then
+                    settings_getter().widgets[key].width = width
+                end
+            end,
+            function()
+                return tostring(settings_getter().widgets[key].width)
+            end)
+        more:add_checkbox(prefix .. "_icon", TR["Icon"],
+            function(value)
+                settings_getter().widgets[key].icon = value == true
+            end,
+            function()
+                return settings_getter().widgets[key].icon ~= false
+            end)
+        more:add_dropdown(prefix .. "_text_alignment", TR["Text alignment"], more.text_alignment_labels,
+            more.text_alignment_values,
+            function(value)
+                settings_getter().widgets[key].text_alignment = value
+            end,
+            function()
+                return settings_getter().widgets[key].text_alignment
+            end)
+        more:add_row_break()
+    end
+    more_block("char_info", "sb_char_info", TR["Character info"])
+    more_block("equip_score", "sb_equip_score", TR["Equipment score"])
+    more_block("lotro_points", "sb_lotro_points", TR["LOTRO Points"])
+    -- el total de puntos LOTRO es de la cuenta (no del perfil): se guarda aparte
+    local lp_shown = nil
+    local function titan_data()
+        local sb = _G.LUI.Features ~= nil and _G.LUI.Features.StatusBar or nil
+        local widgets = sb ~= nil and sb.Widgets or nil
+        return widgets ~= nil and widgets.TitanData or nil
+    end
+    more:add_line_edit("sb_lotro_points_total", TR["Your LOTRO Points now"],
+        function(value)
+            local n = tonumber(value)
+            local data = titan_data()
+            if n ~= nil and n ~= lp_shown and data ~= nil and data.set_lp ~= nil then
+                data.set_lp(n)
+                lp_shown = n
+            end
+        end,
+        function()
+            local data = titan_data()
+            lp_shown = data ~= nil and data.lp or nil
+            return lp_shown ~= nil and tostring(lp_shown) or ""
+        end)
+
     local page = ConfigNestedTabs(window, UI.Widgets.LuiTabBar.position.top,
         FeatureShell.nested_tab_scale, FeatureShell.nested_tab_font_size)
     page:add_tab(TR["Time (local)"], "time", time)
@@ -431,6 +487,7 @@ local function _new_widgets_section(window, settings_getter)
     page:add_tab(TR["Server time"], "time_server", time_server)
     page:add_tab(TR["Personal vault"], "vault", vault)
     page:add_tab(TR["Shared storage"], "shared_storage", shared_storage)
+    page:add_tab(TR["Character & points"], "titan_more", more)
 
     return page
 end

@@ -31,6 +31,9 @@ function StatusBarPage.build_layout_help()
         TR["  %servertime% - server time (local time + offset)"],
         TR["  %vault% - personal vault used/total"],
         TR["  %shared% - shared storage used/total"],
+        TR["  %charinfo% - level and class (details on mouse over)"],
+        TR["  %equipscore% - equipment score (quality + durability)"],
+        TR["  %lotropoints% - LOTRO Points (adds the ones you earn)"],
     }
 
     local external_lines = S.get_status_bar_api_hint_lines()

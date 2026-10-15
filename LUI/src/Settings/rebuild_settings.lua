@@ -826,6 +826,9 @@ function Settings.rebuild()
     end)
     sb.widgets.vault = build_titan_widget("vault")
     sb.widgets.shared_storage = build_titan_widget("shared_storage")
+    sb.widgets.char_info = build_titan_widget("char_info")
+    sb.widgets.equip_score = build_titan_widget("equip_score")
+    sb.widgets.lotro_points = build_titan_widget("lotro_points")
 
     sb.widgets.button = {
         width = sb.widgets.shortcut.width,

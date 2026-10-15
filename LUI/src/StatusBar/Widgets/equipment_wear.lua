@@ -11,6 +11,7 @@ local WidgetBase = _G.LUI.Features.StatusBar.WidgetBase
 local add_callback = _G.LUI.Utils.add_callback
 local remove_callback = _G.LUI.Utils.remove_callback
 local _gradient_morale_color = lui_gradient_morale_color
+local TR = _G.LUI.Locale.TR
 
 local EquipmentWearWidget = class(WidgetBase)
 StatusBarWidgets.EquipmentWearWidget = EquipmentWearWidget
@@ -28,6 +29,17 @@ function EquipmentWearWidget:Constructor(widget_w, bar_h, font, icon_path, wear_
     self._item_callbacks = {}
     self.wear_color = wear_color or {}
     self.coloring = coloring == true
+    self._font = font
+    self._tips_on = true
+    self._detail = nil
+
+    -- (2026-10-15) detalles al pasar el raton (la barra encadena estos eventos)
+    self.MouseEnter = function()
+        self:_show_tip()
+    end
+    self.MouseLeave = function()
+        self:_hide_tip()
+    end
 
     self:set_text("--% (--%)", false)
     self:_ensure_equipment()
@@ -52,7 +64,47 @@ function EquipmentWearWidget:update(now)
     self:_scan(now)
 end
 
+function EquipmentWearWidget:_show_tip()
+    if self._tips_on ~= true then
+        return
+    end
+    local d = self._detail
+    local text = TR["Equipment Wear"]
+    if d ~= nil then
+        text = text .. "\n" .. TR["Average"] .. ": " .. d.average .. "%\n" .. TR["Most worn piece"] .. ": " ..
+            d.weakest .. "%"
+    end
+    if self._tip == nil then
+        local ok, tip = pcall(function()
+            local t = _G.LUI.UI.Widgets.LuiTooltip()
+            t:SetZOrder(2200)
+            return t
+        end)
+        if ok ~= true then
+            return
+        end
+        self._tip = tip
+    end
+    self._tip_open = true
+    pcall(self._tip.ShowFor, self._tip, self, text)
+end
+
+function EquipmentWearWidget:_hide_tip()
+    self._tip_open = false
+    if self._tip ~= nil then
+        pcall(self._tip.Hide, self._tip)
+    end
+end
+
+function EquipmentWearWidget:set_interaction_enabled(enabled)
+    self._tips_on = enabled == true
+    if self._tips_on ~= true then
+        self:_hide_tip()
+    end
+end
+
 function EquipmentWearWidget:destroy()
+    self:_hide_tip()
     self:_detach_equipment_callbacks()
     self:_detach_item_callbacks()
     WidgetBase.destroy(self)
@@ -191,6 +243,23 @@ function EquipmentWearWidget:_scan(now)
     end
 
     local average = S.round_nearest(sum / count)
+    self._detail = { average = average, weakest = weakest }
+    if self._tip_open == true then
+        self:_show_tip()
+    end
+    -- (2026-10-15) si "100% (100%)" no cabe, solo el promedio (el resto al pasar el raton)
+    local full = string.format("%d%% (%d%%)", average, weakest)
+    if S.estimate_bar_text_width ~= nil and self.label ~= nil and
+        S.estimate_bar_text_width(full, self._font) > self.label:GetWidth() then
+        if self.coloring == true then
+            local c = _gradient_morale_color(average / 100, self.wear_color.green, self.wear_color.yellow,
+                self.wear_color.red)
+            self:set_text(S.color_markup(string.format("%d%%", average), c), true)
+        else
+            self:set_text(string.format("%d%%", average), false)
+        end
+        return
+    end
     if self.coloring == true then
         local average_color = _gradient_morale_color(average / 100, self.wear_color.green, self.wear_color.yellow,
             self.wear_color.red)

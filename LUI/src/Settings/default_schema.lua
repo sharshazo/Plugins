@@ -2452,6 +2452,21 @@ _G.LUI.Settings.Defaults.Schema =
 				["text_alignment"] = 3.000000,
 				["icon"] = true,
 			},
+			["char_info"] = {
+				["width"] = 150.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+			},
+			["equip_score"] = {
+				["width"] = 110.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+			},
+			["lotro_points"] = {
+				["width"] = 120.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+			},
 			["equipment_wear"] = {
 				["color"] = {
 					["green"] = {

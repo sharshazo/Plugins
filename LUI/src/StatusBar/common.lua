@@ -54,14 +54,19 @@ S.SILVER_ICON = UI.AssetIds.silver_coin
 S.COPPER_ICON = UI.AssetIds.copper_coin
 S.INVENTORY_SPACE_ICON = UI.AssetIds.backpack
 S.DURABILITY_ICON = UI.AssetIds.durability
+-- texto = archivo propio en assets/ui/titan; numero = icono original del
+-- juego (los mismos que usa TitanBar)
 S.TITAN_WIDGET_ICONS = {
     location = "compass",
-    reputation = "banner",
+    reputation = 0x410d431a,
     pvp_rank = "swords",
-    daynight = "sun",
+    daynight = 0x4101f898,
     time_server = "server_clock",
-    vault = "vault",
-    shared_storage = "shared",
+    vault = 0x41005e9e,
+    shared_storage = 0x41003830,
+    char_info = "hero",
+    equip_score = 0x410f2ea5,
+    lotro_points = "lotro_points",
 }
 
 S.STATUS_BAR_LAYOUT_TOKENS = {
@@ -84,6 +89,9 @@ S.STATUS_BAR_LAYOUT_TOKENS = {
     servertime = "time_server",
     vault = "vault",
     shared = "shared_storage",
+    charinfo = "char_info",
+    equipscore = "equip_score",
+    lotropoints = "lotro_points",
 }
 S.STATUS_BAR_WIDGET_LAYOUT_TOKENS = {
     time_local = "%time%",
@@ -105,6 +113,9 @@ S.STATUS_BAR_WIDGET_LAYOUT_TOKENS = {
     time_server = "%servertime%",
     vault = "%vault%",
     shared_storage = "%shared%",
+    char_info = "%charinfo%",
+    equip_score = "%equipscore%",
+    lotro_points = "%lotropoints%",
 }
 S.STATUS_BAR_EDITABLE_WIDGET_KEYS = {
     "time_local",
@@ -126,6 +137,9 @@ S.STATUS_BAR_EDITABLE_WIDGET_KEYS = {
     "time_server",
     "vault",
     "shared_storage",
+    "char_info",
+    "equip_score",
+    "lotro_points",
 }
 
 S.ITEM_WEAR_STATE = Turbine.Gameplay.ItemWearState or {}
@@ -539,11 +553,52 @@ function S.get_wallet_selection_entries(values)
     return S.parse_wallet_item_list(values)
 end
 
+local function _wallet_key(name)
+    local s = string.gsub(tostring(name), "<[^>]*>", "")
+    s = string.match(s, "^%s*(.-)%s*$") or s
+    return string.lower(s)
+end
+
 function S.wallet_item_matches(entry, wallet_name)
     if entry == nil or wallet_name == nil then
         return false
     end
-    return entry == wallet_name
+    if entry == wallet_name then
+        return true
+    end
+    -- (2026-10-15) sin importar mayusculas, espacios de sobra ni colores
+    return _wallet_key(entry) == _wallet_key(wallet_name)
+end
+
+-- (2026-10-15) ancho aproximado de un texto con la fuente de la barra
+function S.estimate_bar_text_width(text, font)
+    local t = string.gsub(tostring(text or ""), "<[^>]*>", "")
+    local utils = _G.LUI.Utils
+    local fn = utils ~= nil and utils.lui_timed_row_estimate_text_width or nil
+    if fn ~= nil and type(font) == "table" and font.name ~= nil then
+        local ok, w = pcall(fn, t, font.name, font.size)
+        if ok == true and type(w) == "number" then
+            return w
+        end
+    end
+    return string.len(t) * 7 + 4
+end
+
+-- (2026-10-15) "Motes of Enchantment" -> "MoE" (para que quepa en la barra)
+function S.short_item_name(name)
+    local out = ""
+    for word in string.gmatch(tostring(name or ""), "%S+") do
+        local first = string.sub(word, 1, 1)
+        if string.len(word) <= 3 and string.lower(word) == word then
+            out = out .. string.lower(first)
+        else
+            out = out .. string.upper(first)
+        end
+    end
+    if out == "" then
+        return tostring(name or "")
+    end
+    return out
 end
 
 function S.normalize_status_bar_item_name(value)
@@ -974,6 +1029,12 @@ function S.get_status_bar_widget_display_name(widget_key)
         return TR["Personal vault"]
     elseif widget_key == "shared_storage" then
         return TR["Shared storage"]
+    elseif widget_key == "char_info" then
+        return TR["Character info"]
+    elseif widget_key == "equip_score" then
+        return TR["Equipment score"]
+    elseif widget_key == "lotro_points" then
+        return TR["LOTRO Points"]
     end
 
     return tostring(widget_key or "")
@@ -1227,6 +1288,9 @@ function S.get_widget_icon(widget_key)
     end
     -- widgets traidos de TitanBar (iconos propios en assets/ui/titan)
     local titan = S.TITAN_WIDGET_ICONS[widget_key]
+    if type(titan) == "number" then
+        return titan
+    end
     if titan ~= nil then
         return "LUI/assets/ui/titan/" .. titan .. ".tga"
     end

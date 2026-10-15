@@ -263,6 +263,24 @@ local function _bind_widget_interactions(owner, widget, menu_title)
         target:SetAllowDrop(true)
     end
 
+    -- (2026-10-15) resaltado al pasar el raton: marca exactamente el widget
+    -- que queda bajo el puntero (toda su zona de clic, alto completo de la
+    -- barra). Se encadena con lo que el widget ya tuviera.
+    local prior_mouse_enter = target.MouseEnter
+    target.MouseEnter = function(sender, args)
+        if prior_mouse_enter ~= nil then
+            prior_mouse_enter(sender, args)
+        end
+        owner:_show_widget_hover(widget)
+    end
+    local prior_mouse_leave = target.MouseLeave
+    target.MouseLeave = function(sender, args)
+        if prior_mouse_leave ~= nil then
+            prior_mouse_leave(sender, args)
+        end
+        owner:_hide_widget_hover(widget)
+    end
+
     local prior_mouse_click = target.MouseClick
     target.MouseClick = function(sender, args)
         if args ~= nil and args.Button == Turbine.UI.MouseButton.Right then
@@ -417,6 +435,9 @@ local TITAN_WIDGETS = {
     time_server = "TitanServerTimeWidget",
     vault = "TitanVaultWidget",
     shared_storage = "TitanSharedStorageWidget",
+    char_info = "TitanCharInfoWidget",
+    equip_score = "TitanEquipScoreWidget",
+    lotro_points = "TitanLotroPointsWidget",
 }
 
 local function _widget_factory(widget_key, widget_w, bar_h, font, widget_cfg, widget_entry)
@@ -793,7 +814,70 @@ function StatusBarWindow:destroy()
     end
 end
 
+-- (2026-10-15) resaltado del widget bajo el puntero (ver _bind_widget_interactions)
+local HOVER_FILL = Turbine.UI.Color(0.10, 1, 1, 1)
+local HOVER_LINE = Turbine.UI.Color(0.85, 0.20, 0.60, 0.98)
+
+function StatusBarWindow:_place_widget_hover()
+    local hl = self._hover_highlight
+    local widget = self._hover_widget
+    if hl == nil or widget == nil then
+        return
+    end
+    local h = self:GetHeight()
+    local w = widget:GetWidth()
+    hl:SetPosition(widget:GetLeft(), 0)
+    hl:SetSize(w, h)
+    hl.line:SetPosition(0, math.max(0, h - 2))
+    hl.line:SetSize(w, math.min(2, h))
+end
+
+function StatusBarWindow:_show_widget_hover(widget)
+    if widget == nil or self._edit_drag_session ~= nil then
+        return
+    end
+    if self._hover_highlight == nil then
+        local hl = Turbine.UI.Control()
+        hl:SetParent(self)
+        hl:SetMouseVisible(false)
+        hl:SetZOrder(0)
+        hl:SetBackColorBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        hl:SetBackColor(HOVER_FILL)
+        hl.line = Turbine.UI.Control()
+        hl.line:SetParent(hl)
+        hl.line:SetMouseVisible(false)
+        hl.line:SetBackColorBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        hl.line:SetBackColor(HOVER_LINE)
+        self._hover_highlight = hl
+    end
+    self._hover_widget = widget
+    self:_place_widget_hover()
+    self._hover_highlight:SetVisible(true)
+end
+
+function StatusBarWindow:_hide_widget_hover(widget)
+    if self._hover_widget ~= widget and widget ~= nil then
+        return
+    end
+    -- el raton puede pasar a un control hijo del mismo widget (p. ej. el
+    -- atajo de un boton): si sigue dentro del widget, no se apaga
+    if widget ~= nil then
+        local ok, mx, my = pcall(self._get_mouse_position_in_bar, self)
+        if ok == true and type(mx) == "number" and type(my) == "number" then
+            local x0 = widget:GetLeft()
+            if mx >= x0 and mx < x0 + widget:GetWidth() and my >= 0 and my < self:GetHeight() then
+                return
+            end
+        end
+    end
+    self._hover_widget = nil
+    if self._hover_highlight ~= nil then
+        self._hover_highlight:SetVisible(false)
+    end
+end
+
 function StatusBarWindow:_clear_widgets()
+    self:_hide_widget_hover(nil)
     for i = 1, #self._widgets do
         local w = self._widgets[i]
         if w ~= nil then
@@ -1217,6 +1301,7 @@ function StatusBarWindow:_handle_widget_mouse_down(widget, args)
         return false
     end
 
+    self:_hide_widget_hover(nil)
     self:_arm_edit_drag(session, widget, args)
     return true
 end
@@ -1449,6 +1534,7 @@ function StatusBarWindow:_layout_widgets(sb)
     place("left", left_widgets, x_left)
     place("center", center_widgets, x_center)
     place("right", right_widgets, x_right)
+    self:_place_widget_hover()
 
     if self._drag_preview_details ~= nil then
         self:_update_drag_preview(Turbine.Engine.GetGameTime(), true)

@@ -35,6 +35,11 @@ function StatusBarWidgetBase:Constructor(widget_key, widget_w, bar_h, font, cont
     self.label = UI.Widgets.LuiLabel()
     self.label:SetParent(self)
     self.label:SetMouseVisible(false)
+    -- (2026-10-15) una sola linea: un texto largo no se parte en dos
+    -- (la segunda linea quedaba cortada abajo de la barra)
+    if self.label.SetMultiline ~= nil then
+        pcall(self.label.SetMultiline, self.label, false)
+    end
     self.label:SetText("")
     if self.label.SetMarkupEnabled ~= nil then
         self.label:SetMarkupEnabled(false)
