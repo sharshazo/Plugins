@@ -266,14 +266,10 @@ local function ParseChat(sender,args)
 		end
 
 	-- Parse Callout Map Position
-	elseif string.find(args.Message, Enemy_Position_Pattern) then
-		local player, amount, s, w = string.match(args.Message, Enemy_Position_Pattern)
-		if amount == "" then amount = "?" end
-		if tonumber(w) == nil then
-			w = tonumber((string.gsub(w,"%.",",")))
-			s = tonumber((string.gsub(s,"%.",",")))
-		end
-	MapWindow:AddEnemyPosition(w, s, amount, string.sub(player, 32, string.len(player) - 9))
+	-- v4.3.9: lee la posicion de cualquier llamada de enemigos (con ;loc o
+	-- con el boton Pos) y la marca en el mapa
+	elseif ParseEnemyCallout(args.Message) then
+		-- marcado en el mapa
 
 	-- Leave Room
 	elseif (args.ChatType == Turbine.ChatType.UserChat1 or args.ChatType == Turbine.ChatType.UserChat2 or
@@ -307,7 +303,175 @@ Turbine.Chat.Received = function(sender, args)
 		parse_error_shown = true
 		Turbine.Shell.WriteLine("PvMP+: " .. tostring(err))
 	end
+	-- v4.3.14: rachas y nemesis (despues, para que su aviso tape al de la baja)
+	if PvMP_RivalsCheck ~= nil then
+		pcall(PvMP_RivalsCheck, args)
+	end
 end
+-- v4.3.10: llamadas de enemigos de versiones anteriores de PvMP+ (sin
+-- coordenadas): se situan con el lugar y la distancia/direccion del mensaje.
+local CALLOUT_POIS = {
+	[1] = { 16.6, 17.3 },
+	[2] = { 11.7, 15.3 },
+	[3] = { 17.6, 14.5 },
+	[4] = { 15.3, 20.0 },
+	[5] = { 19.3, 17.5 },
+	[6] = { 19.9, 19.3 },
+	[7] = { 13.4, 14.6 },
+	[8] = { 18.4, 20.1 },
+	[9] = { 14.5, 16.2 },
+	[10] = { 12.2, 20.9 },
+	[11] = { 17.0, 22.4 },
+	[12] = { 17.0, 18.6 },
+	[13] = { 13.0, 12.7 },
+	[14] = { 16.1, 21.0 },
+	[15] = { 19.0, 18.6 },
+	[16] = { 20.7, 13.6 },
+	[17] = { 16.0, 12.2 },
+	[18] = { 18.0, 16.7 },
+	[19] = { 19.8, 20.0 },
+	[20] = { 12.51, 16.61 },
+	[21] = { 17.14, 13.75 },
+	[22] = { 17.40, 16.74 },
+	[23] = { 16.49, 18.20 },
+}
+local CALLOUT_PLACES = {
+	["Tol Ascarnen"] = 1,
+	["Тол Аскарнен"] = 1,
+	["Isenbinge-Mine"] = 2,
+	["Isendeep Mine"] = 2,
+	["Mine du Gouffre d'Isen"] = 2,
+	["Изендипский рудник"] = 2,
+	["Tírith Rhaw"] = 3,
+	["Тирит Роу"] = 3,
+	["Lugazag"] = 4,
+	["Лугазаг"] = 4,
+	["Camp de bûcherons du Bois Funeste"] = 5,
+	["Grimwood Lumber Camp"] = 5,
+	["Holzfällerlager im Grimmwald"] = 5,
+	["Лесопилка Мрачного леса"] = 5,
+	["Avant-poste des Monts Froids"] = 6,
+	["Hithlad Outpost"] = 6,
+	["Kaltfelsen-Außenposten"] = 6,
+	["Застава в Хитладе"] = 6,
+	["Arador's End Outpost"] = 7,
+	["Außenposten in Aradors Ende"] = 7,
+	["Avant-poste de la Muraille d'Arador"] = 7,
+	["Застава в Арадорском тупике"] = 7,
+	["Außenposten am Fluss"] = 8,
+	["Avant-poste de la rivière"] = 8,
+	["River Outpost"] = 8,
+	["Застава на реке"] = 8,
+	["Außenposten der Isenbinge"] = 9,
+	["Avant-poste du Gouffre d'Isen"] = 9,
+	["Isendeep Outpost"] = 9,
+	["Застава в Изендипском руднике"] = 9,
+	["Gramfuß"] = 10,
+	["Gramsfoot"] = 10,
+	["Pied de Gram"] = 10,
+	["Подножие Грэм"] = 10,
+	["Dâr-gazag"] = 11,
+	["Дар-Газаг"] = 11,
+	["Camp d'Orques"] = 12,
+	["Orc Camp"] = 12,
+	["Ork-Lager"] = 12,
+	["Орочий лагерь"] = 12,
+	["Grothum"] = 13,
+	["Гротум"] = 13,
+	["Mazauk's Den"] = 14,
+	["Mazauk's Versteck"] = 14,
+	["Repaire de Mazauk"] = 14,
+	["Repaire d'Araignées"] = 15,
+	["Spider Den"] = 15,
+	["Spinne Versteck"] = 15,
+	["Glân Vraig"] = 16,
+	["Глан Врайг"] = 16,
+	["Feste Ringdyr"] = 17,
+	["Ost Ringdyr"] = 17,
+	["Ост Рингдир"] = 17,
+	["Camp d'Elfes"] = 18,
+	["Elben-Lager"] = 18,
+	["Elf Camp"] = 18,
+	["Эльфийский лагерь"] = 18,
+	["Hoarhallow"] = 19,
+	["Sacregris"] = 19,
+	["Weißsenke"] = 19,
+	["Седая котловина"] = 19,
+	["Golloval"] = 20,
+	["Goldhead"] = 21,
+	["Goldschopf"] = 21,
+	["Têtedor"] = 21,
+	["STAB"] = 22,
+	["WTAB"] = 23,
+}
+local CALLOUT_DIRS = { N = 1, NE = 2, E = 3, SE = 4, S = 5, SW = 6, SO = 6, W = 7, O = 7, NW = 8, NO = 8,
+	["С"] = 1, ["СВ"] = 2, ["В"] = 3, ["ЮВ"] = 4, ["Ю"] = 5, ["ЮЗ"] = 6, ["З"] = 7, ["СЗ"] = 8 }
+
+-- posicion aproximada a partir de "@ Lugar" o "120m N Lugar"
+local function CalloutFromPlace(body)
+	local text = string.gsub(body, "</rgb>.*$", "")
+	text = string.gsub(text, "['%s]+$", "")
+	if string.find(text, " in Delving", 1, true) then
+		return nil
+	end
+	local meters, dir
+	local place = string.match(text, " @ (.+)$")
+	if place == nil then
+		meters, dir, place = string.match(text, " (%d+)m (%S+) (.+)$")
+	end
+	local idx = place ~= nil and CALLOUT_PLACES[place] or nil
+	if idx == nil then
+		return nil
+	end
+	local south, west = CALLOUT_POIS[idx][1], CALLOUT_POIS[idx][2]
+	if meters ~= nil then
+		local k = CALLOUT_DIRS[dir]
+		if k == nil then
+			return nil
+		end
+		local d = tonumber(meters) / 180
+		local a = math.rad((k - 1) * 45)
+		west = west - d * math.sin(a)
+		south = south - d * math.cos(a)
+	end
+	return south, west
+end
+
+local function ToCoord(v)
+	return tonumber(v) or tonumber((string.gsub(v, "%.", ","))) or tonumber((string.gsub(v, ",", ".")))
+end
+
+function ParseEnemyCallout(message)
+	local tag = "<rgb=" .. Enemy_Position_Chat_Color .. ">"
+	local i = string.find(message, tag, 1, true)
+	if i == nil then
+		return false
+	end
+	local body = string.sub(message, i + string.len(tag))
+	local s, w = string.match(body, "(%d+[%.,]%d+)S, (%d+[%.,]%d+)W")
+	local south, west
+	if s ~= nil and w ~= nil then
+		south, west = ToCoord(s), ToCoord(w)
+	else
+		-- version anterior: sin coordenadas, se calcula desde el lugar
+		south, west = CalloutFromPlace(body)
+	end
+	if south == nil or west == nil then
+		return false
+	end
+	local amount = string.match(body, "^(%d*)") or ""
+	if amount == "" then
+		amount = "?"
+	end
+	local raw = string.match(message, "^%[[^%]]*%] (.-): ")
+	local player = "?"
+	if raw ~= nil then
+		player = string.match(raw, ">([^<>]+)<") or (string.gsub(raw, "<[^>]*>", ""))
+	end
+	MapWindow:AddEnemyPosition(west, south, amount, player)
+	return true
+end
+
 function IsEnemyNPC(enemy)
 	if Turbine.Engine:GetLanguage() ~= Turbine.Language.German and string.find(enemy, " ") or string.find(enemy, "%a+%u+") or string.find(enemy, "%-%a+") or string.find(enemy, "%'%a+") or string.find(enemy, "[ÀÁÂÄÈÉÊËÌÍÎÏÒÓÔÖÙÚÛÜàáâäèéêëìíîïòóôöùúûü]") or not string.find(enemy, "%u") then
 		return true

@@ -2413,6 +2413,45 @@ _G.LUI.Settings.Defaults.Schema =
 				["width"] = 220.000000,
 				["max_visible"] = 4.000000,
 			},
+			["location"] = {
+				["width"] = 170.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+			},
+			["reputation"] = {
+				["width"] = 240.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+			},
+			["pvp_rank"] = {
+				["width"] = 130.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+			},
+			["daynight"] = {
+				["width"] = 150.000000,
+				["text_alignment"] = 1.000000,
+				["icon"] = true,
+				["seed"] = 10350.000000,
+				["show_next"] = true,
+			},
+			["time_server"] = {
+				["width"] = 70.000000,
+				["text_alignment"] = 2.000000,
+				["icon"] = true,
+				["offset"] = 0.000000,
+				["time_format"] = 1.000000,
+			},
+			["vault"] = {
+				["width"] = 80.000000,
+				["text_alignment"] = 3.000000,
+				["icon"] = true,
+			},
+			["shared_storage"] = {
+				["width"] = 80.000000,
+				["text_alignment"] = 3.000000,
+				["icon"] = true,
+			},
 			["equipment_wear"] = {
 				["color"] = {
 					["green"] = {

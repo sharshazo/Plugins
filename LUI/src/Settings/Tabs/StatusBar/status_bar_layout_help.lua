@@ -24,6 +24,13 @@ function StatusBarPage.build_layout_help()
         TR["  %encyclopedia% - toggle encyclopedia window"],
         TR["  %assets% - toggle assets window"],
         TR["  %raid% - toggle raid manager window"],
+        TR["  %location% - current zone (from the Regional channel)"],
+        TR["  %reputation% - last reputation gained (+ this session)"],
+        TR["  %pvprank% - Infamy / Renown rank and % (from PvMP+)"],
+        TR["  %daynight% - Middle-earth time of day and time left"],
+        TR["  %servertime% - server time (local time + offset)"],
+        TR["  %vault% - personal vault used/total"],
+        TR["  %shared% - shared storage used/total"],
     }
 
     local external_lines = S.get_status_bar_api_hint_lines()

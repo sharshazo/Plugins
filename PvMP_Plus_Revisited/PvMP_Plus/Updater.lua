@@ -30,7 +30,13 @@ Updater.Update = function(sender, args)
 			if control.Timer % 2 == 0 then
 				control:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay_empty.tga")
 			else
-				control:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay.tga")
+				-- v4.3.14: la marca se apaga poco a poco al final
+				local fade = (control.Timer <= 10 and "_fade2") or (control.Timer <= 25 and "_fade1") or ""
+				control:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay" .. fade .. ".tga")
+			end
+			-- v4.3.14: nombre y segundos que le quedan
+			if control.Timer > 0 and control.Callout ~= nil then
+				control:SetText(control.Callout .. " (" .. control.Timer .. "s)")
 			end
 
 			if control.Timer == 0 then control:SetVisible(false) end

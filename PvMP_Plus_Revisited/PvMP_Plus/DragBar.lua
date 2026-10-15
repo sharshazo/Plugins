@@ -151,7 +151,12 @@ function DragBar:Constructor(parent, text)
 
 	self.KeyDown = function(sender, args)
 		if args.Action == Turbine.UI.Lotro.Action.ToggleHiddenDragBoxes then
-			self:SetVisible(not self:IsVisible())
+			if PvMP_IsLocked ~= nil and PvMP_IsLocked() then
+				self.moving = false
+				self:SetVisible(false)	-- v4.3.14: ventanas bloqueadas
+			else
+				self:SetVisible(not self:IsVisible())
+			end
 		end
 	end
 

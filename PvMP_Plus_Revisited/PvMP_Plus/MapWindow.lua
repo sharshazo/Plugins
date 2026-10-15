@@ -273,13 +273,18 @@ function MapWindow:MoveCurrentPosition(west, south, heading)
 end
 
 function MapWindow:AddEnemyPosition(w, s, amount, player)
-	local map_callout = player .. ": " .. amount .. " " .. (amount == "1" and L.FreepCreep or L.FreepsCreeps)
+	-- v4.3.10: si no se dijo cuantos enemigos, solo el nombre de quien avisa
+	local map_callout = player
+	if amount ~= nil and amount ~= "" and amount ~= "?" then
+		map_callout = player .. ": " .. amount .. " " .. (amount == "1" and L.FreepCreep or L.FreepsCreeps)
+	end
 	if self.enemy_position_list[player] ~= nil then
 		self.enemy_position_list[player]:SetPosition(
 			(self.map:GetWidth() - self.map:GetWidth() * (w - self.min_w) / self.dif_w - self.enemy_position_list[player]:GetWidth() / 2),
 			(self.map:GetHeight() * (s - self.min_s) / self.dif_s - (self.enemy_position_list[player]:GetHeight() - 9))
 		)
 		self.enemy_position_list[player].Timer = Enemy_Position_Counter
+		self.enemy_position_list[player].Callout = map_callout	-- v4.3.14: para la cuenta atras
 		self.enemy_position_list[player]:SetText(map_callout)
 		self.enemy_position_list[player]:SetVisible(true)
 		return
@@ -303,5 +308,6 @@ function MapWindow:AddEnemyPosition(w, s, amount, player)
 		(self.map:GetHeight() * (s - self.min_s) / self.dif_s - (enemy_position_overlay:GetHeight() - 9))
 	)
 	enemy_position_overlay.Timer = Enemy_Position_Counter
+	enemy_position_overlay.Callout = map_callout
 	self.enemy_position_list[player] = enemy_position_overlay
 end

@@ -799,6 +799,34 @@ function Settings.rebuild()
         max_visible = math.max(1, tonumber(raw_sb.widgets.craft_plan.max_visible)),
     }
 
+    -- widgets traidos de TitanBar
+    local function build_titan_widget(widget_key, extra)
+        local raw_w = raw_sb.widgets[widget_key] or {}
+        local w = {
+            enabled = in_zones(widget_key),
+            width = scaled_int(tonumber(raw_w.width) or 100),
+            icon = raw_w.icon ~= false,
+            content_alignment = ToLotro.text_alignment[raw_w.text_alignment],
+        }
+        if extra ~= nil then
+            extra(w, raw_w)
+        end
+        return w
+    end
+    sb.widgets.location = build_titan_widget("location")
+    sb.widgets.reputation = build_titan_widget("reputation")
+    sb.widgets.pvp_rank = build_titan_widget("pvp_rank")
+    sb.widgets.daynight = build_titan_widget("daynight", function(w, raw_w)
+        w.seed = tonumber(raw_w.seed) or 10350
+        w.show_next = raw_w.show_next ~= false
+    end)
+    sb.widgets.time_server = build_titan_widget("time_server", function(w, raw_w)
+        w.offset = tonumber(raw_w.offset) or 0
+        w.time_format = raw_w.time_format
+    end)
+    sb.widgets.vault = build_titan_widget("vault")
+    sb.widgets.shared_storage = build_titan_widget("shared_storage")
+
     sb.widgets.button = {
         width = sb.widgets.shortcut.width,
         height = sb.widgets.shortcut.height,

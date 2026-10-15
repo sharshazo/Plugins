@@ -216,20 +216,30 @@ function S.AttachOutposts(ov)
 			local gem = Turbine.UI.Label()
 			gem:SetParent(parent)
 			gem:SetSize(16, 16)
-			gem:SetPosition(bar:GetLeft() + 2, 11)
+			gem:SetPosition(bar:GetLeft() + 2, 13)	-- debajo del texto de bonificacion
 			gem:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
 			gem:SetMouseVisible(false)
 			gem:SetVisible(false)
 			local fire = Turbine.UI.Label()
 			fire:SetParent(parent)
 			fire:SetSize(24, 30)
-			fire:SetPosition(bar:GetLeft() - 2, -1)
+			fire:SetPosition(bar:GetLeft() - 2, 1)
 			fire:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
 			fire:SetMouseVisible(false)
 			fire:SetVisible(false)
-			-- la letra vuelve a quedar encima del diamante
-			txt:SetParent(parent)
-			S.outslots[#S.outslots + 1] = { bar = bar, txt = txt, gem = gem, fire = fire, shown = "", gshown = "" }
+			-- letra propia encima del diamante (la original queda debajo y se oculta)
+			local letter = Turbine.UI.Label()
+			letter:SetParent(parent)
+			letter:SetSize(16, 16)
+			letter:SetPosition(bar:GetLeft() + 2, 13)
+			letter:SetFont(Turbine.UI.Lotro.Font.Verdana12)
+			letter:SetFontStyle(Turbine.UI.FontStyle.Outline)
+			letter:SetOutlineColor(Turbine.UI.Color(0, 0, 0))
+			letter:SetForeColor(Turbine.UI.Color(1, 1, 1))
+			letter:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
+			letter:SetMouseVisible(false)
+			letter:SetVisible(false)
+			S.outslots[#S.outslots + 1] = { bar = bar, txt = txt, gem = gem, fire = fire, letter = letter, shown = "", gshown = "", lshown = "" }
 		end
 	end
 end
@@ -248,7 +258,18 @@ local function AnimateOutposts(frame)
 		if o.bar:IsVisible() then
 			o.bar:SetVisible(false)
 		end
-		local show = o.txt:IsVisible() and o.name ~= nil and o.side ~= nil
+		if o.txt:IsVisible() then
+			o.txt:SetVisible(false)
+		end
+		local show = (storage == nil or not storage.show_outpost_disabled) and o.name ~= nil and o.side ~= nil
+		local l = show and (o.txt:GetText() or "") or ""
+		if l ~= o.lshown then
+			o.letter:SetText(l)
+			o.lshown = l
+		end
+		if o.letter:IsVisible() ~= show then
+			o.letter:SetVisible(show)
+		end
 		if show then
 			local g = RES .. "Outposts/outpost_" .. ((o.side == "creep") and "red" or "blue") .. ".tga"
 			if g ~= o.gshown then
@@ -483,12 +504,23 @@ TickHelps = function()
 			mk.Timer = (mk.Timer or 0) - 1
 			if mk.Timer <= 0 then
 				mk:SetVisible(false)
-			elseif mk.Timer % 2 == 0 then
-				mk:SetBackground(DIR .. "help_marker.tga")
 			else
-				mk:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay_empty.tga")
+				-- v4.3.14: cuenta atras y se apaga poco a poco
+				mk:SetText(name .. ": HELP! (" .. mk.Timer .. "s)")
+				if mk.Timer % 2 == 0 then
+					mk:SetBackground(DIR .. (mk.Timer <= 10 and "help_marker_fade2.tga" or (mk.Timer <= 25 and "help_marker_fade1.tga" or "help_marker.tga")))
+				else
+					mk:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay_empty.tga")
+				end
 			end
 		end
+	end
+end
+
+-- texto del boton de la ventana secundaria (Mostrar/Ocultar asedios)
+function S.SyncButton()
+	if SecondaryWindow ~= nil and SecondaryWindow.siege_button ~= nil then
+		SecondaryWindow.siege_button:SetText(storage.siege_hidden and (L.Siege_Show or "Show Sieges") or (L.Siege_Hide or "Hide Sieges"))
 	end
 end
 
@@ -510,7 +542,7 @@ function SiegeWindow:Constructor()
 	self.back = Turbine.UI.Label()
 	self.back:SetParent(self)
 	self.back:SetSize(W, H)
-	self.back:SetBackground(DIR .. "siege_bg.tga")
+	self.back:SetBackground((PvMP_Themes ~= nil and PvMP_Themes.SiegeBg()) or (DIR .. "siege_bg.tga"))
 	self.back:SetMouseVisible(false)
 
 	-- titulo (arrastrar desde aqui)
@@ -524,7 +556,7 @@ function SiegeWindow:Constructor()
 	self.title:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
 	self.title:SetText(L.Siege_Title or "Sieges")
 	self.title.MouseDown = function(sender, args)
-		if args.Button == Turbine.UI.MouseButton.Left then
+		if args.Button == Turbine.UI.MouseButton.Left and not (PvMP_IsLocked ~= nil and PvMP_IsLocked()) then
 			self.dragging = true
 			self.dx, self.dy = args.X, args.Y
 		end
@@ -551,6 +583,7 @@ function SiegeWindow:Constructor()
 	self.close.MouseClick = function()
 		storage.siege_hidden = true
 		self:SetVisible(false)
+		pcall(S.SyncButton)
 	end
 
 	self.buttons = {}
@@ -719,5 +752,6 @@ function SiegeWindow:Toggle()
 	storage.siege_hidden = not show
 	self.uiHidden = false
 	self:SetVisible(show)
+	pcall(S.SyncButton)
 	if show then self:Refresh() end
 end

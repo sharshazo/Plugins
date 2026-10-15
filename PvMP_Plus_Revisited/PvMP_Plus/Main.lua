@@ -1,6 +1,13 @@
 import "PvMP_Plus_Revisited.PvMP_Plus"
 
 LoadData()
+-- v4.3.14: colores del tema elegido (antes de crear las ventanas)
+if PvMP_Themes ~= nil then
+	local okTheme, errTheme = pcall(PvMP_Themes.ApplyGlobals)
+	if not okTheme then
+		Turbine.Shell.WriteLine("PvMP+ tema: " .. tostring(errTheme))
+	end
+end
 
 InitWindowPoints = InitWindowPoints()
 InitWindowFrags = InitWindowFrags()
@@ -26,6 +33,20 @@ if PvMP_Auras ~= nil then
 	local okAura, errAura = pcall(PvMP_Auras.AttachOverview, OverviewWindow)
 	if not okAura then
 		Turbine.Shell.WriteLine("PvMP+ auras: " .. tostring(errAura))
+	end
+end
+-- v4.3.13: estilos animados de la barra de rango
+if PvMP_BarFX ~= nil then
+	local okBar, errBar = pcall(PvMP_BarFX.Attach, OverviewWindow)
+	if not okBar then
+		Turbine.Shell.WriteLine("PvMP+ barra: " .. tostring(errBar))
+	end
+end
+-- v4.3.14: ventana de rachas y nemesis
+if PvMP_Rivals ~= nil then
+	local okRiv, errRiv = pcall(function() PvMP_Rivals.window = RivalsWindow() end)
+	if not okRiv then
+		Turbine.Shell.WriteLine("PvMP+ rivales: " .. tostring(errRiv))
 	end
 end
 -- v4.3.6: ventana de asedios + llamas en las fortalezas
@@ -113,9 +134,17 @@ function PvMP_Plus_Command:Execute(cmd, args)
 		Turbine.Shell.WriteLine("PvMP+: " .. a)
 	elseif (a == "gaergoth" or a == "gaergoth muerto" or a == "gaergoth off" or a == "gaergoth dead") then
 		if BossTimer ~= nil then BossTimer:Start(true) end
+	elseif (a == "gaergoth abajo" or a == "gaergoth below" or a == "gaergoth izquierda" or a == "gaergoth left" or a == "gaergoth derecha" or a == "gaergoth right") then
+		local p = "below"
+		if a == "gaergoth izquierda" or a == "gaergoth left" then p = "left" end
+		if a == "gaergoth derecha" or a == "gaergoth right" then p = "right" end
+		if BossTimer ~= nil then BossTimer:SetPlacement(p) end
+		if Settings ~= nil and Settings.UpdateBossButton ~= nil then Settings:UpdateBossButton() end
 	elseif (a == "gaergoth activo" or a == "gaergoth on" or a == "gaergoth active" or a == "gaergoth reset") then
 		if BossTimer ~= nil then BossTimer:Stop() end
 		Turbine.Shell.WriteLine("PvMP+: Gaergoth ON.")
+	elseif (a == "rivales" or a == "racha" or a == "rivals" or a == "streak") then
+		if PvMP_Rivals ~= nil then PvMP_Rivals.Toggle() end
 	elseif (a == string.lower(L.Command_Settings) or a == "settings" or a == "opciones" or a == "ajustes") then
 		Settings:Open()
 	elseif (a == string.lower(L.Command_Map) or a == "map" or a == "mapa") then

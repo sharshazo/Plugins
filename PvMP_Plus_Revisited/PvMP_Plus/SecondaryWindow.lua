@@ -2,7 +2,7 @@ SecondaryWindow = class(Turbine.UI.Window)
 
 function SecondaryWindow:Constructor()
 	local width = 150
-	local height = 155
+	local height = 203	-- v4.3.11: +24 boton de Asedios / v4.3.14: +24 boton de Rivales
 
 	Turbine.UI.Window.Constructor(self)
 
@@ -16,7 +16,7 @@ function SecondaryWindow:Constructor()
 	self.panel = Turbine.UI.Control()
 	self.panel:SetParent(self)
 	self.panel:SetSize(width, height)
-	self.panel:SetBackColor(Turbine.UI.Color.Black)
+	self.panel:SetBackColor(Panel_Back_Color or Turbine.UI.Color.Black)
 	self.panel:SetMouseVisible(false)
 
 	self.label_count = Turbine.UI.Label()
@@ -69,7 +69,7 @@ function SecondaryWindow:Constructor()
 	self.enemy_send_button:SetSize(self.enemy_button_container:GetWidth() - 2, self.enemy_button_container:GetHeight() - 2)
 	self.enemy_send_button:SetPosition(1, 1)
 	self.enemy_send_button:SetFont(Turbine.UI.Lotro.Font.Verdana10)
-	self.enemy_send_button:SetBackColor(Turbine.UI.Color.Black)
+	self.enemy_send_button:SetBackColor(Panel_Back_Color or Turbine.UI.Color.Black)
 	self.enemy_send_button:SetForeColor(Default_Font_Color)
 	self.enemy_send_button:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
 	self.enemy_send_button:SetText(L.String_Send)
@@ -102,7 +102,7 @@ function SecondaryWindow:Constructor()
 	self.loc_send_button:SetSize(self.loc_button_container:GetWidth() - 2, self.loc_button_container:GetHeight() - 2)
 	self.loc_send_button:SetPosition(1, 1)
 	self.loc_send_button:SetFont(Turbine.UI.Lotro.Font.Verdana10)
-	self.loc_send_button:SetBackColor(Turbine.UI.Color.Black)
+	self.loc_send_button:SetBackColor(Panel_Back_Color or Turbine.UI.Color.Black)
 	self.loc_send_button:SetForeColor(Default_Font_Color)
 	self.loc_send_button:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
 	self.loc_send_button:SetText(L.String_Loc)
@@ -124,7 +124,7 @@ function SecondaryWindow:Constructor()
 	self.recent_kills_label:SetParent(self.recent_kills_panel)
 	self.recent_kills_label:SetSize(self.recent_kills_panel:GetWidth() - 2, 20)
 	self.recent_kills_label:SetPosition(1, 1)
-	self.recent_kills_label:SetBackColor(Turbine.UI.Color.Black)
+	self.recent_kills_label:SetBackColor(Panel_Back_Color or Turbine.UI.Color.Black)
 	self.recent_kills_label:SetForeColor(Default_Font_Color)
 	self.recent_kills_label:SetFont(Turbine.UI.Lotro.Font.TrajanPro15)
 	self.recent_kills_label:SetFontStyle(Turbine.UI.FontStyle.Outline)
@@ -148,6 +148,24 @@ function SecondaryWindow:Constructor()
 			self.map_button:SetText(L.Map_Hide)
 		else
 			self.map_button:SetText(L.Map_Show)
+		end
+	end
+
+	-- v4.3.11: boton para mostrar u ocultar la ventana de Asedios
+	self.siege_button = LotroButton(self.panel, width - 10, (storage.siege_hidden and (L.Siege_Show or "Show Sieges")) or (L.Siege_Hide or "Hide Sieges"))
+	self.siege_button:SetPosition(5, 156)
+	self.siege_button.Click = function()
+		if PvMP_Siege ~= nil and PvMP_Siege.window ~= nil then
+			PvMP_Siege.window:Toggle()
+		end
+	end
+
+	-- v4.3.14: boton de rachas y nemesis
+	self.rivals_button = LotroButton(self.panel, width - 10, L.Rivals_Button or "Streaks & Rivals")
+	self.rivals_button:SetPosition(5, 180)
+	self.rivals_button.Click = function()
+		if PvMP_Rivals ~= nil then
+			PvMP_Rivals.Toggle()
 		end
 	end
 
@@ -323,6 +341,23 @@ function SecondaryWindow:DisplayChatData(west, south)
 		text = "/" .. L.Chat_Channels[data.numbers.selectedChannel2][1] .. " <rgb=" .. Enemy_Position_Chat_Color .. ">" .. enemy_count .. delving .. " " .. best_distance_meters .. "m " .. direction_index .. " " .. Map_Positions[best_index]
 	end
 
+	-- v4.3.9/10: el mensaje lleva tambien las coordenadas, con el mismo formato
+	-- que da ;loc ("@ Region: lugar: 15.3S, 13.1W"). Asi la marca sale en el
+	-- mapa de quien lo lee, tenga esta version o la anterior de PvMP+.
+	-- Siempre con punto decimal; en la Delving se deja como antes.
+	if west >= 0 and south >= 0 then
+		local function Coord(v)
+			local t = math.floor(v * 10 + 0.5)
+			return math.floor(t / 10) .. "." .. (t % 10)
+		end
+		local where = Map_Positions[best_index]
+		if best_distance_meters > Map_POIs[best_index].radius then
+			where = best_distance_meters .. "m " .. direction_index .. " " .. where
+		end
+		text = "/" .. L.Chat_Channels[data.numbers.selectedChannel2][1] .. " <rgb=" .. Enemy_Position_Chat_Color .. ">" .. enemy_count .. " @ Ettenmoors: " .. where .. ": " .. Coord(south) .. "S, " .. Coord(west) .. "W"
+	end
+	text = text .. "</rgb>"
+
 	chat_message:SetData(text)
 	self.enemy_send_quickslot:SetShortcut(chat_message)
 	self.enemy_send_quickslot:SetAllowDrop(false)
@@ -330,15 +365,21 @@ end
 
 function SecondaryWindow:ShowRecentKills(show)
 	if show then
-		self:SetHeight(155)
-		self.panel:SetHeight(155)
+		self:SetHeight(203)
+		self.panel:SetHeight(203)
 		self.recent_kills_panel:SetVisible(true)
 		self.map_button:SetTop(132)
 	else
-		self:SetHeight(155 - self.recent_kills_panel:GetHeight() - 5)
-		self.panel:SetHeight(155 - self.recent_kills_panel:GetHeight() - 5)
+		self:SetHeight(203 - self.recent_kills_panel:GetHeight() - 5)
+		self.panel:SetHeight(203 - self.recent_kills_panel:GetHeight() - 5)
 		self.recent_kills_panel:SetVisible(false)
 		self.map_button:SetTop(132 - self.recent_kills_panel:GetHeight() - 5)
+	end
+	if self.siege_button ~= nil then
+		self.siege_button:SetTop(self.map_button:GetTop() + 24)
+	end
+	if self.rivals_button ~= nil then
+		self.rivals_button:SetTop(self.map_button:GetTop() + 48)
 	end
 end
 

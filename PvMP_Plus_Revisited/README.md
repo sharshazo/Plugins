@@ -21,10 +21,11 @@ Está basado en **PvMP+ 4.3.2 de Urundus**: conserva todas sus funciones origina
 7. [Avisos, últimas bajas, golpes recientes y mapa](#7-avisos-últimas-bajas-golpes-recientes-y-mapa)
 8. [Idioma español / inglés](#8-idioma-español--inglés)
 9. [Iconos y gráficos](#9-iconos-y-gráficos)
-10. [Comandos del chat](#comandos-del-chat)
-11. [Opciones y guardado](#opciones-y-guardado)
-12. [Instalación](#instalación)
-13. [Requisitos, limitaciones y créditos](#requisitos-limitaciones-y-créditos)
+10. [Novedades: barra animada, marcos, temas, rachas y más](#10-novedades-barra-animada-marcos-temas-rachas-y-más)
+11. [Comandos del chat](#comandos-del-chat)
+12. [Opciones y guardado](#opciones-y-guardado)
+13. [Instalación](#instalación)
+14. [Requisitos, limitaciones y créditos](#requisitos-limitaciones-y-créditos)
 
 ---
 
@@ -202,6 +203,48 @@ Todo esto es del PvMP+ original, traducido:
 
 ---
 
+## 10. Novedades: barra animada, marcos, temas, rachas y más
+
+Todo se elige en **Opciones** (clic: siguiente opción, clic derecho: anterior) y se guarda por personaje; el tema se guarda para toda la cuenta.
+
+### Barra de rango animada
+
+12 estilos (Brillo deslizante, Energía fluida, Aura pulsante, Punta ardiente, Llamas, Runas élficas, Latido, Neón, Plasma, Destellos, Aurora o Clásica), 10 colores, 3 velocidades, un estilo distinto **en combate**, destello al ganar puntos y aura dorada cuando falta poco para subir de rango.
+
+![La barra de rango mostrando varios estilos animados: brillo, energía, llamas, runas, punta ardiente, neón, plasma, destellos, aurora y latido](media/barra_estilos.gif)
+
+### Marcos de barra y auras
+
+Tres marcos nuevos (**Cristal élfico**, **Metal minimalista**, **Obsidiana de fuego**) con su propio relleno, y auras alrededor de la barra: Pulso, Respiración, Fuego vivo, Escarcha, Arcoíris y Destello viajero. Se combinan con cualquier estilo animado.
+
+![Los tres marcos nuevos con distintas auras: cristal con pulso y destello viajero, metal con respiración y arcoíris, obsidiana con fuego vivo y escarcha](media/barra_marcos.gif)
+
+### Temas de color
+
+Clásico, Oscuro moderno, Élfico o Mordor: cambian textos, bordes, paneles, el marco de la barra y el fondo de la ventana de Asedios. También se pueden **bloquear las ventanas** para no moverlas sin querer.
+
+![Los cuatro temas: clásico dorado, oscuro moderno, élfico azul plateado y Mordor rojo](media/temas.gif)
+
+### Rachas y rivales
+
+Aviso en pantalla con cada racha de bajas (3, 5, 10…), tu mejor racha, quién te ha matado más y a quién has matado más. Botón **Rachas y rivales** en la ventana secundaria o `/pvmp+ rivales`.
+
+![Ventana de Rachas y rivales: la racha sube con cada golpe mortal, aparece el aviso de racha y al morir se reinicia y se anota quién te mató](media/rachas_rivales.gif)
+
+### Marcas del mapa con cuenta atrás
+
+Las marcas de enemigos y de Help! muestran quién avisa y los segundos que les quedan, y se van apagando al final.
+
+![Mapa del Ettenmoors con dos marcas que muestran el nombre y los segundos restantes y se van apagando](media/mapa_marcas.gif)
+
+### Gaergoth: aviso 5 minutos antes
+
+Además del temporizador, avisa en pantalla y en el chat cuando faltan 5 minutos para que reaparezca. Su icono se puede poner debajo, a la izquierda o a la derecha de la barra.
+
+![Cuenta atrás de Gaergoth que al llegar a 5 minutos muestra el aviso](media/gaergoth_aviso.gif)
+
+---
+
 ## Comandos del chat
 
 | Comando | Qué hace |
@@ -211,6 +254,8 @@ Todo esto es del PvMP+ original, traducido:
 | `/pvmp+ asedios` (o `sieges`) | Muestra u oculta la ventana de Asedios |
 | `/pvmp+ gaergoth muerto` (o `off`, `gaergoth`) | Marca a Gaergoth como muerto y empieza la hora |
 | `/pvmp+ gaergoth activo` (o `on`) | Vuelve a poner a Gaergoth como activo |
+| `/pvmp+ gaergoth abajo` / `izquierda` / `derecha` | Dónde va el icono de Gaergoth respecto a la barra |
+| `/pvmp+ rivales` (o `racha`) | Muestra u oculta la ventana de Rachas y rivales |
 | `/pvmp+ auras on` / `/pvmp+ auras off` | Enciende o apaga las auras de los iconos |
 | `/pvmp+ idioma es` / `/pvmp+ language en` | Cambia el idioma de la interfaz |
 | `/pvmp+` | Muestra la ayuda |

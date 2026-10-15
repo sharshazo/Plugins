@@ -54,6 +54,15 @@ S.SILVER_ICON = UI.AssetIds.silver_coin
 S.COPPER_ICON = UI.AssetIds.copper_coin
 S.INVENTORY_SPACE_ICON = UI.AssetIds.backpack
 S.DURABILITY_ICON = UI.AssetIds.durability
+S.TITAN_WIDGET_ICONS = {
+    location = "compass",
+    reputation = "banner",
+    pvp_rank = "swords",
+    daynight = "sun",
+    time_server = "server_clock",
+    vault = "vault",
+    shared_storage = "shared",
+}
 
 S.STATUS_BAR_LAYOUT_TOKENS = {
     time = "time_local",
@@ -68,6 +77,13 @@ S.STATUS_BAR_LAYOUT_TOKENS = {
     assets = "assets",
     encyclopedia = "encyclopedia",
     raid = "raid",
+    location = "location",
+    reputation = "reputation",
+    pvprank = "pvp_rank",
+    daynight = "daynight",
+    servertime = "time_server",
+    vault = "vault",
+    shared = "shared_storage",
 }
 S.STATUS_BAR_WIDGET_LAYOUT_TOKENS = {
     time_local = "%time%",
@@ -82,6 +98,13 @@ S.STATUS_BAR_WIDGET_LAYOUT_TOKENS = {
     assets = "%assets%",
     encyclopedia = "%encyclopedia%",
     raid = "%raid%",
+    location = "%location%",
+    reputation = "%reputation%",
+    pvp_rank = "%pvprank%",
+    daynight = "%daynight%",
+    time_server = "%servertime%",
+    vault = "%vault%",
+    shared_storage = "%shared%",
 }
 S.STATUS_BAR_EDITABLE_WIDGET_KEYS = {
     "time_local",
@@ -96,6 +119,13 @@ S.STATUS_BAR_EDITABLE_WIDGET_KEYS = {
     "assets",
     "encyclopedia",
     "raid",
+    "location",
+    "reputation",
+    "pvp_rank",
+    "daynight",
+    "time_server",
+    "vault",
+    "shared_storage",
 }
 
 S.ITEM_WEAR_STATE = Turbine.Gameplay.ItemWearState or {}
@@ -930,6 +960,20 @@ function S.get_status_bar_widget_display_name(widget_key)
         return Shortcuts.get_label("encyclopedia")
     elseif widget_key == "raid" then
         return Shortcuts.get_label("raid")
+    elseif widget_key == "location" then
+        return TR["Location"]
+    elseif widget_key == "reputation" then
+        return TR["Reputation"]
+    elseif widget_key == "pvp_rank" then
+        return TR["Infamy / Renown"]
+    elseif widget_key == "daynight" then
+        return TR["Day & Night"]
+    elseif widget_key == "time_server" then
+        return TR["Server time"]
+    elseif widget_key == "vault" then
+        return TR["Personal vault"]
+    elseif widget_key == "shared_storage" then
+        return TR["Shared storage"]
     end
 
     return tostring(widget_key or "")
@@ -1180,6 +1224,11 @@ function S.get_widget_icon(widget_key)
         return S.INVENTORY_SPACE_ICON
     elseif widget_key == "equipment_wear" then
         return S.DURABILITY_ICON
+    end
+    -- widgets traidos de TitanBar (iconos propios en assets/ui/titan)
+    local titan = S.TITAN_WIDGET_ICONS[widget_key]
+    if titan ~= nil then
+        return "LUI/assets/ui/titan/" .. titan .. ".tga"
     end
     return nil
 end

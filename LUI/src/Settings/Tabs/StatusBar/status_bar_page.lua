@@ -334,6 +334,86 @@ local function _new_widgets_section(window, settings_getter)
             return tostring(settings_getter().widgets.craft_plan.max_visible)
         end)
 
+    -- widgets traidos de TitanBar: ancho, icono y alineacion (+ extras)
+    local function titan_tab(key, prefix, extra)
+        local content = ConfigContent(window, 4)
+        content:add_line_edit(prefix .. "_width", TR["Width"],
+            function(value)
+                local width = tonumber(value)
+                if width ~= nil then
+                    settings_getter().widgets[key].width = width
+                end
+            end,
+            function()
+                return tostring(settings_getter().widgets[key].width)
+            end)
+        content:add_row_break()
+        content:add_checkbox(prefix .. "_icon", TR["Icon"],
+            function(value)
+                settings_getter().widgets[key].icon = value == true
+            end,
+            function()
+                return settings_getter().widgets[key].icon ~= false
+            end)
+        content:add_dropdown(prefix .. "_text_alignment", TR["Text alignment"], content.text_alignment_labels,
+            content.text_alignment_values,
+            function(value)
+                settings_getter().widgets[key].text_alignment = value
+            end,
+            function()
+                return settings_getter().widgets[key].text_alignment
+            end)
+        if extra ~= nil then
+            content:add_row_break()
+            extra(content)
+        end
+        return content
+    end
+
+    local location = titan_tab("location", "sb_location")
+    local reputation = titan_tab("reputation", "sb_reputation")
+    local pvp_rank = titan_tab("pvp_rank", "sb_pvp_rank")
+    local daynight = titan_tab("daynight", "sb_daynight", function(content)
+        content:add_checkbox("sb_daynight_next", TR["Show time left"],
+            function(value)
+                settings_getter().widgets.daynight.show_next = value == true
+            end,
+            function()
+                return settings_getter().widgets.daynight.show_next ~= false
+            end)
+        content:add_line_edit("sb_daynight_seed", TR["Sync adjustment (s)"],
+            function(value)
+                local seed = tonumber(value)
+                if seed ~= nil then
+                    settings_getter().widgets.daynight.seed = seed
+                end
+            end,
+            function()
+                return tostring(settings_getter().widgets.daynight.seed)
+            end)
+    end)
+    local time_server = titan_tab("time_server", "sb_time_server", function(content)
+        content:add_line_edit("sb_time_server_offset", TR["Hours from local time"],
+            function(value)
+                local offset = tonumber(value)
+                if offset ~= nil and offset >= -24 and offset <= 24 then
+                    settings_getter().widgets.time_server.offset = offset
+                end
+            end,
+            function()
+                return tostring(settings_getter().widgets.time_server.offset)
+            end)
+        content:add_dropdown("sb_time_server_format", TR["Time format"], time_format_labels, time_format_values,
+            function(value)
+                settings_getter().widgets.time_server.time_format = value
+            end,
+            function()
+                return settings_getter().widgets.time_server.time_format
+            end)
+    end)
+    local vault = titan_tab("vault", "sb_vault")
+    local shared_storage = titan_tab("shared_storage", "sb_shared_storage")
+
     local page = ConfigNestedTabs(window, UI.Widgets.LuiTabBar.position.top,
         FeatureShell.nested_tab_scale, FeatureShell.nested_tab_font_size)
     page:add_tab(TR["Time (local)"], "time", time)
@@ -344,6 +424,13 @@ local function _new_widgets_section(window, settings_getter)
     page:add_tab(TR["Tracked Item"], "item", item)
     page:add_tab(TR["Shortcut Buttons"], "shortcuts", shortcuts)
     page:add_tab(TR["Crafting Plan"], "craft_plan", craft_plan)
+    page:add_tab(TR["Location"], "location", location)
+    page:add_tab(TR["Reputation"], "reputation", reputation)
+    page:add_tab(TR["Infamy / Renown"], "pvp_rank", pvp_rank)
+    page:add_tab(TR["Day & Night"], "daynight", daynight)
+    page:add_tab(TR["Server time"], "time_server", time_server)
+    page:add_tab(TR["Personal vault"], "vault", vault)
+    page:add_tab(TR["Shared storage"], "shared_storage", shared_storage)
 
     return page
 end

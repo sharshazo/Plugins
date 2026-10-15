@@ -2,7 +2,7 @@ Settings = class(Turbine.UI.Lotro.Window)
 
 function Settings:Constructor()
 	local width = 430
-	local height = PvMP_Language_Switchable and 570 or 540
+	local height = PvMP_Language_Switchable and 810 or 780	-- v4.3.12: +30 Gaergoth / v4.3.13: +120 barra / v4.3.14: +60 combate, tema y bloqueo / v4.3.15: +30 marco y aura
 
 	Turbine.UI.Lotro.Window.Constructor(self)
 
@@ -309,6 +309,76 @@ function Settings:Constructor()
 		end
 	end
 
+	-- v4.3.12: donde va el icono de Gaergoth (debajo / izquierda / derecha de la barra)
+	self.boss_button = LotroButton(self, width - 30, "")
+	self.boss_button:SetPosition(width / 2 - self.boss_button:GetWidth() / 2, (self.language_button or self.reset_button):GetTop() + 30)
+	self.boss_button.Click = function()
+		if BossTimer ~= nil then
+			BossTimer:CyclePlacement()
+		end
+		self:UpdateBossButton()
+	end
+	self:UpdateBossButton()
+
+	-- v4.3.13: estilo de la barra de rango (clic: siguiente, clic derecho: anterior)
+	self.bar_buttons = {}
+	local prev = self.boss_button
+	for _, kind in ipairs({ "style", "combat", "color", "speed", "extras" }) do
+		local btn = LotroButton(self, width - 30, "")
+		btn:SetPosition(width / 2 - btn:GetWidth() / 2, prev:GetTop() + 30)
+		btn.Click = function()
+			if PvMP_BarFX ~= nil then PvMP_BarFX.Cycle(kind, 1) end
+			self:UpdateBarButtons()
+		end
+		btn.MouseClick = function(sender, args)
+			if PvMP_BarFX ~= nil and args ~= nil and Turbine.UI.MouseButton ~= nil and args.Button == Turbine.UI.MouseButton.Right then
+				PvMP_BarFX.Cycle(kind, -1)
+				self:UpdateBarButtons()
+			end
+		end
+		self.bar_buttons[kind] = btn
+		prev = btn
+	end
+
+	-- v4.3.14: tema de colores (recarga el plugin) y bloqueo de ventanas
+	local half = (width - 40) / 2
+	self.theme_button = LotroButton(self, half, "")
+	self.theme_button:SetPosition(15, prev:GetTop() + 30)
+	self.theme_button.Click = function()
+		if PvMP_Themes ~= nil then PvMP_Themes.Cycle(1) end
+		self:UpdateBarButtons()
+	end
+	self.theme_button.MouseClick = function(sender, args)
+		if PvMP_Themes ~= nil and args ~= nil and Turbine.UI.MouseButton ~= nil and args.Button == Turbine.UI.MouseButton.Right then
+			PvMP_Themes.Cycle(-1)
+			self:UpdateBarButtons()
+		end
+	end
+	self.lock_button = LotroButton(self, half, "")
+	self.lock_button:SetPosition(25 + half, prev:GetTop() + 30)
+	self.lock_button.Click = function()
+		if PvMP_Themes ~= nil then PvMP_Themes.ToggleLock() end
+		self:UpdateBarButtons()
+	end
+
+	-- v4.3.15: marco de la barra y aura (clic: siguiente, clic derecho: anterior)
+	for i, kind in ipairs({ "skin", "aura" }) do
+		local btn = LotroButton(self, half, "")
+		btn:SetPosition(i == 1 and 15 or (25 + half), self.theme_button:GetTop() + 30)
+		btn.Click = function()
+			if PvMP_BarFX ~= nil then PvMP_BarFX.Cycle(kind, 1) end
+			self:UpdateBarButtons()
+		end
+		btn.MouseClick = function(sender, args)
+			if PvMP_BarFX ~= nil and args ~= nil and Turbine.UI.MouseButton ~= nil and args.Button == Turbine.UI.MouseButton.Right then
+				PvMP_BarFX.Cycle(kind, -1)
+				self:UpdateBarButtons()
+			end
+		end
+		self.bar_buttons[kind] = btn
+	end
+	self:UpdateBarButtons()
+
 	self.KeyDown = function(sender, args)
 		if args.Action == Turbine.UI.Lotro.Action.Escape then
 			self:SetVisible(false)
@@ -321,6 +391,33 @@ function Settings:Constructor()
 	end
 end
 
+function Settings:UpdateBossButton()
+	if self.boss_button == nil then
+		return
+	end
+	local p = storage ~= nil and storage.boss_position or nil
+	local names = {
+		left = L.Boss_Place_Left or "left of the bar",
+		right = L.Boss_Place_Right or "right of the bar",
+	}
+	self.boss_button:SetText((L.Boss_Place or "Gaergoth: ") .. (names[p] or L.Boss_Place_Below or "below the bar"))
+end
+
+function Settings:UpdateBarButtons()
+	if self.bar_buttons == nil or PvMP_BarFX == nil then
+		return
+	end
+	for kind, btn in pairs(self.bar_buttons) do
+		btn:SetText(PvMP_BarFX.ButtonText(kind))
+	end
+	if PvMP_Themes ~= nil and self.theme_button ~= nil then
+		self.theme_button:SetText(PvMP_Themes.ButtonText())
+		self.lock_button:SetText(PvMP_Themes.LockText())
+	end
+end
+
 function Settings:Open()
+	self:UpdateBossButton()
+	self:UpdateBarButtons()
 	self:SetVisible(true)
 end

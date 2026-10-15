@@ -54,3 +54,12 @@ TravelWindowII:
 Credit goes to the TravelWindowII maintainers, including wduda / Hyoss / whiterabbit963, and to
 the original Travel Window authors credited upstream, including Dhor and later
 contributors.
+
+## TitanBar
+
+The status bar widgets in `src/StatusBar/Widgets/titan_widgets.lua`
+(location, reputation, Infamy / Renown, day & night, server time, personal
+vault and shared storage) are based on ideas and formulas from TitanBar
+1.24.45 by Habna and contributors (Garan, ScrappyTheGreat - "PredictInGameTime",
+Glubby - "PvMP+", and others credited in TitanBar's `credits.txt`). The icons
+in `assets/ui/titan/` were drawn for LUI.

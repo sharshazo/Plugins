@@ -409,6 +409,16 @@ local function _widget_ctor(name)
     return widgets[name]
 end
 
+local TITAN_WIDGETS = {
+    location = "TitanLocationWidget",
+    reputation = "TitanReputationWidget",
+    pvp_rank = "TitanPvpRankWidget",
+    daynight = "TitanDayNightWidget",
+    time_server = "TitanServerTimeWidget",
+    vault = "TitanVaultWidget",
+    shared_storage = "TitanSharedStorageWidget",
+}
+
 local function _widget_factory(widget_key, widget_w, bar_h, font, widget_cfg, widget_entry)
     local shortcut_spec = SHORTCUT_WIDGETS[widget_key]
     if shortcut_spec ~= nil then
@@ -472,6 +482,14 @@ local function _widget_factory(widget_key, widget_w, bar_h, font, widget_cfg, wi
             error("Missing StatusBar widget constructor: CraftPlanWidget")
         end
         return ctor(widget_w, bar_h, font, widget_cfg ~= nil and widget_cfg.max_visible or nil)
+    elseif TITAN_WIDGETS[widget_key] ~= nil then
+        -- widgets traidos de TitanBar (titan_widgets.lua)
+        local ctor = _widget_ctor(TITAN_WIDGETS[widget_key])
+        if ctor == nil then
+            error("Missing StatusBar widget constructor: " .. TITAN_WIDGETS[widget_key])
+        end
+        local icon_path = widget_cfg ~= nil and widget_cfg.icon == true and S.get_widget_icon(widget_key) or nil
+        return ctor(widget_w, bar_h, font, icon_path, widget_cfg)
     elseif widget_key == "button" then
         local ctor = _widget_ctor("AliasButtonWidget")
         if ctor == nil then

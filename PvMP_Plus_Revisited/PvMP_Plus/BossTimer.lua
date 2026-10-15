@@ -6,6 +6,8 @@
 --     (gris, sin llamas) y cuenta 1 hora. Al terminar vuelve a ACTIVO.
 -- Se guarda por servidor (sigue contando aunque salgas del juego).
 -- Manual: /pvmp+ gaergoth muerto (u off)  |  /pvmp+ gaergoth activo (u on)
+-- v4.3.12: posicion elegible (Opciones o /pvmp+ gaergoth abajo|izquierda|derecha):
+--          debajo de la barra, a su izquierda o a su derecha.
 
 local BOSS_KEY = "PvMP_Plus_Gaergoth"
 local RESPAWN = 3600          -- 1 hora
@@ -14,7 +16,7 @@ local DIR = "PvMP_Plus_Revisited/PvMP_Plus/Resources/Bosses/"
 local FIRE_FRAMES = 10
 local FPS = 12.5
 local ICON = 80
-local W, H = 240, 80
+local W, H = 270, 80
 local TX = ICON + 2
 
 -- segundos "absolutos" (siempre crecen, tambien al cambiar de anio)
@@ -85,6 +87,8 @@ function BossTimerWindow:Constructor()
 	self.lastStart = nil
 	self.lastTick = -1
 	self.shownIcon = ""
+	self.barW = W - TX - 8
+	self:ApplyLayout()
 	self:Load()
 
 	self:SetWantsUpdates(true)
@@ -134,6 +138,7 @@ function BossTimerWindow:Start(manual)
 	end
 	self.lastStart = now
 	self.ends = now + RESPAWN
+	self.warned = false
 	self:Save()
 	self.lastTick = -1
 	Alert(L.Boss_Killed_Alert or "Gaergoth defeated - respawn in 1 hour", Color("#FF6B6B"))
@@ -189,19 +194,42 @@ function BossTimerWindow:Tick()
 		end
 	else
 		local left = self.ends - now
+		-- v4.3.14: aviso 5 minutos antes de que reaparezca
+		if left <= 300 and left > 0 and not self.warned then
+			self.warned = true
+			local msg = L.Boss_Soon_Alert or "Gaergoth respawns in 5 minutes!"
+			Alert(msg, Color("#FFB347"))
+			Turbine.Shell.WriteLine("PvMP+: " .. msg)
+		end
 		self:SetIcon("gaergoth_off.tga")
 		self.time:SetText((L.Boss_Respawn or "Respawn in ") .. Clock(left))
 		self.time:SetForeColor(Color(left <= 300 and "#FFB347" or "#9AA3B5"))
 		self.track:SetVisible(true)
 		self.fill:SetVisible(true)
-		self.fill:SetWidth(math.floor((W - TX - 8) * (left / RESPAWN)))
+		self.fill:SetWidth(math.floor(self.barW * (left / RESPAWN)))
 	end
-	-- debajo de la barra principal (o de sus estadisticas)
+	-- junto a la barra principal: debajo (por defecto), a la izquierda o a la derecha
 	local ov = OverviewWindow
 	local show = ov ~= nil and ov:IsVisible() and ov.panel ~= nil and ov.panel:IsVisible()
 	if show then
-		local y = ov:GetTop() + ((storage ~= nil and storage.stats_hidden) and 64 or 102)
-		local x = ov:GetLeft() + math.floor(ov:GetWidth() / 2 - W / 2)
+		local place = self:GetPlacement()
+		if place ~= self.layout then
+			self:ApplyLayout()
+		end
+		local x, y
+		if place == "left" then
+			x = ov:GetLeft() - W + 6
+			y = ov:GetTop() - 6			-- icono centrado con la barra
+		elseif place == "right" then
+			x = ov:GetLeft() + ov:GetWidth() - 6
+			y = ov:GetTop() - 6
+		else
+			y = ov:GetTop() + ((storage ~= nil and storage.stats_hidden) and 64 or 102)
+			x = ov:GetLeft() + math.floor(ov:GetWidth() / 2 - W / 2)
+		end
+		-- que no se salga de la pantalla
+		x = math.max(0, math.min(x, Turbine.UI.Display.GetWidth() - W))
+		y = math.max(0, math.min(y, Turbine.UI.Display.GetHeight() - H))
 		if x ~= self:GetLeft() or y ~= self:GetTop() then
 			self:SetPosition(x, y)
 		end
@@ -209,6 +237,67 @@ function BossTimerWindow:Tick()
 	if self:IsVisible() ~= show then
 		self:SetVisible(show)
 	end
+end
+
+-- posicion respecto a la barra: "below" | "left" | "right" (por personaje)
+local PLACES = { "below", "left", "right" }
+function BossTimerWindow:GetPlacement()
+	local p = storage ~= nil and storage.boss_position or nil
+	if p ~= "left" and p ~= "right" then
+		p = "below"
+	end
+	return p
+end
+
+function BossTimerWindow:SetPlacement(p)
+	if p ~= "left" and p ~= "right" then
+		p = "below"
+	end
+	if storage ~= nil then
+		storage.boss_position = p
+	end
+	self:ApplyLayout()
+	self.lastTick = -1
+	pcall(self.Tick, self)
+end
+
+function BossTimerWindow:CyclePlacement()
+	local cur = self:GetPlacement()
+	for i, p in ipairs(PLACES) do
+		if p == cur then
+			self:SetPlacement(PLACES[(i % #PLACES) + 1])
+			return
+		end
+	end
+	self:SetPlacement("below")
+end
+
+-- a la izquierda el icono va al lado derecho (pegado a la barra) y el texto a su izquierda
+function BossTimerWindow:ApplyLayout()
+	local place = self:GetPlacement()
+	self.layout = place
+	local tw = W - TX
+	if place == "left" then
+		self.icon:SetPosition(W - ICON, 0)
+		self.name:SetPosition(0, 20)
+		self.time:SetPosition(0, 37)
+		self.name:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
+		self.time:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
+		self.barX = 8
+	else
+		self.icon:SetPosition(0, 0)
+		self.name:SetPosition(TX, 20)
+		self.time:SetPosition(TX, 37)
+		self.name:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+		self.time:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
+		self.barX = TX
+	end
+	self.name:SetSize(tw, 16)
+	self.time:SetSize(tw, 18)
+	self.barW = W - TX - 8
+	self.track:SetPosition(self.barX, 58)
+	self.track:SetWidth(self.barW)
+	self.fill:SetPosition(self.barX, 58)
 end
 
 -- Lee el chat: solo mensajes del juego (no lo que escriben los jugadores)
