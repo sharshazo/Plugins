@@ -68,9 +68,28 @@ Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landa
 
 ---
 
+## Descarga por separado
+
+¿Solo quieres un addon? Descarga su ZIP. **Cada ZIP ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
+
+| Addon | Descarga |
+|---|---|
+| ✨ LUI | [⬇️ LUI.zip](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.zip) |
+| 📖 QuestSync | [⬇️ QuestSync.zip](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.zip) |
+| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.zip](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.zip) |
+| 🏆 Deed Tracker | [⬇️ DeedTracker.zip](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.zip) |
+| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.zip](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.zip) |
+| 📦 Todos juntos | [⬇️ Todos_los_addons.zip](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.zip) |
+
+Abre el ZIP y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Si Windows pregunta, acepta **combinar** y **reemplazar**. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
+
+Todas las versiones: [página de Releases](https://github.com/sharshazo/Plugins/releases).
+
+---
+
 ## Instalación rápida
 
-1. Botón verde **Code → Download ZIP**.
+1. Botón verde **Code → Download ZIP** (o el ZIP de un solo addon, arriba).
 2. Abre el ZIP. Dentro hay una sola carpeta (`Plugins-main`). Entra en ella.
 3. Copia las **6 carpetas** que hay dentro (`LOTRO_Quest_Assistant`, `LUI`, `WorldMap_Addon`, `Turbine`, `CubePlugins`, `PvMP_Plus_Revisited`) y pégalas en:
 
