@@ -4,3 +4,5 @@
 
 import "LUI.src.Cooldowns.cooldown_entry"
 import "LUI.src.Cooldowns.cooldowns_window"
+-- (2026-10-16) disenos y animaciones (envuelve CooldownEntry)
+import "LUI.src.Cooldowns.cooldown_fx"

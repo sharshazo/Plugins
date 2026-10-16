@@ -12,6 +12,8 @@ local S = _G.LUI.Features.StatusBar.Common
 local Style = UI.Widgets.Style
 
 local WalletWidget = class(Turbine.UI.Control)
+local _shared_tip = nil
+local _tip_owner = nil
 StatusBarWidgets.WalletWidget = WalletWidget
 
 local ITEM_GAP = 6
@@ -139,7 +141,8 @@ function WalletWidget:_show_tip()
     if self._tips_on ~= true or #self._item_controls == 0 then
         return
     end
-    if self._tip == nil then
+    -- una sola ventanita compartida (no se crean ventanas nuevas al rehacer la barra)
+    if _shared_tip == nil then
         local ok, tip = pcall(function()
             local t = UI.Widgets.LuiTooltip()
             t:SetZOrder(2200)
@@ -148,15 +151,18 @@ function WalletWidget:_show_tip()
         if ok ~= true then
             return
         end
-        self._tip = tip
+        _shared_tip = tip
     end
+    self._tip = _shared_tip
+    _tip_owner = self
     self._tip_open = true
     pcall(self._tip.ShowFor, self._tip, self, self:_tip_text())
 end
 
 function WalletWidget:_hide_tip()
     self._tip_open = false
-    if self._tip ~= nil then
+    if self._tip ~= nil and _tip_owner == self then
+        _tip_owner = nil
         pcall(self._tip.Hide, self._tip)
     end
 end

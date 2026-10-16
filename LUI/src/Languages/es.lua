@@ -1310,4 +1310,6 @@ LUI.src.Languages.es.ES = {
     ["5 - Flash on a new debuff"] = "5 - Destello de perjuicio nuevo",
     ["6 - Fade out"] = "6 - Salida desvanecida",
     ["The preview above shows the classic design; the chosen design and animations are shown in game."] = "La vista previa de arriba muestra el diseño clásico; el diseño y las animaciones elegidas se ven en el juego.",
+    ["Click a design to choose it. Lit animations are on; dimmed ones are off."] = "Haz clic en un diseño para elegirlo. Las animaciones iluminadas están activadas; las apagadas, desactivadas.",
+    ["5 - Flash when ready"] = "5 - Destello al quedar lista",
 }

@@ -11,11 +11,14 @@ local ConfigTabs = _G.LUI.Settings.Content.ConfigTabs
 local LUI_ENUMS = _G.LUI.Settings.Enums
 local UI = _G.LUI.UI
 local class = _G.LUI.Core.class
+import "Turbine.UI"
+import "Turbine.UI.Lotro"
 import "LUI.src.Settings.Tabs.feature_shell"
 import "LUI.src.Settings.Content.content"
 import "LUI.src.Settings.Content.nested_tabs"
 import "LUI.src.Settings.Content.tabs"
 import "LUI.src.Settings.Content.section_page"
+import "LUI.src.Settings.Tabs.fx_design_previews"
 
 local FeatureShell = _G.LUI.Settings.Tabs.SettingsFeatureShell
 local scaled_int = FeatureShell.scaled_int
@@ -140,6 +143,17 @@ local function _new_colors_section(window, refresh_preview, settings_getter, pre
     return page, text
 end
 
+-- (2026-10-16) vistas previas del diseno: ver Settings/Tabs/fx_design_previews.lua
+local DESIGN_CARDS = {
+    { "classic", "vista_clasico.tga", "Classic" },
+    { "bar", "vista_barra.tga", "Integrated time bar" },
+    { "icons", "vista_iconos.tga", "Icons only" },
+}
+
+local function _add_design_previews(design, prefix, anims)
+    _G.LUI.Settings.Tabs.FxDesignPreviews.add(design, prefix, anims, DESIGN_CARDS, "anim_")
+end
+
 local function _new_actor_page(window, preview_key, preview_height, refresh_preview_fn, prefix, settings_getter, bar_specs)
     local page = ConfigSectionPage(window, preview_key, preview_height, refresh_preview_fn)
     local bar_mode_labels = { TR["Load"], TR["Unload"] }
@@ -221,12 +235,12 @@ local function _new_actor_page(window, preview_key, preview_height, refresh_prev
         end)
     design:add_row_break()
     local anims = {
-        { "anim_slide", "1 - Slide in" },
-        { "anim_shine", "2 - Shine across the bar" },
-        { "anim_pulse", "3 - Heartbeat when ending (< 3 s)" },
-        { "anim_sweep", "4 - Circular sweep on the icon" },
-        { "anim_flash", "5 - Flash on a new debuff" },
-        { "anim_fade", "6 - Fade out" },
+        { "anim_slide", "1 - Slide in", "slide" },
+        { "anim_shine", "2 - Shine across the bar", "shine" },
+        { "anim_pulse", "3 - Heartbeat when ending (< 3 s)", "pulse" },
+        { "anim_sweep", "4 - Circular sweep on the icon", "sweep" },
+        { "anim_flash", "5 - Flash on a new debuff", "flash" },
+        { "anim_fade", "6 - Fade out", "fade" },
     }
     for i = 1, #anims do
         local key = anims[i][1]
@@ -239,7 +253,8 @@ local function _new_actor_page(window, preview_key, preview_height, refresh_prev
             end)
     end
     design:add_row_break()
-    design:add_info(TR["The preview above shows the classic design; the chosen design and animations are shown in game."])
+    design:add_info(TR["Click a design to choose it. Lit animations are on; dimmed ones are off."])
+    _add_design_previews(design, prefix, anims)
     page:add_tab(TR["Design"], "design", design)
 
     local layout = ConfigContent(window, 4, page.refresh_preview)

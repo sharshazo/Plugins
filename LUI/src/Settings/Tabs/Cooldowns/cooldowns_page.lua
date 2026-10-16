@@ -14,6 +14,7 @@ import "LUI.src.Settings.Tabs.feature_shell"
 import "LUI.src.Settings.Content.content"
 import "LUI.src.Settings.Content.tabs"
 import "LUI.src.Settings.Content.nested_tabs"
+import "LUI.src.Settings.Tabs.fx_design_previews"
 
 local FeatureShell = _G.LUI.Settings.Tabs.SettingsFeatureShell
 local scaled_int = FeatureShell.scaled_int
@@ -268,6 +269,61 @@ function CooldownsFeaturePage:Constructor(window)
             return settings_getter().group_display
         end, group_display_help)
     self:add_tab(TR["General"], "general", general)
+
+    -- (2026-10-16) diseno y animaciones (Cooldowns/cooldown_fx.lua)
+    local design = ConfigContent(window, 4, refresh_preview)
+    design:add_dropdown("cd_style", TR["Design"],
+        { TR["Classic"], TR["Integrated time bar"], TR["Icons only"] },
+        { "classic", "bar", "icons" },
+        function(value)
+            settings_getter().style = value
+        end,
+        function()
+            return settings_getter().style or "classic"
+        end)
+    design:add_dropdown("cd_icon_size", TR["Icon size (icons only)"],
+        { "28", "32", "36", "40", "48" }, { 28, 32, 36, 40, 48 },
+        function(value)
+            settings_getter().icon_size = value
+        end,
+        function()
+            return tonumber(settings_getter().icon_size) or 36
+        end)
+    design:add_dropdown("cd_anim_speed", TR["Animation speed"],
+        { TR["Slow"], TR["Normal"], TR["Fast"] }, { 1, 2, 3 },
+        function(value)
+            settings_getter().anim_speed = value
+        end,
+        function()
+            return tonumber(settings_getter().anim_speed) or 2
+        end)
+    design:add_row_break()
+    local cd_anims = {
+        { "anim_slide", "1 - Slide in", "slide" },
+        { "anim_shine", "2 - Shine across the bar", "shine" },
+        { "anim_pulse", "3 - Heartbeat when ending (< 3 s)", "pulse" },
+        { "anim_sweep", "4 - Circular sweep on the icon", "sweep" },
+        { "anim_flash", "5 - Flash when ready", "flash" },
+        { "anim_fade", "6 - Fade out", "fade" },
+    }
+    for i = 1, #cd_anims do
+        local key = cd_anims[i][1]
+        design:add_checkbox("cd_" .. key, TR[cd_anims[i][2]],
+            function(value)
+                settings_getter()[key] = value == true
+            end,
+            function()
+                return settings_getter()[key] ~= false
+            end)
+    end
+    design:add_row_break()
+    design:add_info(TR["Click a design to choose it. Lit animations are on; dimmed ones are off."])
+    _G.LUI.Settings.Tabs.FxDesignPreviews.add(design, "cd", cd_anims, {
+        { "classic", "vista_cd_clasico.tga", "Classic" },
+        { "bar", "vista_cd_barra.tga", "Integrated time bar" },
+        { "icons", "vista_cd_iconos.tga", "Icons only" },
+    }, "anim_cd_")
+    self:add_tab(TR["Design"], "design", design)
 
     local layout = ConfigContent(window, 4, refresh_preview)
     layout:add_dropdown("cd_orientation", TR["Orientation"], orientation_labels, orientation_values,

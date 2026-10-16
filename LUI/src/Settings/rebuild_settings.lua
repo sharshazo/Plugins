@@ -50,7 +50,31 @@ local function build_expiring_effects_resolved(dst)
         r.time_font = FONT_TO_LOTRO(dst.font.name, r.time_font_size)
     end
 
+    -- (2026-10-16) diseno "solo iconos": cada casilla es un icono cuadrado
+    if dst.style == "icons" then
+        r.entry_width = dst.icon_size
+        r.entry_height = dst.icon_size
+    end
+
     return r
+end
+
+-- (2026-10-16) diseno y animaciones de los efectos (ver ExpiringEffects/effect_fx.lua)
+local EE_STYLES = { classic = true, bar = true, icons = true }
+local EE_ICON_SIZES = { [28] = true, [32] = true, [36] = true, [40] = true, [48] = true }
+local function copy_expiring_effects_fx(dst, src)
+    dst.style = EE_STYLES[src.style] == true and src.style or "classic"
+    local size = math.floor(tonumber(src.icon_size) or 36)
+    dst.icon_size = EE_ICON_SIZES[size] == true and size or 36
+    dst.anim_slide = src.anim_slide ~= false
+    dst.anim_shine = src.anim_shine ~= false
+    dst.anim_pulse = src.anim_pulse ~= false
+    dst.anim_sweep = src.anim_sweep ~= false
+    dst.anim_flash = src.anim_flash ~= false
+    dst.anim_fade = src.anim_fade ~= false
+    local speed = math.floor(tonumber(src.anim_speed) or 2)
+    if speed < 1 or speed > 3 then speed = 2 end
+    dst.anim_speed = speed
 end
 
 function Settings.rebuild()
@@ -656,6 +680,7 @@ function Settings.rebuild()
     self_ee.font.color = build_color(raw_self_ee.font.color)
     self_ee.font.outline_color = build_color(raw_self_ee.font.outline_color)
 
+    copy_expiring_effects_fx(self_ee, raw_self_ee)
     self_ee.resolved = build_expiring_effects_resolved(self_ee)
 
     local raw_expiring_target_effects = raw.target.expiring_effects
@@ -690,6 +715,7 @@ function Settings.rebuild()
     target_ee.font.color = build_color(raw_expiring_target_effects.font.color)
     target_ee.font.outline_color = build_color(raw_expiring_target_effects.font.outline_color)
 
+    copy_expiring_effects_fx(target_ee, raw_expiring_target_effects)
     target_ee.resolved = build_expiring_effects_resolved(target_ee)
 
     -- (2026-10-02) efecto del puntero: valores ya validados (pointer_fx.lua)
@@ -901,6 +927,12 @@ function Settings.rebuild()
         )
     if cd_resolved.time_font_size ~= nil then
         cd_resolved.time_font = FONT_TO_LOTRO(cd.font.name, cd_resolved.time_font_size)
+    end
+    -- (2026-10-16) diseno y animaciones (Cooldowns/cooldown_fx.lua)
+    copy_expiring_effects_fx(cd, raw_cd)
+    if cd.style == "icons" then
+        cd_resolved.width = cd.icon_size
+        cd_resolved.height = cd.icon_size
     end
     cd.resolved = cd_resolved
 
