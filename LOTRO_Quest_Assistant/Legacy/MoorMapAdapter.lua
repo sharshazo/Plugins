@@ -96,7 +96,14 @@ function MoorMapAdapter.SetQuestMarker(quickslot, mapData)
     -- Si la base de datos no pudo resolver el mapa o las coordenadas fallaron en parsearse,
     -- MoorMap arrojara errores en el chat ("ID de mapa no valido", "Coordenada no valida").
     -- Limpiamos el shortcut para que el boton no haga nada y evitamos el spam.
-    if not mapData.mapID or mapData.mapID == 0 or (mapData.ns == 0 and mapData.ew == 0) then
+    -- v2026-10-16 (pedido del usuario): si esta cargado nuestro addon
+    -- "Mapa del Mundo" (WorldMap_Addon), el clic abre ESE mapa y marca el
+    -- punto ahi ("/mapa punto ..."); MoorMap queda solo como respaldo. El
+    -- Mapa del Mundo elige el mapa por la coordenada, asi que mapID 0 ya
+    -- no impide marcar el punto.
+    local useWorldMap = _G.WorldMapAddon ~= nil and type(_G.WorldMapAddon.ShowPoint) == "function"
+    if (not useWorldMap and (not mapData.mapID or mapData.mapID == 0)) or
+        not mapData.ns or not mapData.ew or (mapData.ns == 0 and mapData.ew == 0) then
         quickslot:SetShortcut(Turbine.UI.Lotro.Shortcut(Turbine.UI.Lotro.ShortcutType.Alias, ""))
         if LQA.Debug.Enabled then
             Turbine.Shell.WriteLine("<rgb=#FF00FF>QuestSync DEBUG: MoorMap ping abortado (mapID 0 o coord 0) para " .. tostring(mapData.name) .. "</rgb>")
@@ -138,6 +145,19 @@ function MoorMapAdapter.SetQuestMarker(quickslot, mapData)
             s = string.gsub(s, pair[1], pair[2])
         end
         return s
+    end
+
+    if useWorldMap then
+        local wcmd = string.format("/mapa punto %s:%s:%s:%s",
+            tostring(tonumber(mapData.mapID) or 0),
+            formatCoord(mapData.ns),
+            formatCoord(mapData.ew),
+            (string.gsub(foldAscii(mapData.name), ":", "-")))
+        if LQA.Debug.Enabled then
+            Turbine.Shell.WriteLine("<rgb=#FF00FF>QuestSync DEBUG: Mapa del Mundo cmd = " .. wcmd .. "</rgb>")
+        end
+        quickslot:SetShortcut(Turbine.UI.Lotro.Shortcut(Turbine.UI.Lotro.ShortcutType.Alias, wcmd))
+        return
     end
 
     local cmd = string.format("/MoorMap ping %s:%s:%s:%s:%s",

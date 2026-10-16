@@ -345,6 +345,241 @@ end
 -- Main.lua): "arguments" es el resto de la linea completo, como un solo
 -- string CON espacios (se compara ahi literal contra "debug on"), asi que
 -- una busqueda de varias palabras llega intacta.
+-- v3.13 (pedido del usuario): Quest Assistant manda sus puntos aca. Abre
+-- el mapa, elige el mapa de zona que contiene el punto y lo marca con la
+-- misma flecha que la busqueda de lugares (ZoneView:FindAt).
+-- ns/ew: numeros con signo (sur y oeste negativos, como MoorMap).
+-- mid: mapa sugerido (mismos numeros que MoorMap), puede ser nil o 0.
+local function PointNum(v)
+    if type(v) == "number" then
+        return v
+    end
+    local s = tostring(v or ""):gsub("%s", "")
+    return tonumber(s) or tonumber((s:gsub(",", "."))) or tonumber((s:gsub("%.", ",")))
+end
+
+local POINT_TOL = 0.4   -- igual que COVER_TOL de worldmap_zonemap.lua
+
+-- x, y del punto en el mapa mid si el punto cae en su dibujo; si no, nil
+local function PointOnMap(mid, ns, ew)
+    local ZD = WorldMapAddon.ZoneMapsData
+    local CAL = WorldMapAddon.MapCal
+    local m = ZD ~= nil and ZD.Maps ~= nil and ZD.Maps[mid] or nil
+    local cal = type(CAL) == "table" and CAL[mid] or nil
+    if m == nil or type(cal) ~= "table" or cal[8] == nil then
+        return nil
+    end
+    if ns > cal[5] + POINT_TOL or ns < cal[7] - POINT_TOL or ew < cal[6] - POINT_TOL or ew > cal[8] + POINT_TOL then
+        return nil
+    end
+    local x = ew * cal[1] + cal[2]
+    local y = ns * cal[3] + cal[4]
+    if x < 0 or y < 0 or x > (m.w or 1024) or y > (m.h or 768) then
+        return nil
+    end
+    return x, y
+end
+
+-- Las coordenadas de LOTRO se repiten entre regiones (Eriador, Rhovanion,
+-- Gondor...): el mismo ns/ew cae en mapas de zonas distintas. Por eso el
+-- mapa sugerido manda: primero ese mapa, despues los otros mapas de SU
+-- zona. Sin mapa sugerido solo se marca si todos los mapas que contienen
+-- el punto son de una misma zona. Devuelve id, x, y (o nil y el motivo).
+-- caja de la zona en el mapa del mundo (de su poligono), para saber que
+-- zonas son vecinas
+local function ZoneBox(name)
+    local D = WorldMapAddon.Data
+    if D == nil or type(D.Zones) ~= "table" then
+        return nil
+    end
+    for _, z in ipairs(D.Zones) do
+        if z.nombre_original == name and type(z.poligono) == "table" and z.poligono[1] ~= nil then
+            local x0, y0, x1, y1 = 1e9, 1e9, -1e9, -1e9
+            for _, pt in ipairs(z.poligono) do
+                x0, y0 = math.min(x0, pt.x), math.min(y0, pt.y)
+                x1, y1 = math.max(x1, pt.x), math.max(y1, pt.y)
+            end
+            return { x0, y0, x1, y1 }
+        end
+    end
+    return nil
+end
+
+local NEAR_PX = 12      -- separacion maxima entre cajas de zonas vecinas
+local NEAR_COORD = 12   -- distancia maxima (ns/ew) del punto a su zona
+
+-- distancia (en ns/ew) del punto al mapa mas cercano de la zona; asi una
+-- coordenada de otra region (mismos numeros, otro lugar) no pasa por vecina
+local function CoordDistToZone(zn, ns, ew)
+    local ZD = WorldMapAddon.ZoneMapsData
+    local best = nil
+    for id, c in pairs(WorldMapAddon.MapCal) do
+        local m = ZD.Maps[id]
+        if m ~= nil and ZD.MapZone[id] == zn and (m.tier == 3 or m.tier == 4) and c[1] ~= 0 and c[5] ~= nil and c[5] < 900 then
+            local dn = math.max(0, ns - c[5], c[7] - ns)
+            local de = math.max(0, c[6] - ew, ew - c[8])
+            local d = math.sqrt(dn * dn + de * de)
+            if best == nil or d < best then
+                best = d
+            end
+        end
+    end
+    return best
+end
+
+local function ZonesNear(a, b)
+    local ba, bb = ZoneBox(a), ZoneBox(b)
+    if ba == nil or bb == nil then
+        return false
+    end
+    return ba[1] - NEAR_PX <= bb[3] and bb[1] - NEAR_PX <= ba[3] and
+        ba[2] - NEAR_PX <= bb[4] and bb[2] - NEAR_PX <= ba[4]
+end
+
+-- mejor mapa (zona 3 antes que area 4, despues el mas chico) que contiene
+-- el punto; accept(zona) decide que zonas valen. Devuelve id, x, y, zonas.
+local function SearchPointMap(ns, ew, accept)
+    local ZD = WorldMapAddon.ZoneMapsData
+    local CAL = WorldMapAddon.MapCal
+    local best, bx, by, bkey
+    local zones, nz = {}, 0
+    for id, cal in pairs(CAL) do
+        local m = ZD.Maps[id]
+        local zn = ZD.MapZone ~= nil and ZD.MapZone[id] or nil
+        -- solo mapas de zona y de area (3 y 4) con calibracion conocida;
+        -- los interiores de instancias comparten coordenadas con el exterior
+        if m ~= nil and (m.tier == 3 or m.tier == 4) and zn ~= nil and
+            (accept == nil or accept(zn)) and cal[1] ~= 0 and cal[5] ~= nil and cal[5] < 900 then
+            local x, y = PointOnMap(id, ns, ew)
+            if x ~= nil then
+                if zones[zn] == nil then
+                    zones[zn] = true
+                    nz = nz + 1
+                end
+                local area = math.abs((cal[5] - cal[7]) * (cal[8] - cal[6]))
+                local key = { m.tier == 3 and 0 or 1, area, id }
+                local better = bkey == nil
+                if not better then
+                    for i = 1, 3 do
+                        if key[i] ~= bkey[i] then
+                            better = key[i] < bkey[i]
+                            break
+                        end
+                    end
+                end
+                if better then
+                    best, bx, by, bkey = id, x, y, key
+                end
+            end
+        end
+    end
+    return best, bx, by, nz
+end
+
+-- Las coordenadas de LOTRO se repiten entre regiones (Eriador, Rhovanion,
+-- Gondor...): el mismo ns/ew cae en mapas de zonas distintas. Por eso el
+-- mapa sugerido manda: primero ese mapa, despues los otros mapas de SU
+-- zona, despues los de una zona VECINA (mision que manda a la zona de al
+-- lado). Sin mapa sugerido solo se marca si todos los mapas que contienen
+-- el punto son de una misma zona.
+-- Devuelve id, x, y (o nil y el motivo).
+local function PickPointMap(ns, ew, mid)
+    local ZD = WorldMapAddon.ZoneMapsData
+    local CAL = WorldMapAddon.MapCal
+    if ZD == nil or ZD.Maps == nil or type(CAL) ~= "table" then
+        return nil
+    end
+    if mid ~= nil and mid ~= 0 and ZD.Maps[mid] ~= nil then
+        local x, y = PointOnMap(mid, ns, ew)
+        if x ~= nil then
+            return mid, x, y
+        end
+        local hint = ZD.MapZone ~= nil and ZD.MapZone[mid] or nil
+        if hint == nil then
+            return nil, "fuera"
+        end
+        local id, hx, hy = SearchPointMap(ns, ew, function(zn) return zn == hint end)
+        if id ~= nil then
+            return id, hx, hy
+        end
+        local near = CoordDistToZone(hint, ns, ew)
+        if near == nil or near > NEAR_COORD then
+            return nil, "fuera"
+        end
+        local nz
+        id, hx, hy, nz = SearchPointMap(ns, ew, function(zn) return ZonesNear(hint, zn) end)
+        if id ~= nil and nz == 1 then
+            return id, hx, hy
+        end
+        return nil, (id ~= nil) and "varios" or "fuera"
+    end
+    local id, x, y, nz = SearchPointMap(ns, ew, nil)
+    if id == nil then
+        return nil, "fuera"
+    end
+    if nz > 1 then
+        return nil, "varios"
+    end
+    return id, x, y
+end
+
+function WorldMapAddon.ShowPoint(ns, ew, mid, label)
+    ns, ew, mid = PointNum(ns), PointNum(ew), PointNum(mid)
+    if ns == nil or ew == nil or (ns == 0 and ew == 0) then
+        return false
+    end
+    if WorldMapAddon.UI == nil or WorldMapAddon.UI.WorldMap == nil then
+        return false
+    end
+    if not WorldMapAddon.instance then
+        WorldMapAddon.instance = WorldMapAddon.UI.WorldMap()
+    end
+    local inst = WorldMapAddon.instance
+    inst:SetVisible(true)
+    pcall(function() inst:Activate() end)
+    local ZD = WorldMapAddon.ZoneMapsData
+    local function zoneOf(m)
+        local zname = ZD ~= nil and ZD.MapZone ~= nil and m ~= nil and ZD.MapZone[m] or nil
+        if zname ~= nil and inst._zoneByOriginal ~= nil then
+            local ok, z = pcall(inst._zoneByOriginal, inst, zname)
+            if ok and z ~= nil then
+                return z
+            end
+        end
+        return false
+    end
+    local id, x, y = PickPointMap(ns, ew, mid)
+    if id == nil then
+        -- al menos se abre la zona del mapa sugerido
+        local hz = zoneOf(mid)
+        if hz ~= false then
+            pcall(function() inst:_showZoneView(hz) end)
+        end
+        local why = x == "varios" and "no se sabe en que zona esta ese lugar" or "ese lugar no esta en el mapa de su zona"
+        Turbine.Shell.WriteLine("<rgb=#FFB040>Mapa del Mundo: " .. why .. " (" .. tostring(label or "") ..
+            "  " .. string.format("%.1f%s, %.1f%s", math.abs(ns), ns < 0 and "S" or "N", math.abs(ew), ew < 0 and "W" or "E") .. ")</rgb>")
+        return false
+    end
+    local zone = zoneOf(id)
+    local ok, done = pcall(function()
+        if inst.zoneView == nil or not inst.zoneMode or inst.zoneView.zone ~= zone then
+            inst:_showZoneView(zone)
+        end
+        if inst.zoneView == nil then
+            return false
+        end
+        return inst.zoneView:FindAt(id, x, y)
+    end)
+    if not ok then
+        Turbine.Shell.WriteLine("<rgb=#FF0000>Mapa del Mundo: no se pudo marcar el punto -- " .. tostring(done) .. "</rgb>")
+        return false
+    end
+    if done and inst.qrBox ~= nil then
+        pcall(function() inst.qrBox:SetVisible(false) end)
+    end
+    return done == true
+end
+
 WorldMapAddon.MapCommand = Turbine.ShellCommand()
 function WorldMapAddon.MapCommand:Execute(command, arguments)
     local query = arguments ~= nil and tostring(arguments):match("^%s*(.-)%s*$") or ""
@@ -356,6 +591,12 @@ function WorldMapAddon.MapCommand:Execute(command, arguments)
     end
     -- v3.11: "/mapa opciones" abre la ventana de opciones
     local low = query:lower()
+    -- v3.13: "/mapa punto mapa:ns:ew:nombre" (lo usa Quest Assistant)
+    local pm, pns, pew, plabel = query:match("^[Pp][Uu][Nn][Tt][Oo]%s+(%-?%d*):([^:]+):([^:]+):?(.*)$")
+    if pns ~= nil and PointNum(pns) ~= nil and PointNum(pew) ~= nil then
+        WorldMapAddon.ShowPoint(pns, pew, pm, plabel)
+        return
+    end
     if (low == "opciones" or low == "options") and WorldMapAddon.Options ~= nil and WorldMapAddon.Options.Show ~= nil then
         WorldMapAddon.Options.Show()
         return

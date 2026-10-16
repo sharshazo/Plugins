@@ -1312,4 +1312,13 @@ LUI.src.Languages.es.ES = {
     ["The preview above shows the classic design; the chosen design and animations are shown in game."] = "La vista previa de arriba muestra el diseño clásico; el diseño y las animaciones elegidas se ven en el juego.",
     ["Click a design to choose it. Lit animations are on; dimmed ones are off."] = "Haz clic en un diseño para elegirlo. Las animaciones iluminadas están activadas; las apagadas, desactivadas.",
     ["5 - Flash when ready"] = "5 - Destello al quedar lista",
+    ["Show the number"] = "Mostrar el número",
+    ["Only the last seconds"] = "Solo los últimos segundos",
+    ["Never"] = "Nunca",
+    ["Show from (seconds left)"] = "Mostrar desde (segundos que faltan)",
+    ["Number size (icons only)"] = "Tamaño del número (solo iconos)",
+    ["Number position (icons only)"] = "Posición del número (solo iconos)",
+    ["Icon size"] = "Tamaño de los iconos",
+    ["Maximum (bar height)"] = "Máximo (alto de la barra)",
+    ["For even bigger icons, raise the bar Height (for example 26)."] = "Para iconos aún más grandes, sube la Altura de la barra (por ejemplo 26).",
 }

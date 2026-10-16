@@ -124,6 +124,10 @@ local function _ensure(self)
     f.hilite:SetBackColor(HILITE)
     f.shine = _ctl(self.bar_fill, 6)
     pcall(f.shine.SetBackground, f.shine, DIR .. "brillo.tga")
+    -- velo oscuro para la entrada y la salida (la opacidad solo funciona
+    -- en ventanas, no en controles)
+    f.veil = _ctl(self, 50)
+    f.veil:SetBackColor(CLEAR)
     -- estado
     f.opacity = 1
     f.time_color = nil
@@ -242,7 +246,11 @@ local function _after_apply(self, s)
         f.shine:SetPosition(-SHINE_W, 0)
     end
 
-    self:SetOpacity(1)
+    local ew, eh = self:GetSize()
+    f.veil:SetPosition(0, 0)
+    f.veil:SetSize(ew, eh)
+    f.veil:SetBackColor(CLEAR)
+    f.veil:SetVisible(false)
 end
 
 ---------------------------------------------------------------------
@@ -325,7 +333,7 @@ local function _after_update(self, s, remaining, base)
     if self.effect == nil or type(remaining) ~= "number" then
         if f.opacity ~= 1 then
             f.opacity = 1
-            self:SetOpacity(1)
+            f.veil:SetVisible(false)
         end
         f.sweep_clip:SetVisible(false)
         f.tint:SetVisible(false)
@@ -396,7 +404,12 @@ local function _after_update(self, s, remaining, base)
     op = math.floor(op * 20 + 0.5) / 20
     if op ~= f.opacity then
         f.opacity = op
-        self:SetOpacity(op)
+        if op < 1 then
+            f.veil:SetBackColor(Turbine.UI.Color(0.85 * (1 - op), 0.02, 0.02, 0.03))
+            f.veil:SetVisible(true)
+        else
+            f.veil:SetVisible(false)
+        end
     end
     if dx ~= f.dx then
         f.dx = dx

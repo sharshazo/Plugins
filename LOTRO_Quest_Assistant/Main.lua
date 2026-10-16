@@ -126,6 +126,8 @@ end
 import "LOTRO_Quest_Assistant.Core.QuestLocResolver"
 import "LOTRO_Quest_Assistant.Core.NarratorBridge"
 import "LOTRO_Quest_Assistant.Core.NarratorMute"
+-- (2026-10-16) interruptor del libro de mision automatico (boton en el Tracker)
+import "LOTRO_Quest_Assistant.Core.BookPopupToggle"
 import "LOTRO_Quest_Assistant.Core.QuestStateManager"
 import "LOTRO_Quest_Assistant.Core.QuestDiag"
 import "LOTRO_Quest_Assistant.Core.QuestEventParser"

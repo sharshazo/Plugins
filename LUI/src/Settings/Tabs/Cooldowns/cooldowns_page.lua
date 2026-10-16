@@ -298,6 +298,43 @@ function CooldownsFeaturePage:Constructor(window)
             return tonumber(settings_getter().anim_speed) or 2
         end)
     design:add_row_break()
+    -- numero del tiempo: cuando aparece, tamano y posicion
+    design:add_dropdown("cd_num_mode", TR["Show the number"],
+        { TR["Always"], TR["Only the last seconds"], TR["Never"] },
+        { "always", "last", "never" },
+        function(value)
+            settings_getter().num_mode = value
+        end,
+        function()
+            return settings_getter().num_mode or "always"
+        end)
+    design:add_line_edit("cd_num_from", TR["Show from (seconds left)"],
+        function(value)
+            local n = tonumber(value)
+            if n ~= nil and n >= 1 and n <= 3600 then
+                settings_getter().num_from = n
+            end
+        end,
+        function()
+            return tostring(settings_getter().num_from or 30)
+        end)
+    design:add_dropdown("cd_num_size", TR["Number size (icons only)"],
+        { TR["Auto"], "12", "14", "16", "18", "20" }, { 0, 12, 14, 16, 18, 20 },
+        function(value)
+            settings_getter().num_size = value
+        end,
+        function()
+            return tonumber(settings_getter().num_size) or 0
+        end)
+    design:add_dropdown("cd_num_pos", TR["Number position (icons only)"],
+        { TR["Center"], TR["Bottom"], TR["Top"] }, { "center", "bottom", "top" },
+        function(value)
+            settings_getter().num_pos = value
+        end,
+        function()
+            return settings_getter().num_pos or "center"
+        end)
+    design:add_row_break()
     local cd_anims = {
         { "anim_slide", "1 - Slide in", "slide" },
         { "anim_shine", "2 - Shine across the bar", "shine" },

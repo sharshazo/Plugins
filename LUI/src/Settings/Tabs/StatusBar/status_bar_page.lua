@@ -594,6 +594,17 @@ function StatusBarPage:Constructor(window)
         function()
             return tostring(settings_getter().height)
         end)
+    -- (2026-10-16) tamano de los iconos de la barra
+    layout:add_dropdown("sb_icon_size_mode", TR["Icon size"],
+        { TR["Normal"], TR["Large"], TR["Maximum (bar height)"] }, { 1, 2, 3 },
+        function(value)
+            settings_getter().icon_size_mode = value
+        end,
+        function()
+            return tonumber(settings_getter().icon_size_mode) or 3
+        end)
+    layout:add_row_break()
+    layout:add_info(TR["For even bigger icons, raise the bar Height (for example 26)."])
     layout:add_row_break()
     layout:add_line_edit("sb_layout_left", TR["Left layout"],
         function(value)

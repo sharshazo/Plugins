@@ -11,15 +11,27 @@
 -- acabarse (< 3 s), 4 barrido circular del icono, 5 destello al quedar
 -- lista, 6 salida desvanecida.
 --
+-- (2026-10-16 b) El icono de la habilidad es una imagen ESTIRADA, y el juego
+-- dibuja las imagenes estiradas por encima de todos los controles de su
+-- ventana (ver Upkeep/upkeep_window.lua). Por eso el numero, el barrido y
+-- los destellos van en una ventanita compania transparente que sigue a la
+-- ventana de reutilizaciones, igual que hace el Upkeep. Y como la opacidad
+-- solo funciona en ventanas, la entrada y la salida se hacen con un velo
+-- oscuro en esa misma ventanita.
+--
+-- Opciones del numero: mostrar siempre / solo los ultimos X segundos /
+-- nunca, tamano y posicion (centro, abajo, arriba).
+--
 -- No cambia la logica de la ventana: envuelve apply_settings y
--- update_remaining de CooldownEntry y agrega controles propios. Todo va
--- protegido: si algo falla, la entrada se ve como la clasica.
+-- update_remaining de CooldownEntry. Todo va protegido: si algo falla, la
+-- entrada se ve como la clasica.
 
 import "Turbine.UI"
 
 local Cooldowns = _G.LUI.Features.Cooldowns
 local State = _G.LUI.Settings.State
 local Utils = _G.LUI.Utils
+local UI = _G.LUI.UI
 
 local FX = {}
 Cooldowns.FX = FX
@@ -91,32 +103,139 @@ local function _with_alpha(color, a)
     return Turbine.UI.Color(a, color.R, color.G, color.B)
 end
 
+---------------------------------------------------------------------
+-- Ventanita compania (una por ventana de reutilizaciones)
+---------------------------------------------------------------------
+
+local function _raise(ov)
+    if ov:IsVisible() == true then
+        pcall(ov.Activate, ov)
+    end
+end
+
+local function _sync_overlay(ov)
+    local win = ov.win
+    local show = win:IsVisible() == true
+    if show and win.is_move_mode ~= nil and win:is_move_mode() == true then
+        show = false
+    end
+    if show ~= (ov:IsVisible() == true) then
+        ov:SetVisible(show)
+        if show then
+            _raise(ov)
+        end
+    end
+    if not show then
+        return
+    end
+    local x, y = win:GetPosition()
+    if x ~= ov.px or y ~= ov.py then
+        ov.px, ov.py = x, y
+        ov:SetPosition(x, y)
+    end
+    local w, h = win:GetSize()
+    if w ~= ov.pw or h ~= ov.ph then
+        ov.pw, ov.ph = w, h
+        ov:SetSize(w, h)
+    end
+    for entry, g in pairs(ov.groups) do
+        local ev = entry:IsVisible() == true and entry.skill ~= nil
+        if (g.root:IsVisible() == true) ~= ev then
+            g.root:SetVisible(ev)
+        end
+        if ev then
+            local ex, ey = entry:GetPosition()
+            if ex ~= g.ex or ey ~= g.ey then
+                g.ex, g.ey = ex, ey
+                g.root:SetPosition(ex, ey)
+            end
+        end
+    end
+end
+
+local function _overlay_for(win)
+    if type(win) ~= "table" then
+        return nil
+    end
+    if win._cdfx_overlay ~= nil then
+        return win._cdfx_overlay
+    end
+    local ok, ov = pcall(function()
+        local o = UI.Widgets.LuiBaseWindow({ hideable = true })
+        o:SetVisible(false)
+        o:SetMouseVisible(false)
+        if UI.NativeScaling ~= nil and UI.NativeScaling.apply_window ~= nil then
+            pcall(UI.NativeScaling.apply_window, o)
+        end
+        return o
+    end)
+    if ok ~= true or ov == nil then
+        return nil
+    end
+    ov.win = win
+    ov.groups = setmetatable({}, { __mode = "k" })
+    ov.Update = function()
+        local okk, err = pcall(_sync_overlay, ov)
+        if okk ~= true then
+            FX.report(err)
+            ov:SetWantsUpdates(false)
+        end
+    end
+    ov:SetWantsUpdates(true)
+    -- como el Upkeep: si se activa la ventana (modo mover), la compania
+    -- vuelve a quedar encima
+    if Utils.add_callback ~= nil then
+        pcall(Utils.add_callback, win, "Activated", function()
+            _raise(ov)
+        end)
+    end
+    win._cdfx_overlay = ov
+    return ov
+end
+
+---------------------------------------------------------------------
+-- Controles de cada entrada
+---------------------------------------------------------------------
+
 local function _ensure(self)
     if self._fx ~= nil then
         return self._fx
     end
     local f = {}
-    -- marco de color del icono (detras del icono)
+    -- en la ventana principal: marco de color del icono y adornos de la barra
     f.ring = _ctl(self, 1)
     self.icon_background:SetZOrder(2)
-    -- encima del icono
-    f.sweep_clip = _ctl(self.icon_background, 20)
-    f.sweep = _ctl(f.sweep_clip)
-    f.tint = _ctl(self.icon_background, 21)
-    f.time = _G.LUI.UI.Widgets.LuiLabel()
-    f.time:SetParent(self.icon_background)
-    f.time:SetMouseVisible(false)
-    f.time:SetZOrder(22)
-    pcall(f.time.SetMultiline, f.time, false)
-    f.time:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
-    f.time:SetFontStyle(Turbine.UI.FontStyle.Outline)
-    f.time:SetOutlineColor(Turbine.UI.Color(1, 0, 0, 0))
-    f.time:SetVisible(false)
-    -- sobre la barra
     f.hilite = _ctl(self.bar_fill, 5)
     f.hilite:SetBackColor(HILITE)
     f.shine = _ctl(self.bar_fill, 6)
     pcall(f.shine.SetBackground, f.shine, DIR .. "brillo.tga")
+    -- en la ventanita compania (encima del icono estirado)
+    local ov = _overlay_for(self:GetParent())
+    if ov ~= nil then
+        local g = {}
+        g.root = Turbine.UI.Control()
+        g.root:SetParent(ov)
+        g.root:SetMouseVisible(false)
+        g.root:SetVisible(false)
+        g.box = Turbine.UI.Control()
+        g.box:SetParent(g.root)
+        g.box:SetMouseVisible(false)
+        g.sweep_clip = _ctl(g.box, 20)
+        g.sweep = _ctl(g.sweep_clip)
+        g.tint = _ctl(g.box, 21)
+        g.time = UI.Widgets.LuiLabel()
+        g.time:SetParent(g.box)
+        g.time:SetMouseVisible(false)
+        g.time:SetZOrder(22)
+        pcall(g.time.SetMultiline, g.time, false)
+        g.time:SetFontStyle(Turbine.UI.FontStyle.Outline)
+        g.time:SetOutlineColor(Turbine.UI.Color(1, 0, 0, 0))
+        g.time:SetVisible(false)
+        g.veil = _ctl(g.root, 30)
+        g.veil:SetBackColor(CLEAR)
+        ov.groups[self] = g
+        f.g = g
+    end
     self._fx = f
     return f
 end
@@ -131,6 +250,12 @@ local function _set_icon_inner(self, inner)
     end
 end
 
+local NUM_ALIGN = {
+    center = Turbine.UI.ContentAlignment.MiddleCenter,
+    bottom = Turbine.UI.ContentAlignment.BottomCenter,
+    top = Turbine.UI.ContentAlignment.TopCenter,
+}
+
 ---------------------------------------------------------------------
 -- Despues de apply_settings
 ---------------------------------------------------------------------
@@ -141,8 +266,9 @@ local function _after_apply(self, s)
     f.style = style
     f.dx = 0
     f.base_x = nil
-    f.opacity = 1
+    f.veil_a = -1
     f.time_color = nil
+    f.time_text = nil
     f.sweep_frame = -1
     f.tint_a = -1
     f.name_key = nil
@@ -175,11 +301,11 @@ local function _after_apply(self, s)
         self.border_left:SetBackColor(bc)
         self.border_right:SetBackColor(bc)
         inner = sz - 2 * b
+        bx, by = b, b
         self.icon_background:SetPosition(b, b)
         self.icon_background:SetSize(inner, inner)
         _set_icon_inner(self, inner)
     elseif style == "bar" then
-        -- marco de color alrededor del icono
         local b = (iw >= 24) and 2 or 1
         inner = iw - 2 * b
         if inner < 1 then inner = 1 end
@@ -187,7 +313,8 @@ local function _after_apply(self, s)
         f.ring:SetSize(iw, iw)
         f.ring:SetBackColor(_with_alpha(color, 1))
         f.ring:SetVisible(true)
-        self.icon_background:SetPosition(bx + b, by + b)
+        bx, by = bx + b, by + b
+        self.icon_background:SetPosition(bx, by)
         self.icon_background:SetSize(inner, inner)
         _set_icon_inner(self, inner)
         self.bar_background:SetBackColor(DARK)
@@ -195,42 +322,62 @@ local function _after_apply(self, s)
     end
     f.inner = inner
 
-    -- barrido
-    local ss = _sweep_size(inner)
-    f.sweep_size = ss
-    if ss ~= nil then
-        local off = math.floor((inner - ss) / 2)
-        f.sweep_clip:SetPosition(off, off)
-        f.sweep_clip:SetSize(ss, ss)
-        f.sweep:SetSize(ss * SWEEP_COLS, ss * (SWEEP_FRAMES / SWEEP_COLS))
-        f.sweep:SetPosition(0, 0)
-        pcall(f.sweep.SetBackground, f.sweep, DIR .. "barrido_" .. ss .. ".tga")
-        f.sweep:SetVisible(true)
-    end
-    f.sweep_clip:SetVisible(false)
+    -- compania: caja del icono, barrido, destello, numero y velo
+    local g = f.g
+    if g ~= nil then
+        local ew, eh = self:GetSize()
+        g.root:SetSize(ew, eh)
+        g.veil:SetPosition(0, 0)
+        g.veil:SetSize(ew, eh)
+        g.veil:SetBackColor(CLEAR)
+        g.veil:SetVisible(false)
+        g.box:SetPosition(bx, by)
+        g.box:SetSize(inner, inner)
 
-    f.tint:SetPosition(0, 0)
-    f.tint:SetSize(inner, inner)
-    f.tint:SetBackColor(CLEAR)
-    f.tint:SetVisible(false)
-
-    if style == "icons" then
-        local size = inner >= 40 and 16 or (inner >= 30 and 14 or 12)
-        if Utils.FONT_TO_LOTRO ~= nil then
-            local ok, fnt = pcall(Utils.FONT_TO_LOTRO, s.font.name, size)
-            if ok and fnt ~= nil then
-                f.time:SetFont(fnt)
-            end
+        local ss = _sweep_size(inner)
+        f.sweep_size = ss
+        if ss ~= nil then
+            local off = math.floor((inner - ss) / 2)
+            g.sweep_clip:SetPosition(off, off)
+            g.sweep_clip:SetSize(ss, ss)
+            g.sweep:SetSize(ss * SWEEP_COLS, ss * (SWEEP_FRAMES / SWEEP_COLS))
+            g.sweep:SetPosition(0, 0)
+            pcall(g.sweep.SetBackground, g.sweep, DIR .. "barrido_" .. ss .. ".tga")
+            g.sweep:SetVisible(true)
         end
-        f.time:SetFontStyle(Turbine.UI.FontStyle.Outline)
-        f.time:SetOutlineColor(Turbine.UI.Color(1, 0, 0, 0))
-        f.time:SetPosition(0, 0)
-        f.time:SetSize(inner, inner)
-        f.time:SetVisible(true)
-        self.time_label:SetVisible(false)
-        self.name_label:SetVisible(false)
+        g.sweep_clip:SetVisible(false)
+
+        g.tint:SetPosition(0, 0)
+        g.tint:SetSize(inner, inner)
+        g.tint:SetBackColor(CLEAR)
+        g.tint:SetVisible(false)
+
+        if style == "icons" then
+            local size = tonumber(s.num_size) or 0
+            if size <= 0 then
+                size = inner >= 40 and 16 or (inner >= 30 and 14 or 12)
+            end
+            if Utils.FONT_TO_LOTRO ~= nil then
+                local ok, fnt = pcall(Utils.FONT_TO_LOTRO, s.font.name, size)
+                if ok and fnt ~= nil then
+                    g.time:SetFont(fnt)
+                end
+            end
+            g.time:SetFontStyle(Turbine.UI.FontStyle.Outline)
+            g.time:SetOutlineColor(Turbine.UI.Color(1, 0, 0, 0))
+            g.time:SetTextAlignment(NUM_ALIGN[s.num_pos] or NUM_ALIGN.center)
+            -- un poco mas ancho que el icono: un "1:30" grande no se corta
+            g.time:SetPosition(-6, 0)
+            g.time:SetSize(inner + 12, inner)
+            g.time:SetText("")
+            g.time:SetVisible(true)
+            self.time_label:SetVisible(false)
+            self.name_label:SetVisible(false)
+        else
+            g.time:SetVisible(false)
+        end
     else
-        f.time:SetVisible(false)
+        f.sweep_size = nil
     end
 
     local fw, fh = self.bar_fill:GetSize()
@@ -251,8 +398,6 @@ local function _after_apply(self, s)
         f.shine:SetSize(SHINE_W, math.max(1, fh))
         f.shine:SetPosition(-SHINE_W, 0)
     end
-
-    self:SetOpacity(1)
 end
 
 ---------------------------------------------------------------------
@@ -312,22 +457,53 @@ local function _born(self, now)
     return win._cdfx_born[rec] or -100
 end
 
+-- se muestra el numero ahora? (opcion "siempre / ultimos X s / nunca")
+local function _show_number(s, remaining)
+    local mode = s.num_mode
+    if mode == "never" then
+        return false
+    end
+    if mode == "last" then
+        local from = tonumber(s.num_from) or 30
+        return remaining <= from
+    end
+    return true
+end
+
+local function _format_number(s, remaining)
+    if remaining < 0 then
+        remaining = 0
+    end
+    if s.time_format == 2 then   -- segundos enteros
+        local total = math.floor(remaining + 0.5)
+        if total >= 60 then
+            return string.format("%d:%02d", math.floor(total / 60), total % 60)
+        end
+        return tostring(total)
+    end
+    if Utils.lui_format_icon_timeout ~= nil then
+        return Utils.lui_format_icon_timeout(remaining)
+    end
+    return tostring(math.floor(remaining))
+end
+
 local function _after_update(self, s, remaining, base)
     local f = self._fx
     if f == nil then
         return
     end
+    local g = f.g
     if self.skill == nil or type(remaining) ~= "number" then
-        if f.opacity ~= 1 then
-            f.opacity = 1
-            self:SetOpacity(1)
-        end
         if f.dx ~= 0 and f.base_x ~= nil then
             f.dx = 0
             self:SetPosition(f.base_x, f.base_y)
         end
-        f.sweep_clip:SetVisible(false)
-        f.tint:SetVisible(false)
+        if g ~= nil then
+            g.sweep_clip:SetVisible(false)
+            g.tint:SetVisible(false)
+            g.veil:SetVisible(false)
+            f.veil_a = -1
+        end
         f.shine:SetVisible(false)
         return
     end
@@ -345,15 +521,15 @@ local function _after_update(self, s, remaining, base)
     if pct < 0 then pct = 0 end
     if pct > 1 then pct = 1 end
 
-    -- 1 entrada deslizante + 6 salida desvanecida
-    local op = 1
+    -- 1 entrada deslizante + 6 salida desvanecida (velo oscuro + movimiento)
+    local veil = 0
     local dx = 0
     if _on(s, "anim_slide") then
         local d = 0.35 * sp
         if age < d then
             local p = age / d
             local e = 1 - (1 - p) * (1 - p) * (1 - p)
-            op = e
+            veil = 0.85 * (1 - e)
             dx = -math.floor((1 - e) * math.min(40, self:GetWidth() * 0.3))
         end
     end
@@ -362,15 +538,10 @@ local function _after_update(self, s, remaining, base)
         if remaining < d then
             local p = remaining / d
             if p < 0 then p = 0 end
-            if p < op then op = p end
+            local v = 0.85 * (1 - p)
+            if v > veil then veil = v end
             dx = dx + math.floor((1 - p) * 8)
         end
-    end
-    if op < 0 then op = 0 end
-    op = math.floor(op * 20 + 0.5) / 20
-    if op ~= f.opacity then
-        f.opacity = op
-        self:SetOpacity(op)
     end
     if f.base_x == nil then
         f.base_x, f.base_y = self:GetPosition()
@@ -379,20 +550,44 @@ local function _after_update(self, s, remaining, base)
         f.dx = dx
         self:SetPosition(f.base_x + dx, f.base_y)
     end
-
-    -- tiempo
-    if style == "icons" then
-        local fmt = Utils.lui_format_cooldown_time
-        if fmt ~= nil then
-            f.time:SetText(fmt(math.max(0, remaining), s.time_format))
+    if g ~= nil then
+        veil = math.floor(veil * 20 + 0.5) / 20
+        if veil ~= f.veil_a then
+            f.veil_a = veil
+            if veil > 0 then
+                g.veil:SetBackColor(Turbine.UI.Color(veil, 0.02, 0.02, 0.03))
+                g.veil:SetVisible(true)
+            else
+                g.veil:SetVisible(false)
+            end
         end
     end
-    if style ~= "classic" then
-        local label = (style == "icons") and f.time or self.time_label
-        if remaining < 3 then
-            _set_time_color(f, label, GREEN)
-        else
-            _set_time_color(f, label, s.font.color or WHITE)
+
+    -- numero (opciones: siempre / ultimos X s / nunca)
+    local show_num = _show_number(s, remaining)
+    if style == "icons" then
+        if g ~= nil then
+            local text = show_num and _format_number(s, remaining) or ""
+            if text ~= f.time_text then
+                f.time_text = text
+                g.time:SetText(text)
+            end
+            if remaining < 3 then
+                _set_time_color(f, g.time, GREEN)
+            else
+                _set_time_color(f, g.time, s.font.color or WHITE)
+            end
+        end
+    else
+        if show_num ~= true and self.show_time then
+            self.time_label:SetText("")
+        end
+        if style == "bar" then
+            if remaining < 3 then
+                _set_time_color(f, self.time_label, GREEN)
+            else
+                _set_time_color(f, self.time_label, s.font.color or WHITE)
+            end
         end
     end
     if style == "bar" and self.vertical ~= true then
@@ -402,41 +597,43 @@ local function _after_update(self, s, remaining, base)
         end
     end
 
-    -- 4 barrido (la parte oscura es el tiempo que falta)
-    if f.sweep_size ~= nil and _on(s, "anim_sweep") then
-        local frame = math.floor(pct * (SWEEP_FRAMES - 1) + 0.5)
-        if frame ~= f.sweep_frame then
-            f.sweep_frame = frame
-            local ss = f.sweep_size
-            f.sweep:SetPosition(-(frame % SWEEP_COLS) * ss, -math.floor(frame / SWEEP_COLS) * ss)
+    if g ~= nil then
+        -- 4 barrido (la parte oscura es el tiempo que falta)
+        if f.sweep_size ~= nil and _on(s, "anim_sweep") then
+            local frame = math.floor(pct * (SWEEP_FRAMES - 1) + 0.5)
+            if frame ~= f.sweep_frame then
+                f.sweep_frame = frame
+                local ss = f.sweep_size
+                g.sweep:SetPosition(-(frame % SWEEP_COLS) * ss, -math.floor(frame / SWEEP_COLS) * ss)
+            end
+            if g.sweep_clip:IsVisible() ~= true then
+                g.sweep_clip:SetVisible(true)
+            end
+        elseif g.sweep_clip:IsVisible() == true then
+            g.sweep_clip:SetVisible(false)
         end
-        if f.sweep_clip:IsVisible() ~= true then
-            f.sweep_clip:SetVisible(true)
-        end
-    elseif f.sweep_clip:IsVisible() == true then
-        f.sweep_clip:SetVisible(false)
-    end
 
-    -- 3 latido (< 3 s) y 5 destello al quedar lista -> capa dorada
-    local tint = 0
-    if _on(s, "anim_pulse") and remaining < 3 then
-        tint = 0.35 * math.abs(math.sin(now * math.pi * 3 / sp))
-    end
-    if _on(s, "anim_flash") then
-        local d = 0.6 * sp
-        if remaining < d then
-            local fl = 0.65 * math.abs(math.sin((1 - remaining / d) * math.pi * 2))
-            if fl > tint then tint = fl end
+        -- 3 latido (< 3 s) y 5 destello al quedar lista -> capa dorada
+        local tint = 0
+        if _on(s, "anim_pulse") and remaining < 3 then
+            tint = 0.35 * math.abs(math.sin(now * math.pi * 3 / sp))
         end
-    end
-    tint = math.floor(tint * 20 + 0.5) / 20
-    if tint ~= f.tint_a then
-        f.tint_a = tint
-        if tint > 0 then
-            f.tint:SetBackColor(Turbine.UI.Color(tint, 1, 0.85, 0.35))
-            f.tint:SetVisible(true)
-        else
-            f.tint:SetVisible(false)
+        if _on(s, "anim_flash") then
+            local d = 0.6 * sp
+            if remaining < d then
+                local fl = 0.65 * math.abs(math.sin((1 - remaining / d) * math.pi * 2))
+                if fl > tint then tint = fl end
+            end
+        end
+        tint = math.floor(tint * 20 + 0.5) / 20
+        if tint ~= f.tint_a then
+            f.tint_a = tint
+            if tint > 0 then
+                g.tint:SetBackColor(Turbine.UI.Color(tint, 1, 0.85, 0.35))
+                g.tint:SetVisible(true)
+            else
+                g.tint:SetVisible(false)
+            end
         end
     end
 

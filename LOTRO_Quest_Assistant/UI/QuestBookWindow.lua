@@ -493,11 +493,16 @@ function LQA.UI.QuestBookWindow:Constructor()
         -- garantizados a disparar solo en la transicion real (no en cada
         -- reafirmacion por texto de objetivo/narrativa), asi que esta
         -- ventana nunca se reabre sola por una mision que ya estaba activa.
+        -- (2026-10-16) el boton del libro en el Tracker (Core/BookPopupToggle)
+        -- puede apagar esta apertura automatica.
+        local function autoOpen()
+            return _G.BookPopup == nil or BookPopup.IsEnabled() ~= false
+        end
         LQA.Core.EventBus:Subscribe("QUEST_JUST_ACCEPTED", function(data)
-            if data and data.ndx then self:ShowFor(data.ndx, "ACCEPTED") end
+            if data and data.ndx and autoOpen() then self:ShowFor(data.ndx, "ACCEPTED") end
         end)
         LQA.Core.EventBus:Subscribe("QUEST_JUST_COMPLETED", function(data)
-            if data and data.ndx then self:ShowFor(data.ndx, "COMPLETED") end
+            if data and data.ndx and autoOpen() then self:ShowFor(data.ndx, "COMPLETED") end
         end)
     end
 

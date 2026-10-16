@@ -109,6 +109,10 @@ local DEED_LAYERS = { exp = true, haz = true, mob = true, cof = true }
 -- incursion / mazmorra (60x60), misiones activas (pines) y su estado
 local AURA_W, AURA_H, AURA_MAX = 40, 40, 90
 local QRING_W, QRING_H = 60, 60
+-- v3.14 (pedido del usuario): flecha ROJA solo para el punto que se marca
+-- desde Quest Assistant o la busqueda (FindAt), con su aura y anillo rojos.
+-- Las demas flechas siguen con QARROW (flecha_mision, ahora la dorada).
+local FARROW = { img = "flecha_punto.tga", w = 32, h = 40, aura = "flecha_punto_aura_", aw = 54, ah = 62, adx = -11, ady = -19, ring = "fl_paura_" }
 local QPIN_MAX = 40
 local STATUS_REFRESH = 3      -- s entre repasos del estado de hazañas / misiones
 local COVER_TOL = 0.4         -- tolerancia de los limites del dibujo (como build3)
@@ -926,12 +930,13 @@ function ZV:_buildPools()
                 item.qarrow = layer(QARROW.w, QARROW.h, QARROW.img)
                 local num = Turbine.UI.Label()
                 num:SetParent(item.qarrow)
-                num:SetPosition(0, 10)
+                -- v3.14: flecha dorada nueva con centro oscuro: numero claro, borde oscuro, en el centro
+                num:SetPosition(0, 4)
                 num:SetSize(QARROW.w, 16)
                 num:SetFont(Turbine.UI.Lotro.Font.Verdana12)
-                num:SetForeColor(HexToColor("#2A1A04"))
+                num:SetForeColor(HexToColor("#FFE9A8"))
                 num:SetFontStyle(Turbine.UI.FontStyle.Outline)
-                num:SetOutlineColor(HexToColor("#FFE9A8"))
+                num:SetOutlineColor(HexToColor("#2A1A04"))
                 num:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
                 num:SetMouseVisible(false)
                 num:SetSelectable(false)
@@ -3837,9 +3842,9 @@ function ZV:FindAt(mid, x, y)
             c:SetVisible(false)
             return c
         end
-        self.findRing = layer(QRING_W, QRING_H, "fl_qaura_1.tga")
-        self.findAura = layer(QARROW.aw, QARROW.ah, QARROW.aura .. "1.tga")
-        self.findArrow = layer(QARROW.w, QARROW.h, QARROW.img)
+        self.findRing = layer(QRING_W, QRING_H, FARROW.ring .. "1.tga")
+        self.findAura = layer(FARROW.aw, FARROW.ah, FARROW.aura .. "1.tga")
+        self.findArrow = layer(FARROW.w, FARROW.h, FARROW.img)
         self.findFrame = 1
     end
     self.find = { mid = mid, x = math.floor(x + 0.5), y = math.floor(y + 0.5) }
@@ -3875,15 +3880,15 @@ function ZV:_animateFind(now)
         return
     end
     local bob = math.floor(QARROW_BOB * math.sin(2 * math.pi * now / QARROW_PERIOD) + 0.5)
-    local x = self.find.x - math.floor(QARROW.w / 2)
-    local y = self.find.y - QARROW.h - QARROW_GAP - 8 + bob
+    local x = self.find.x - math.floor(FARROW.w / 2)
+    local y = self.find.y - FARROW.h - QARROW_GAP - 8 + bob
     self.findArrow:SetPosition(x, y)
-    self.findAura:SetPosition(x + QARROW.adx, y + QARROW.ady)
+    self.findAura:SetPosition(x + FARROW.adx, y + FARROW.ady)
     local f = (math.floor(now * FX_FPS) % FX_FRAMES) + 1
     if f ~= self.findFrame then
         self.findFrame = f
-        self.findAura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
-        self.findRing:SetBackground(RES .. "fl_qaura_" .. tostring(f) .. ".tga")
+        self.findAura:SetBackground(RES .. FARROW.aura .. tostring(f) .. ".tga")
+        self.findRing:SetBackground(RES .. FARROW.ring .. tostring(f) .. ".tga")
     end
 end
 

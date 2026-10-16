@@ -128,7 +128,15 @@ function Previews.add(design, prefix, anims, cards_spec, sheet_prefix)
         sheet:SetPosition(0, 0)
         pcall(sheet.SetBackground, sheet, VISTA .. sheet_prefix .. anims[i][3] .. ".tga")
         local cap = _caption(anim_entry.control, TR[anims[i][2]])
-        tiles[i] = { key = anims[i][1], frame = frame, clip = clip, sheet = sheet, cap = cap, on = nil }
+        -- velo oscuro para las desactivadas (la opacidad no funciona en controles)
+        local veil = _plain(frame)
+        veil:SetZOrder(5)
+        pcall(veil.SetBackColorBlendMode, veil, Turbine.UI.BlendMode.AlphaBlend)
+        veil:SetBackColor(Turbine.UI.Color(0.7, 0.02, 0.02, 0.03))
+        veil:SetPosition(1, 1)
+        veil:SetSize(ANIM_W, ANIM_H)
+        veil:SetVisible(false)
+        tiles[i] = { key = anims[i][1], frame = frame, clip = clip, sheet = sheet, cap = cap, veil = veil, on = nil }
     end
     anim_entry.control.SizeChanged = function()
         local w = anim_entry.control:GetWidth()
@@ -142,6 +150,7 @@ function Previews.add(design, prefix, anims, cards_spec, sheet_prefix)
             tiles[i].frame:SetPosition(x, y)
             tiles[i].frame:SetSize(tw, ANIM_H + 2)
             tiles[i].clip:SetSize(math.max(1, tw - 2), ANIM_H)
+            tiles[i].veil:SetSize(math.max(1, tw - 2), ANIM_H)
             tiles[i].cap:SetPosition(x, y + ANIM_H + 4)
             tiles[i].cap:SetSize(tw, CAPTION_H)
         end
@@ -166,7 +175,7 @@ function Previews.add(design, prefix, anims, cards_spec, sheet_prefix)
             local on = v ~= false
             if tiles[i].on ~= on then
                 tiles[i].on = on
-                tiles[i].clip:SetOpacity(on and 1 or 0.3)
+                tiles[i].veil:SetVisible(on ~= true)
                 tiles[i].frame:SetBackColor(on and SEL_COLOR or OFF_COLOR)
             end
         end

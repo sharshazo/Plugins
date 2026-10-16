@@ -545,6 +545,33 @@ function LQA.UI.QuestTrackerHUD:Constructor()
     end
     LQA.Core.EventBus:Subscribe("NARRATOR_MUTE_CHANGED", RefreshAudioIcon)
 
+    -- (2026-10-16, pedido del usuario) Boton para prender/apagar el libro de
+    -- mision que se abre solo al aceptar o completar una mision
+    -- (Core/BookPopupToggle.lua). Igual que el de audio: verde = se abre
+    -- solo, gris con X = no se abre. Va a la izquierda del boton de audio,
+    -- en la misma fila.
+    if _G.BookPopup ~= nil then
+        local function BookIconName()
+            return BookPopup.IsEnabled() and "libro_on" or "libro_off"
+        end
+        self.btnBookToggle = LQA.UI.MEMBookStyle.CreateIconButtonAlpha(BookIconName(), 32, 32)
+        self.btnBookToggle:SetParent(self)
+        self.btnBookToggle:SetPosition(SAFE_RIGHT - 32 - 38, GATHER_BTN_Y)
+        self.btnBookToggle.ButtonClicked = function()
+            BookPopup.Toggle()
+        end
+        local function RefreshBookIcon()
+            local tex = BookIconName()
+            self.btnBookToggle.normalIcon = LQA.UI.MEMBookStyle.RES_BASE .. tex .. ".tga"
+            self.btnBookToggle.overIcon = LQA.UI.MEMBookStyle.RES_BASE .. tex .. "_over.tga"
+            self.btnBookToggle.clickIcon = LQA.UI.MEMBookStyle.RES_BASE .. tex .. "_down.tga"
+            self.btnBookToggle:SetBackground(
+                self.btnBookToggle.mouseOver and self.btnBookToggle.overIcon or self.btnBookToggle.normalIcon
+            )
+        end
+        LQA.Core.EventBus:Subscribe("BOOK_POPUP_CHANGED", RefreshBookIcon)
+    end
+
     -- V17: 22 (alto viejo de btnGather, boton de texto nativo) -> 32 (alto
     -- real del icono nuevo, ver btnGather mas arriba) para no superponerse.
     -- V14: x=10->15 (SCALE), Y sin escalar -- GATHER_BTN_Y ya escalado, el
@@ -833,6 +860,55 @@ function LQA.UI.QuestTrackerHUD:PopulateActive()
 end
 
 -- fila de antes (2026-10-14: queda de respaldo)
+-- (2026-10-16, pedido del usuario) Boton Narrar de cada mision con efecto
+-- de "apretado": al hundirlo se oscurece y baja 1 px (narrar_icon_down), y
+-- despues queda en verde unos segundos (narrar_icon_on) para saber que el
+-- pedido de narracion ya salio. Se recuerda por mision, asi que aunque el
+-- Tracker rehaga la lista el boton sigue en verde hasta que pase el tiempo.
+local NARRAR_ACTIVE_SECS = 3
+local narrarSentAt = {}
+
+local function SetNarrarIcons(btn, tex)
+    local base = LQA.UI.MEMBookStyle.RES_BASE
+    btn.normalIcon = base .. tex .. ".tga"
+    btn.overIcon = base .. tex .. "_over.tga"
+    btn.clickIcon = base .. "narrar_icon_down.tga"
+    if not btn._narrDown then
+        btn:SetBackground(btn.mouseOver and btn.overIcon or btn.normalIcon)
+    end
+end
+
+local function WireNarrarButton(btn, ndx, playFn)
+    local function refresh()
+        local t = narrarSentAt[ndx]
+        local active = t ~= nil and (Turbine.Engine.GetGameTime() - t) < NARRAR_ACTIVE_SECS
+        if active ~= btn._narrActive then
+            btn._narrActive = active
+            SetNarrarIcons(btn, active and "narrar_icon_on" or "narrar_icon")
+        end
+        btn:SetWantsUpdates(active == true)
+    end
+    local md, mu = btn.MouseDown, btn.MouseUp
+    btn.MouseDown = function(...)
+        btn._narrDown = true
+        if md then md(...) end
+    end
+    btn.MouseUp = function(...)
+        btn._narrDown = false
+        if mu then mu(...) end
+    end
+    btn.Update = function()
+        pcall(refresh)
+    end
+    btn.ButtonClicked = function()
+        narrarSentAt[ndx] = Turbine.Engine.GetGameTime()
+        playFn()
+        -- el cambio a verde se ve al soltar (Update del siguiente cuadro)
+        btn:SetWantsUpdates(true)
+    end
+    pcall(refresh)
+end
+
 function LQA.UI.QuestTrackerHUD:AddQuestRowOld(ndx, quest, data, esName)
                     local qType = ClassifyQuest(quest)
                     local qColor = QUEST_TYPE_COLOR[qType]
@@ -1052,9 +1128,9 @@ function LQA.UI.QuestTrackerHUD:AddQuestRowOld(ndx, quest, data, esName)
                     local btnNarrar = LQA.UI.MEMBookStyle.CreateIconButtonAlpha("narrar_icon", 24, 24)
                     btnNarrar:SetParent(item)
                     btnNarrar:SetPosition(SAFE_LEFT - 10, rowHeight - 24)
-                    btnNarrar.ButtonClicked = function()
+                    WireNarrarButton(btnNarrar, ndx, function()
                         NarratorBridge.PlayQuestText(ndx, quest, esName)
-                    end
+                    end)
 
                     self.listBox:AddItem(item)
 end
@@ -1124,9 +1200,9 @@ function LQA.UI.QuestTrackerHUD:AddQuestRowModern(ndx, quest, data, esName)
     local btnNarrar = LQA.UI.MEMBookStyle.CreateIconButtonAlpha("narrar_icon", 24, 24)
     btnNarrar:SetParent(item)
     btnNarrar:SetPosition(left, y2)
-    btnNarrar.ButtonClicked = function()
+    WireNarrarButton(btnNarrar, ndx, function()
         NarratorBridge.PlayQuestText(ndx, quest, esName)
-    end
+    end)
     local prog = data.progress
     local cur, tot = nil, nil
     if type(prog) == "string" then

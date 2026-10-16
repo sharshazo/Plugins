@@ -746,6 +746,9 @@ function Settings.rebuild()
     sb.zone_tint = raw_sb.zone_tint ~= false
     sb.zone_animations = raw_sb.zone_animations ~= false
     sb.height = scaled_int(raw_sb.height)
+    local icon_mode = math.floor(tonumber(raw_sb.icon_size_mode) or 3)
+    if icon_mode < 1 or icon_mode > 3 then icon_mode = 3 end
+    sb.icon_size_mode = icon_mode
     sb.padding = scaled_int(raw_sb.padding)
     sb.gap = scaled_int(raw_sb.gap)
     sb.bg.opacity = raw_sb.bg.opacity
@@ -930,6 +933,17 @@ function Settings.rebuild()
     end
     -- (2026-10-16) diseno y animaciones (Cooldowns/cooldown_fx.lua)
     copy_expiring_effects_fx(cd, raw_cd)
+    -- numero del tiempo (sobre todo para "solo iconos")
+    local num_modes = { always = true, last = true, never = true }
+    local num_positions = { center = true, bottom = true, top = true }
+    cd.num_mode = num_modes[raw_cd.num_mode] == true and raw_cd.num_mode or "always"
+    cd.num_from = math.max(1, math.min(3600, tonumber(raw_cd.num_from) or 30))
+    local num_size = math.floor(tonumber(raw_cd.num_size) or 0)
+    if num_size ~= 12 and num_size ~= 14 and num_size ~= 16 and num_size ~= 18 and num_size ~= 20 then
+        num_size = 0
+    end
+    cd.num_size = num_size
+    cd.num_pos = num_positions[raw_cd.num_pos] == true and raw_cd.num_pos or "center"
     if cd.style == "icons" then
         cd_resolved.width = cd.icon_size
         cd_resolved.height = cd.icon_size

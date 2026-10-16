@@ -1265,8 +1265,19 @@ function S.get_centered_icon_y(container_h, icon_h)
     return math.floor((container_h - icon_h) / 2)
 end
 
+-- (2026-10-16) tamano de los iconos de la barra (Opciones > Barra de estado >
+-- Diseno): 1 = normal (4 px menos que la barra), 2 = grande (2 px menos),
+-- 3 = maximo (todo el alto de la barra)
+local ICON_INSET_BY_MODE = { [1] = 4, [2] = 2, [3] = 0 }
+
 function S.get_icon_size(bar_h)
-    local size = bar_h - S.ICON_INSET
+    local inset = S.ICON_INSET
+    local state = _G.LUI.Settings ~= nil and _G.LUI.Settings.State or nil
+    local sb = state ~= nil and state.settings ~= nil and state.settings.status_bar or nil
+    if type(sb) == "table" and ICON_INSET_BY_MODE[sb.icon_size_mode] ~= nil then
+        inset = ICON_INSET_BY_MODE[sb.icon_size_mode]
+    end
+    local size = bar_h - inset
     if size < 0 then
         return 0
     end
