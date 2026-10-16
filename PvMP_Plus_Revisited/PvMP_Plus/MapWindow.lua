@@ -272,42 +272,88 @@ function MapWindow:MoveCurrentPosition(west, south, heading)
 	Current_Position_Counter = 20 -- In seconds how long icon is shown
 end
 
+-- v4.3.15: varias llamadas a la vez. Cada jugador puede tener varias marcas
+-- (una por sitio); si vuelve a avisar cerca de una marca suya, esa se mueve.
+-- Las marcas apagadas se reutilizan y hay un maximo a la vista.
+local ENEMY_MARKS_MAX = 12
+local ENEMY_MARK_NEAR = 0.6	-- en unidades del mapa (S/W)
+
 function MapWindow:AddEnemyPosition(w, s, amount, player)
 	-- v4.3.10: si no se dijo cuantos enemigos, solo el nombre de quien avisa
+	player = player or "?"
 	local map_callout = player
 	if amount ~= nil and amount ~= "" and amount ~= "?" then
 		map_callout = player .. ": " .. amount .. " " .. (amount == "1" and L.FreepCreep or L.FreepsCreeps)
 	end
-	if self.enemy_position_list[player] ~= nil then
-		self.enemy_position_list[player]:SetPosition(
-			(self.map:GetWidth() - self.map:GetWidth() * (w - self.min_w) / self.dif_w - self.enemy_position_list[player]:GetWidth() / 2),
-			(self.map:GetHeight() * (s - self.min_s) / self.dif_s - (self.enemy_position_list[player]:GetHeight() - 9))
-		)
-		self.enemy_position_list[player].Timer = Enemy_Position_Counter
-		self.enemy_position_list[player].Callout = map_callout	-- v4.3.14: para la cuenta atras
-		self.enemy_position_list[player]:SetText(map_callout)
-		self.enemy_position_list[player]:SetVisible(true)
-		return
+
+	local list = self.enemy_position_list
+	local mark, spare, oldest
+	local active = 0
+	for key, control in pairs(list) do
+		local alive = (control.Timer or 0) > 0 and control:IsVisible()
+		if alive then
+			active = active + 1
+			if oldest == nil or control.Timer < oldest.Timer then
+				oldest = control
+			end
+			if mark == nil and (control.Player or key) == player and control.S ~= nil and
+				math.abs(control.S - s) <= ENEMY_MARK_NEAR and math.abs(control.W - w) <= ENEMY_MARK_NEAR then
+				mark = control
+			end
+		elseif spare == nil then
+			spare = control
+		end
+	end
+	if mark == nil then
+		mark = spare
+	end
+	if mark == nil and active >= ENEMY_MARKS_MAX then
+		mark = oldest
+	end
+	if mark == nil then
+		mark = Turbine.UI.Label()
+		mark:SetParent(self.map)
+		mark:SetSize(151, 29)
+		mark:SetStretchMode(1)
+		mark:SetSize(153, 31)
+		mark:SetFont(Turbine.UI.Lotro.Font.Arial12)
+		mark:SetForeColor(Turbine.UI.Color.Black)
+		mark:SetFontStyle(Turbine.UI.FontStyle.Outline)
+		mark:SetOutlineColor(Turbine.UI.Color.White)
+		mark:SetTextAlignment(Turbine.UI.ContentAlignment.TopCenter)
+		mark:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay.tga")
+		mark:SetMouseVisible(false)
+		local key = player
+		local n = 1
+		while list[key] ~= nil do
+			n = n + 1
+			key = player .. "#" .. n
+		end
+		list[key] = mark
 	end
 
-	local enemy_position_overlay = Turbine.UI.Label()
-	enemy_position_overlay:SetParent(self.map)
-	enemy_position_overlay:SetSize(151, 29)
-	enemy_position_overlay:SetStretchMode(1)
-	enemy_position_overlay:SetSize(153, 31)
-	enemy_position_overlay:SetFont(Turbine.UI.Lotro.Font.Arial12)
-	enemy_position_overlay:SetForeColor(Turbine.UI.Color.Black)
-	enemy_position_overlay:SetFontStyle(Turbine.UI.FontStyle.Outline)
-	enemy_position_overlay:SetOutlineColor(Turbine.UI.Color.White)
-	enemy_position_overlay:SetTextAlignment(Turbine.UI.ContentAlignment.TopCenter)
-	enemy_position_overlay:SetText(map_callout)
-	enemy_position_overlay:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay.tga")
-	enemy_position_overlay:SetMouseVisible(false)
-	enemy_position_overlay:SetPosition(
-		(self.map:GetWidth() - self.map:GetWidth() * (w - self.min_w) / self.dif_w -  math.ceil(enemy_position_overlay:GetWidth() / 2)),
-		(self.map:GetHeight() * (s - self.min_s) / self.dif_s - (enemy_position_overlay:GetHeight() - 9))
-	)
-	enemy_position_overlay.Timer = Enemy_Position_Counter
-	enemy_position_overlay.Callout = map_callout
-	self.enemy_position_list[player] = enemy_position_overlay
+	mark.Player = player
+	mark.S, mark.W = s, w
+	local x = self.map:GetWidth() - self.map:GetWidth() * (w - self.min_w) / self.dif_w - math.ceil(mark:GetWidth() / 2)
+	local y = self.map:GetHeight() * (s - self.min_s) / self.dif_s - (mark:GetHeight() - 9)
+	-- si otra marca ya esta en el mismo sitio, esta se pone un poco mas arriba
+	for _ = 1, 6 do
+		local taken = false
+		for _, control in pairs(list) do
+			if control ~= mark and (control.Timer or 0) > 0 and control:IsVisible() and
+				math.abs(control:GetLeft() - x) < 40 and math.abs(control:GetTop() - y) < 12 then
+				taken = true
+				break
+			end
+		end
+		if not taken then
+			break
+		end
+		y = y - 14
+	end
+	mark:SetPosition(x, y)
+	mark.Timer = Enemy_Position_Counter
+	mark.Callout = map_callout	-- v4.3.14: para la cuenta atras
+	mark:SetText(map_callout)
+	mark:SetVisible(true)
 end

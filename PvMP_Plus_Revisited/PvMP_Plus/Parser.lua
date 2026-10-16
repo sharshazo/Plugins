@@ -298,6 +298,10 @@ Turbine.Chat.Received = function(sender, args)
 	if PvMP_SiegeCheck ~= nil then
 		pcall(PvMP_SiegeCheck, args)
 	end
+	-- v4.3.15: en el canal Regional la rama de sigilo tapaba las llamadas
+	if args.ChatType == Turbine.ChatType.Regional and ParseEnemyCallout ~= nil then
+		pcall(ParseEnemyCallout, args.Message)
+	end
 	local ok, err = pcall(ParseChat, sender, args)
 	if not ok and not parse_error_shown then
 		parse_error_shown = true
@@ -441,34 +445,73 @@ local function ToCoord(v)
 	return tonumber(v) or tonumber((string.gsub(v, "%.", ","))) or tonumber((string.gsub(v, ",", ".")))
 end
 
+-- v4.3.15: tambien se leen las llamadas de otras versiones del addon (otro
+-- color en la etiqueta <rgb=...>) y las escritas a mano con "@" y
+-- coordenadas ("9 Creeps @ Eriador: Tirith Rhaw: 17.5S, 14.7W"). Solo se
+-- marcan coordenadas que caen dentro del mapa de las Landas de Etten.
+local CALLOUT_MIN_S, CALLOUT_MAX_S = 10, 22
+local CALLOUT_MIN_W, CALLOUT_MAX_W = 8.2, 24.3
+
+local function InsideMap(south, west)
+	return south ~= nil and west ~= nil and south >= CALLOUT_MIN_S and south <= CALLOUT_MAX_S and
+		west >= CALLOUT_MIN_W and west <= CALLOUT_MAX_W
+end
+
 function ParseEnemyCallout(message)
-	local tag = "<rgb=" .. Enemy_Position_Chat_Color .. ">"
-	local i = string.find(message, tag, 1, true)
-	if i == nil then
+	if type(message) ~= "string" then
 		return false
 	end
-	local body = string.sub(message, i + string.len(tag))
-	local s, w = string.match(body, "(%d+[%.,]%d+)S, (%d+[%.,]%d+)W")
-	local south, west
-	if s ~= nil and w ~= nil then
-		south, west = ToCoord(s), ToCoord(w)
+	-- texto despues de "[Canal] Nombre: "
+	local raw = string.match(message, "^%[[^%]]*%] (.-): ")
+	local body
+	local tag = "<rgb=" .. Enemy_Position_Chat_Color .. ">"
+	local i = string.find(message, tag, 1, true)
+	if i ~= nil then
+		body = string.sub(message, i + string.len(tag))
 	else
-		-- version anterior: sin coordenadas, se calcula desde el lugar
-		south, west = CalloutFromPlace(body)
+		-- otra version del addon: cualquier color
+		local j, k = string.find(message, "<rgb=#%x%x%x%x%x%x>")
+		if j ~= nil and raw ~= nil then
+			body = string.sub(message, k + 1)
+		elseif raw ~= nil and string.find(message, " @ ", 1, true) then
+			-- escrita a mano: lo que dijo el jugador
+			body = string.match(message, "^%[[^%]]*%] .-: (.*)$")
+		end
 	end
-	if south == nil or west == nil then
+	if body == nil then
+		return false
+	end
+	body = string.gsub(body, "^['%s]+", "")
+	-- v4.3.15: todas las coordenadas del mensaje (pueden venir varias)
+	local points = {}
+	for cs, cw in string.gmatch(body, "(%d+[%.,]%d+)%s*S,?%s*(%d+[%.,]%d+)%s*W") do
+		local south, west = ToCoord(cs), ToCoord(cw)
+		if InsideMap(south, west) and #points < 6 then
+			points[#points + 1] = { south, west }
+		end
+	end
+	if #points == 0 and (i ~= nil or string.find(message, "<rgb=#%x%x%x%x%x%x>")) and
+		string.find(body, "%d+[%.,]%d+%s*S") == nil then
+		-- version anterior: sin coordenadas, se calcula desde el lugar
+		local south, west = CalloutFromPlace(body)
+		if InsideMap(south, west) then
+			points[1] = { south, west }
+		end
+	end
+	if #points == 0 then
 		return false
 	end
 	local amount = string.match(body, "^(%d*)") or ""
 	if amount == "" then
 		amount = "?"
 	end
-	local raw = string.match(message, "^%[[^%]]*%] (.-): ")
 	local player = "?"
 	if raw ~= nil then
 		player = string.match(raw, ">([^<>]+)<") or (string.gsub(raw, "<[^>]*>", ""))
 	end
-	MapWindow:AddEnemyPosition(west, south, amount, player)
+	for n = 1, #points do
+		MapWindow:AddEnemyPosition(points[n][2], points[n][1], amount, player)
+	end
 	return true
 end
 
