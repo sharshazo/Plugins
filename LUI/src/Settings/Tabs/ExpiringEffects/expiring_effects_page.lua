@@ -192,6 +192,56 @@ local function _new_actor_page(window, preview_key, preview_height, refresh_prev
         end)
     page:add_tab(TR["General"], "general", general)
 
+    -- (2026-10-16) diseno y animaciones (ExpiringEffects/effect_fx.lua)
+    local design = ConfigContent(window, 4, page.refresh_preview)
+    design:add_dropdown(prefix .. "_style", TR["Design"],
+        { TR["Classic"], TR["Integrated time bar"], TR["Icons only"] },
+        { "classic", "bar", "icons" },
+        function(value)
+            settings_getter().style = value
+        end,
+        function()
+            return settings_getter().style or "classic"
+        end)
+    design:add_dropdown(prefix .. "_icon_size", TR["Icon size (icons only)"],
+        { "28", "32", "36", "40", "48" }, { 28, 32, 36, 40, 48 },
+        function(value)
+            settings_getter().icon_size = value
+        end,
+        function()
+            return tonumber(settings_getter().icon_size) or 36
+        end)
+    design:add_dropdown(prefix .. "_anim_speed", TR["Animation speed"],
+        { TR["Slow"], TR["Normal"], TR["Fast"] }, { 1, 2, 3 },
+        function(value)
+            settings_getter().anim_speed = value
+        end,
+        function()
+            return tonumber(settings_getter().anim_speed) or 2
+        end)
+    design:add_row_break()
+    local anims = {
+        { "anim_slide", "1 - Slide in" },
+        { "anim_shine", "2 - Shine across the bar" },
+        { "anim_pulse", "3 - Heartbeat when ending (< 3 s)" },
+        { "anim_sweep", "4 - Circular sweep on the icon" },
+        { "anim_flash", "5 - Flash on a new debuff" },
+        { "anim_fade", "6 - Fade out" },
+    }
+    for i = 1, #anims do
+        local key = anims[i][1]
+        design:add_checkbox(prefix .. "_" .. key, TR[anims[i][2]],
+            function(value)
+                settings_getter()[key] = value == true
+            end,
+            function()
+                return settings_getter()[key] ~= false
+            end)
+    end
+    design:add_row_break()
+    design:add_info(TR["The preview above shows the classic design; the chosen design and animations are shown in game."])
+    page:add_tab(TR["Design"], "design", design)
+
     local layout = ConfigContent(window, 4, page.refresh_preview)
     layout:add_dropdown(prefix .. "_orientation", TR["Orientation"], orientation_labels, orientation_values,
         function(value)

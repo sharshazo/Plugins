@@ -7,3 +7,5 @@ import "LUI.src.ExpiringEffects.self_expiring_effect_entry"
 import "LUI.src.ExpiringEffects.self_expiring_effects_window"
 import "LUI.src.ExpiringEffects.target_expiring_effect_entry"
 import "LUI.src.ExpiringEffects.target_expiring_effects_window"
+-- (2026-10-16) disenos y animaciones (envuelve las dos clases de entradas)
+import "LUI.src.ExpiringEffects.effect_fx"

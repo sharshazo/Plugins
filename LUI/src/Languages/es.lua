@@ -1297,4 +1297,17 @@ LUI.src.Languages.es.ES = {
     ["River Hobbit"] = "Hobbit de río",
     ["Average"] = "Promedio",
     ["Most worn piece"] = "Pieza más gastada",
+    -- (2026-10-16) diseno y animaciones de los efectos
+    ["Design"] = "Diseño",
+    ["Classic"] = "Clásico",
+    ["Integrated time bar"] = "Barra de tiempo integrada",
+    ["Icons only"] = "Solo iconos",
+    ["Icon size (icons only)"] = "Tamaño del icono (solo iconos)",
+    ["1 - Slide in"] = "1 - Entrada deslizante",
+    ["2 - Shine across the bar"] = "2 - Brillo que recorre la barra",
+    ["3 - Heartbeat when ending (< 3 s)"] = "3 - Latido al acabarse (< 3 s)",
+    ["4 - Circular sweep on the icon"] = "4 - Barrido circular del icono",
+    ["5 - Flash on a new debuff"] = "5 - Destello de perjuicio nuevo",
+    ["6 - Fade out"] = "6 - Salida desvanecida",
+    ["The preview above shows the classic design; the chosen design and animations are shown in game."] = "La vista previa de arriba muestra el diseño clásico; el diseño y las animaciones elegidas se ven en el juego.",
 }
