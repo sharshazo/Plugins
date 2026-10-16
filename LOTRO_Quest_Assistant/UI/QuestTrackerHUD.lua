@@ -502,7 +502,11 @@ function LQA.UI.QuestTrackerHUD:Constructor()
     self.btnGather:SetParent(self)
     self.btnGather:SetPosition(SAFE_LEFT, GATHER_BTN_Y)
     self.btnGather.MouseClick = function()
-        if _G.GatherWindow then
+        -- v2026-10-16: abre la ventana "Recoleccion" nueva (Mapa del Mundo);
+        -- la de siempre si el Mapa del Mundo no esta cargado
+        if LQA.ToggleGatherWindow then
+            LQA.ToggleGatherWindow()
+        elseif _G.GatherWindow then
             _G.GatherWindow:SetVisible(not _G.GatherWindow:IsVisible())
         end
     end

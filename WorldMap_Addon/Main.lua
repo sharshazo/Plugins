@@ -57,6 +57,8 @@ pcall(import, "WorldMap_Addon.worldmap_options")
 import "WorldMap_Addon.worldmap_zonemap"
 import "WorldMap_Addon.worldmap"
 import "WorldMap_Addon.worldmap_launcher"
+-- v3.15: ventana propia "Recoleccion" (si fallara, el mapa sigue igual)
+pcall(import, "WorldMap_Addon.worldmap_gather")
 
 _G.WorldMapAddon = _G.WorldMapAddon or {}
 

@@ -93,7 +93,10 @@ function LQA.UI.QuestSyncLauncher:Constructor()
     self.btnGather:SetSize(ICON, ICON)
     self.btnGather:SetBackground(RES .. "magnifying_icon_35.tga")
     self:_AttachDrag(self.btnGather, function()
-        if _G.GatherWindow then
+        -- v2026-10-16: la ventana "Recoleccion" nueva (Mapa del Mundo) si esta
+        if LQA.ToggleGatherWindow then
+            LQA.ToggleGatherWindow()
+        elseif _G.GatherWindow then
             _G.GatherWindow:SetVisible(not _G.GatherWindow:IsVisible())
         end
     end)

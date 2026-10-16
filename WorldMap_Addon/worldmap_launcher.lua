@@ -131,7 +131,11 @@ function WorldMapAddon.UI.Launcher:Constructor()
         end
     end)
     self:_AddSub("lupa", LQA_RES .. "magnifying_icon_35.tga", function()
-        if _G.GatherWindow ~= nil then
+        -- v3.15: la ventana "Recoleccion" de este addon (sin MoorMap); la
+        -- de Quest Assistant solo si la nueva no estuviera
+        if WorldMapAddon.Gather ~= nil and WorldMapAddon.Gather.Toggle ~= nil then
+            WorldMapAddon.Gather.Toggle()
+        elseif _G.GatherWindow ~= nil then
             _G.GatherWindow:SetVisible(not _G.GatherWindow:IsVisible())
         end
     end)
@@ -140,6 +144,14 @@ function WorldMapAddon.UI.Launcher:Constructor()
     local itemToggle = Turbine.UI.MenuItem("Abrir/Cerrar Mapa del Mundo")
     itemToggle.Click = function() self:ToggleMap() end
     self.menu:GetItems():Add(itemToggle)
+    -- v3.15: ventana Recoleccion
+    local itemGather = Turbine.UI.MenuItem("Abrir/Cerrar Recolecci\195\179n")
+    itemGather.Click = function()
+        if WorldMapAddon.Gather ~= nil then
+            WorldMapAddon.Gather.Toggle()
+        end
+    end
+    self.menu:GetItems():Add(itemGather)
 
     self.itemLock = Turbine.UI.MenuItem("Bloquear posicion")
     self.itemLock.Click = function()
@@ -195,7 +207,7 @@ function WorldMapAddon.UI.Launcher:_AvailableSubs()
         if btn.subKey == "libro" then
             ok = LqaLauncher(self) ~= nil
         elseif btn.subKey == "lupa" then
-            ok = _G.GatherWindow ~= nil
+            ok = _G.GatherWindow ~= nil or _G.GatherPointsStore ~= nil
         end
         if ok then
             list[#list + 1] = btn
@@ -595,6 +607,11 @@ function WorldMapAddon.MapCommand:Execute(command, arguments)
     local pm, pns, pew, plabel = query:match("^[Pp][Uu][Nn][Tt][Oo]%s+(%-?%d*):([^:]+):([^:]+):?(.*)$")
     if pns ~= nil and PointNum(pns) ~= nil and PointNum(pew) ~= nil then
         WorldMapAddon.ShowPoint(pns, pew, pm, plabel)
+        return
+    end
+    -- v3.15: "/mapa recoleccion" abre / cierra la ventana Recoleccion
+    if (low == "recoleccion" or low == "recolecci\195\179n" or low == "gathering") and WorldMapAddon.Gather ~= nil then
+        WorldMapAddon.Gather.Toggle()
         return
     end
     if (low == "opciones" or low == "options") and WorldMapAddon.Options ~= nil and WorldMapAddon.Options.Show ~= nil then

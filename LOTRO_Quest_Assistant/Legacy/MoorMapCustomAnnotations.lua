@@ -131,8 +131,32 @@ watcher:SetWantsUpdates(true)
 -- MISMO numero que usa el Grid de MoorMap/MMCust.lua -- confirmado porque
 -- ambos derivan del mismo campo "r<N>" que imprime el cliente). type: 43
 -- (Minero) / 44 (Leñador) / 45 (Erudito) / 46 (Granjero, ver nota arriba).
+-- v2026-10-16 (pedido del usuario: recoleccion SIN depender de MoorMap):
+-- los puntos ya se ven en la capa "Recoleccion" del Mapa del Mundo. Esta
+-- copia a MoorMap queda solo si el plugin MMCust esta instalado; si no,
+-- antes quedaba la cola trabada esperando una respuesta que nunca llega.
+-- Mismo chequeo que usa el propio MoorMap (GetAvailablePlugins().Name).
+local mmcustAvailable = nil
+local function MMCustAvailable()
+    if mmcustAvailable ~= nil then return mmcustAvailable end
+    local ok, list = pcall(function() return Turbine.PluginManager.GetAvailablePlugins() end)
+    if not ok or type(list) ~= "table" then
+        mmcustAvailable = true   -- no se pudo saber: como siempre
+        return true
+    end
+    mmcustAvailable = false
+    for _, p in pairs(list) do
+        if type(p) == "table" and p.Name == "MMCust" then
+            mmcustAvailable = true
+            break
+        end
+    end
+    return mmcustAvailable
+end
+
 function MoorMapCustomAnnotations.RegisterNode(region, ns, ew, nodeType, tier, name, desc)
     if region == nil or ns == nil or ew == nil or nodeType == nil then return end
+    if not MMCustAvailable() then return end
     table.insert(queue, {
         region = region, ns = ns, ew = ew,
         type = nodeType, tier = tier or 1,

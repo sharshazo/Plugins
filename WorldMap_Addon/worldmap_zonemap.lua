@@ -101,6 +101,8 @@ local LAYER_TIP = {
     exploracion = { 12, 23 }, fauna = { 12, 22 }, hazana = { 11, 23 }, historia = { 12, 23 }, jefe = { 12, 23 },
     mazmorra = { 12, 22 }, mineria = { 12, 23 }, mision = { 12, 23 }, mobs = { 12, 23 }, npc = { 12, 23 },
     pesca = { 12, 22 }, raid = { 12, 23 }, viaje = { 12, 23 },
+    -- v3.15: recoleccion: el icono va centrado en el punto
+    recoleccion = { 12, 12 }, rec_minero = { 12, 12 }, rec_lenador = { 12, 12 }, rec_erudito = { 12, 12 }, rec_granjero = { 12, 12 },
 }
 local LAYER_MAX_LINES = 8
 -- v3.4: capas cuyos iconos son de una hazaña (los muestra tambien "Hazañas")
@@ -114,6 +116,13 @@ local QRING_W, QRING_H = 60, 60
 -- Las demas flechas siguen con QARROW (flecha_mision, ahora la dorada).
 local FARROW = { img = "flecha_punto.tga", w = 32, h = 40, aura = "flecha_punto_aura_", aw = 54, ah = 62, adx = -11, ady = -19, ring = "fl_paura_" }
 local QPIN_MAX = 40
+-- v3.15: puntos de recoleccion de Quest Assistant (capa "rec")
+local GPIN_MAX = 80
+local GATHER_ICON = { MINERO = "rec_minero", ["LE\195\145ADOR"] = "rec_lenador", ERUDITO = "rec_erudito", GRANJERO = "rec_granjero" }
+local GATHER_PROF = {
+    MINERO = { "Minero", "Prospector" }, ["LE\195\145ADOR"] = { "Le\195\177ador", "Forester" },
+    ERUDITO = { "Erudito", "Scholar" }, GRANJERO = { "Granjero", "Farmer" },
+}
 local STATUS_REFRESH = 3      -- s entre repasos del estado de hazañas / misiones
 local COVER_TOL = 0.4         -- tolerancia de los limites del dibujo (como build3)
 
@@ -895,6 +904,14 @@ function ZV:_buildPools()
     for i = 1, needL do
         self.layerPool[i] = makePin(i)
     end
+    -- v3.15: puntos de recoleccion (Quest Assistant), encima de las capas
+    -- y debajo de las misiones
+    self.gatherPool = {}
+    for i = 1, GPIN_MAX do
+        local item = makePin(i)
+        item.gather = true
+        self.gatherPool[i] = item
+    end
     -- v3.3: misiones ACTIVAS del jugador (Quest Assistant), encima de las capas
     self.questPool = {}
     for i = 1, QPIN_MAX do
@@ -1022,7 +1039,7 @@ end
 -- v3.2: icono de capa (punta abajo en el punto x, y del mapa)
 function ZV:_showLayer(item, p)
     local F = Filters()
-    local name = F ~= nil and F.LayerIcon ~= nil and F.LayerIcon[p[1]] or nil
+    local name = p.icon or (F ~= nil and F.LayerIcon ~= nil and F.LayerIcon[p[1]]) or nil
     if name == nil then
         return false
     end
@@ -1250,6 +1267,124 @@ function ZV:_questPinData()
     return out, table.concat(sig, ",")
 end
 
+-- v3.15 (pedido del usuario): puntos de recoleccion que el jugador fue
+-- guardando con Quest Assistant (GatherPointsStore, por personaje), en su
+-- propia capa "Recolecci\195\179n" -- sin MoorMap. Cada punto guarda el mapa
+-- donde se capturo (mismos numeros de mapa que este addon); se ve en ese
+-- mapa y en los otros mapas de la MISMA zona que lo contienen (las
+-- coordenadas se repiten entre regiones, por eso nunca en otra zona).
+-- Puntos a menos de 10 px se juntan en un icono (varias lineas).
+local function GatherStore()
+    local G = _G.GatherPointsStore
+    if type(G) ~= "table" or type(G.Points) ~= "table" then
+        return nil
+    end
+    return G.Points
+end
+
+-- firma barata para saber si cambio algo (punto nuevo o visto otra vez)
+local function GatherSig()
+    local pts = GatherStore()
+    if pts == nil then
+        return ""
+    end
+    local n, seen = 0, 0
+    for _, zones in pairs(pts) do
+        if type(zones) == "table" then
+            for _, list in pairs(zones) do
+                if type(list) == "table" then
+                    for _, pt in pairs(list) do
+                        n = n + 1
+                        seen = seen + (tonumber(type(pt) == "table" and pt.timesSeen) or 1)
+                    end
+                end
+            end
+        end
+    end
+    return n .. ":" .. seen
+end
+ZV.GatherSig = GatherSig
+
+function ZV:_gatherPinData()
+    local out = {}
+    local pts = GatherStore()
+    local CAL = WorldMapAddon.MapCal
+    local mid = self.mapId
+    local cal = type(CAL) == "table" and mid ~= false and CAL[mid] or nil
+    if pts == nil or cal == nil then
+        return out
+    end
+    local zoneName = ZD ~= nil and ZD.MapZone ~= nil and ZD.MapZone[mid] or nil
+    local W, H = self.mapW, self.mapH
+    for prof, zones in pairs(pts) do
+        if type(zones) == "table" then
+            for idx, list in pairs(zones) do
+                local zi = tonumber(idx)
+                local sameMap = zi == mid
+                local sameZone = sameMap or (zoneName ~= nil and zi ~= nil and ZD.MapZone[zi] == zoneName)
+                if sameZone and type(list) == "table" then
+                    for _, pt in pairs(list) do
+                        local ns = type(pt) == "table" and tonumber(pt.ns) or nil
+                        local ew = type(pt) == "table" and tonumber(pt.ew) or nil
+                        if ns ~= nil and ew ~= nil then
+                            local x = ew * cal[1] + cal[2]
+                            local y = ns * cal[3] + cal[4]
+                            local inside = x - LAYER_W / 2 >= 3 and x + LAYER_W / 2 <= W - 3 and y - LAYER_H / 2 >= 3 and y + LAYER_H / 2 <= H - 3
+                            local drawn = sameMap or (ns <= cal[5] + COVER_TOL and ns >= cal[7] - COVER_TOL and ew >= cal[6] - COVER_TOL and ew <= cal[8] + COVER_TOL)
+                            if inside and drawn then
+                                local pr = GATHER_PROF[prof] or { tostring(prof), tostring(prof) }
+                                local node = tostring(pt.node or "?")
+                                local tier = tonumber(pt.tier)
+                                local times = tonumber(pt.timesSeen) or 1
+                                local subES = pr[1] .. (tier and (" - nivel " .. tier) or "") .. (times > 1 and (" - visto " .. times .. " veces") or "")
+                                local subEN = pr[2] .. (tier and (" - tier " .. tier) or "") .. (times > 1 and (" - seen " .. times .. " times") or "")
+                                local merged = false
+                                for _, g in ipairs(out) do
+                                    if math.abs(g.x - x) <= 10 and math.abs(g.y - y) <= 10 then
+                                        if #g.en < LAYER_MAX_LINES then
+                                            g.en[#g.en + 1] = node; g.es[#g.es + 1] = node
+                                            g.sen[#g.sen + 1] = subEN; g.ses[#g.ses + 1] = subES
+                                        end
+                                        merged = true
+                                        break
+                                    end
+                                end
+                                if not merged and #out < GPIN_MAX then
+                                    out[#out + 1] = { x = x, y = y, icon = GATHER_ICON[prof] or "recoleccion",
+                                        en = { node }, es = { node }, sen = { subEN }, ses = { subES } }
+                                end
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return out
+end
+
+function ZV:_fillGatherPins()
+    for _, item in ipairs(self.gatherPool or {}) do
+        if item.vis then
+            self:_hideItem(item)
+        end
+    end
+    self.gatherSig = GatherSig()
+    if self.gatherPool == nil or not FilterOn("rec") then
+        return
+    end
+    for i, g in ipairs(self:_gatherPinData()) do
+        local item = self.gatherPool[i]
+        if item == nil then
+            break
+        end
+        local p = { "rec", math.floor(g.x + 0.5), math.floor(g.y + 0.5), table.concat(g.en, "\n"), table.concat(g.es, "\n"),
+            table.concat(g.sen, "\n"), table.concat(g.ses, "\n") }
+        p.icon = g.icon
+        self:_showLayer(item, p)
+    end
+end
+
 function ZV:_fillQuestPins()
     for _, item in ipairs(self.questPool) do
         if item.vis then
@@ -1322,6 +1457,11 @@ function ZV:_clearIcons()
         end
     end
     for _, item in ipairs(self.questPool) do
+        if item.vis then
+            self:_hideItem(item)
+        end
+    end
+    for _, item in ipairs(self.gatherPool or {}) do
         if item.vis then
             self:_hideItem(item)
         end
@@ -1432,6 +1572,8 @@ function ZV:_fillIcons()
     pcall(function() self:_fillBosses() end)
     -- v3.3: misiones activas del jugador + estado de hazañas (gris / aura)
     pcall(function() self:_fillQuestPins() end)
+    -- v3.15: puntos de recoleccion guardados por Quest Assistant
+    pcall(function() self:_fillGatherPins() end)
     pcall(function() self:_refreshStatus() end)
 end
 
@@ -1739,7 +1881,7 @@ function ZV:_enterItem(item)
     if item.layer then
         pcall(function() self:_setPinImage(item, true) end)
         -- v3.9: tarjeta moderna (Deed Tracker); si no se puede, el cartel de texto
-        if not item.quest then
+        if not item.quest and not item.gather then
             local okC, shown = pcall(function() return self:_openDeedCard(item) end)
             if okC and shown == true then
                 return
@@ -1779,7 +1921,7 @@ function ZV:_enterItem(item)
             end)
         end
         -- v3.8: saber del lugar, hazaña, recompensas... (Deed Tracker)
-        if not item.quest then
+        if not item.quest and not item.gather then
             pcall(function()
                 for _, l in ipairs(DeedInfoLines(item.poi, es)) do
                     lines[#lines + 1] = l
@@ -2240,6 +2382,10 @@ function ZV:Tick()
                 if sig ~= self.questSig then
                     self:_fillQuestPins()
                 end
+            end
+            -- v3.15: punto de recoleccion nuevo / visto otra vez
+            if FilterOn("rec") and GatherSig() ~= self.gatherSig then
+                pcall(function() self:_fillGatherPins() end)
             end
             -- v3.4: copia de Deed Tracker / Quest Assistant y, si cambio
             -- algo (completada nueva, progreso), se vuelve a dibujar

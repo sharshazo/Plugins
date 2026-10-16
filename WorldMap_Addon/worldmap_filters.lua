@@ -47,6 +47,10 @@ F.Defs = {
     { key = "fau", icon = "fauna", es = "Fauna", en = "Wildlife", on = false },
     { key = "cam", icon = "campamento", es = "Campamentos", en = "Campsites", on = true },
     { key = "via", icon = "viaje", es = "Puntos de viaje", en = "Travel points", on = true },
+    -- v3.15 (pedido del usuario): puntos de recoleccion que guarda Quest
+    -- Assistant (minero, leñador, erudito, granjero), sin MoorMap. Viene
+    -- apagada: la recoleccion tiene su propia ventana (worldmap_gather.lua)
+    { key = "rec", icon = "recoleccion", es = "Recolecci\195\179n", en = "Gathering", on = false },
     -- v3.4: opcion (no es una capa): hazañas / exploracion / cofres ya
     -- completados. Apagado = no se ven en el mapa; encendido = gris con X.
     { key = "done", icon = "completadas", es = "Ver completadas", en = "Show completed", on = false, option = true },
@@ -73,13 +77,14 @@ F.Title = {
     pes = { es = "Pesca", en = "Fishing" },
     fau = { es = "Fauna", en = "Wildlife" },
     his = { es = "Historia y saber", en = "Lore & landmarks" },
+    rec = { es = "Recolecci\195\179n (tus puntos)", en = "Gathering (your points)" },
 }
 
 -- icono de cada capa en el mapa (caja 24x24, la punta abajo = el lugar)
 F.LayerIcon = {
     exp = "exploracion", haz = "hazana", mob = "mobs", cof = "cofre", jef = "jefe", esb = "establo_blanco",
     esa = "establo_azul", cam = "campamento", via = "viaje", mis = "mision", npc = "npc", min = "mineria",
-    pes = "pesca", fau = "fauna", his = "historia",
+    pes = "pesca", fau = "fauna", his = "historia", rec = "recoleccion",
 }
 
 F.state = {}
@@ -174,6 +179,16 @@ function F.Set(key, on)
     F.state[key] = on and true or false
     F.Save()
     notify()
+end
+
+-- v3.15: todas las capas (no las opciones) encendidas
+function F.AllOn()
+    for _, d in ipairs(F.Defs) do
+        if not d.option and F.state[d.key] ~= true then
+            return false
+        end
+    end
+    return true
 end
 
 function F.SetAll(on)
@@ -334,7 +349,10 @@ function Panel.New()
             label:SetSize(r[3], r[4])
             label:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
             c.MouseClick = function()
-                if action == 1 then
+                if action == 1 and #CELLS - #F.Defs == 1 then
+                    -- v3.15: un solo cuadro libre: alterna mostrar / ocultar todo
+                    F.SetAll(not F.AllOn())
+                elseif action == 1 then
                     F.SetAll(true)
                 elseif action == 2 then
                     F.SetAll(false)
@@ -369,7 +387,13 @@ function Panel:_paintCell(cell)
         cell.icon:SetOpacity(on and 1 or 0.45)
     else
         local t
-        if cell.action == 1 then
+        if cell.action == 1 and #CELLS - #F.Defs == 1 then
+            if F.AllOn() then
+                t = es and "Ocultar todo" or "Hide all"
+            else
+                t = es and "Mostrar todo" or "Show all"
+            end
+        elseif cell.action == 1 then
             t = es and "Mostrar todo" or "Show all"
         elseif cell.action == 2 then
             t = es and "Ocultar todo" or "Hide all"

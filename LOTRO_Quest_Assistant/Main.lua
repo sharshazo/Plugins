@@ -270,6 +270,24 @@ _G.QuestBookWindow = LQA.UI.QuestBookWindow()
 -- de las 3 cargas simultaneas que causaba los cierres.
 _G.GatherWindow = LQA.UI.GatherWindow()
 
+-- v2026-10-16 (pedido del usuario): los iconos de Recoleccion (tracker,
+-- lupa) y /recoleccion abren la ventana "Recoleccion" del Mapa del Mundo
+-- (WorldMap_Addon/worldmap_gather.lua, sin MoorMap). Si ese addon no esta
+-- cargado o su ventana fallara, se abre la de siempre (GatherWindow).
+function LQA.ToggleGatherWindow()
+    local W = _G.WorldMapAddon
+    local G = type(W) == "table" and W.Gather or nil
+    if type(G) == "table" and type(G.Toggle) == "function" then
+        local okCall, opened = pcall(G.Toggle)
+        if okCall and opened then
+            return
+        end
+    end
+    if _G.GatherWindow then
+        _G.GatherWindow:SetVisible(not _G.GatherWindow:IsVisible())
+    end
+end
+
 -- Icono flotante y arrastrable, siempre en pantalla: un clic abre/cierra
 -- las dos ventanas de arriba juntas. MainWindow y HUD ya deben existir
 -- (ToggleWindows los usa por su global _G).
@@ -326,11 +344,7 @@ Turbine.Shell.WriteLine("Usa /cofres para abrir la ventana principal en la pesta
 -- GatherSync: /recoleccion abre/cierra la ventana de mapa de puntos.
 GatherWindowCommand = Turbine.ShellCommand()
 function GatherWindowCommand:Execute(command, arguments)
-    if _G.GatherWindow:IsVisible() then
-        _G.GatherWindow:SetVisible(false)
-    else
-        _G.GatherWindow:SetVisible(true)
-    end
+    LQA.ToggleGatherWindow()
 end
 Turbine.Shell.AddCommand("recoleccion;qrecoleccion", GatherWindowCommand)
 Turbine.Shell.WriteLine("Usa /recoleccion para ver el mapa de puntos de recolección.")
