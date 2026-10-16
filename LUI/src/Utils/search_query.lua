@@ -193,8 +193,8 @@ function SearchQuery.matches_groups(groups, haystack_lower)
 end
 
 -- Evaluate parsed text groups against a searchable domain (a table with
--- fold_needle / search / search_within / STOP2, e.g. Lore.Items or
--- Lore.Quests): terms inside a group AND together, groups OR together.
+-- fold_needle / search / search_within / STOP2, e.g. Lore.Items):
+-- terms inside a group AND together, groups OR together.
 -- The longest usable term seeds each group globally (cached, most
 -- selective); every other term probes only the surviving candidates.
 -- Not usable as a seed: terms under 2 chars and baked stop bigrams

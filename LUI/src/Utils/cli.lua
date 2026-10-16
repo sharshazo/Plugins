@@ -46,18 +46,10 @@ local function display_help()
     _write_help_command("/lui move cancel", "  /lui move cancel - Cancel move mode changes")
     _write_help_command("/lui inventory", "  /lui inventory  - Toggle inventory window")
     _write_help_command("/lui inv", "  /lui inv        - Short alias for /lui inventory")
-    _write_help_command("/lui assets", "  /lui assets      - Toggle assets window")
-    _write_help_command("/lui a", "  /lui a          - Short alias for /lui assets")
     _write_help_command("/lui craft", "  /lui craft      - Toggle crafting window")
-    _write_help_command("/lui travel", "  /lui travel     - Toggle travel window")
     _write_help_command("/lui raid", "  /lui raid       - Toggle raid manager window")
-    _write_help_command("/lui trav", "  /lui trav       - Short alias for /lui travel")
     _write_help_command("/lui encyclopedia", "  /lui encyclopedia - Toggle encyclopedia window")
     _write_help_command("/lui ency", "  /lui ency       - Alias for /lui encyclopedia")
-    _write_help_command("/lui bestiary", "  /lui bestiary   - Alias for /lui encyclopedia")
-    _write_help_command("/lui beast", "  /lui beast      - Alias for /lui bestiary")
-    _write_help_command("/lui b", "  /lui b          - Short alias for /lui bestiary")
-    _write_help_command("/lui card [monster name]", "  /lui card [monster name] - Open the bestiary card for a monster")
     _write_help_command("/lui menu", "  /lui menu       - Show the LUI Menu icon again (/lui menu off hides it)")
     _write_help_command("/lui diag", "  /lui diag       - Image check after a game update")
     _write_help_command("/lui puntero", "  /lui puntero    - Pointer effect: on / off / <style> / <color> / prueba")
@@ -522,15 +514,11 @@ function command:Execute(_, str)
         Shortcuts.toggle_config()
     elseif cmd == "inventory" or cmd == "inv" then
         Shortcuts.toggle_inventory()
-    elseif cmd == "assets" or cmd == "a" then
-        Shortcuts.toggle_assets()
     elseif cmd == "craft" then
         Shortcuts.toggle_crafting()
-    elseif cmd == "travel" or cmd == "trav" then
-        Shortcuts.toggle_travel()
     elseif cmd == "raid" then
         Shortcuts.toggle_raid_groups()
-    elseif cmd == "encyclopedia" or cmd == "ency" or cmd == "bestiary" or cmd == "beast" or cmd == "b" then
+    elseif cmd == "encyclopedia" or cmd == "ency" then
         local action = list[2] ~= nil and string.lower(list[2]) or nil
         if action == nil then
             Shortcuts.toggle_encyclopedia()
@@ -554,16 +542,6 @@ function command:Execute(_, str)
         local History = _G.LUI.Features.Drops.History
         if History ~= nil then
             History.execute(table.concat(list, " ", 2))
-        end
-    elseif cmd == "card" then
-        local monster_name = table.concat(list, " ", 2)
-        if monster_name == nil or monster_name == "" then
-            Turbine.Shell.WriteLine(TR["Usage: /lui card [monster name]"])
-            return
-        end
-
-        if Windows.bestiary_card:show_for_name(monster_name, nil) ~= true then
-            Turbine.Shell.WriteLine(TR["Monster not found in bestiary: "] .. monster_name)
         end
     elseif cmd == "api.sb" or (cmd == "api" and list[2] ~= nil and string.lower(list[2]) == "sb") then
         local start_index = cmd == "api.sb" and 2 or 3

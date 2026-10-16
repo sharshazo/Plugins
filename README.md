@@ -70,16 +70,16 @@ Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landa
 
 ## Descarga por separado
 
-¿Solo quieres un addon? Descarga su ZIP. **Cada ZIP ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
+¿Solo quieres un addon? Descarga su ZIP o RAR. **Cada ZIP o RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
 
 | Addon | Descarga |
 |---|---|
-| ✨ LUI | [⬇️ LUI.zip](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.zip) |
-| 📖 QuestSync | [⬇️ QuestSync.zip](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.zip) |
-| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.zip](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.zip) |
-| 🏆 Deed Tracker | [⬇️ DeedTracker.zip](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.zip) |
-| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.zip](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.zip) |
-| 📦 Todos juntos | [⬇️ Todos_los_addons.zip](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.zip) |
+| ✨ LUI | [⬇️ LUI.zip](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.zip) · [⬇️ LUI.rar](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.rar) |
+| 📖 QuestSync | [⬇️ QuestSync.zip](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.zip) · [⬇️ QuestSync.rar](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.rar) |
+| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.zip](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.zip) · [⬇️ MapaDelMundo.rar](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.rar) |
+| 🏆 Deed Tracker | [⬇️ DeedTracker.zip](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.zip) · [⬇️ DeedTracker.rar](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.rar) |
+| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.zip](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.zip) · [⬇️ PvMP_Plus.rar](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.rar) |
+| 📦 Todos juntos | [⬇️ Todos_los_addons.zip](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.zip) · [⬇️ Todos_los_addons.rar](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.rar) |
 
 Abre el ZIP y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Si Windows pregunta, acepta **combinar** y **reemplazar**. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
 

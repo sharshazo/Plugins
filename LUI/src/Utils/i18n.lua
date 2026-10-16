@@ -34,7 +34,7 @@ Locale.language_override = nil
 -- (2026-10-02) Idioma guardado en un archivo propio (scope de cuenta,
 -- lectura SINCRONA): las traducciones de TODOS los modulos que arman
 -- textos al importarse (listas de opciones, etiquetas del lanzador,
--- Bestiario, Ayuda...) se calculan ANTES de que Persistence cargue el
+-- Enciclopedia, Ayuda...) se calculan ANTES de que Persistence cargue el
 -- perfil, asi que sin esto se quedaban en ingles aunque el perfil dijera
 -- "es". main.lua y la ventana de configuracion mantienen este archivo al
 -- dia con Locale.persist_language(). Todo va en pcall: si algo falla,

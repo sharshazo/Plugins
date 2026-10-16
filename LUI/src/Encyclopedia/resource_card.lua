@@ -2,10 +2,9 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 --
--- ResourceCard: the harvest-node sibling of the bestiary card. Opens from a
--- target double-click when the target name resolves to a resource node
--- (Lore.Nodes); shows the node's profession/tier and its yields as the same
--- clickable chips the bestiary card uses for drops (guaranteed yields with
+-- ResourceCard: harvest-node card. Opens from a target double-click when the
+-- target name resolves to a resource node (Lore.Nodes); shows the node's
+-- profession/tier and its yields as clickable chips (guaranteed yields with
 -- quantity ranges, bonus yields, rare finds in the gold chest styling).
 
 local TR = _G.LUI.Locale.TR
@@ -24,7 +23,7 @@ local Style = UI.Widgets.Style
 local CW = Encyclopedia.CardWidgets
 
 local BASE_WIDTH = 420
--- taller than the bestiary stat boxes: the body hosts the native 32px
+-- taller than the default stat boxes: the body hosts the native 32px
 -- profession badge art (20px header + 2px frame + 34px body)
 local BASE_STAT_BOX_H = 56
 local BADGE_SIDE = 32
@@ -119,8 +118,7 @@ function ResourceCard:Constructor()
 end
 
 -- ------------------------------------------------- position persistence ----
--- shared with the quest card (card_widgets.lua); only the settings key
--- differs
+-- shared helpers in card_widgets.lua, keyed by this card's settings key
 
 local SETTINGS_KEY = "resource_card_window"
 
@@ -290,8 +288,7 @@ function ResourceCard:close()
     self:hide()
 end
 
--- target double-click entry: false when the target is not a harvest node,
--- so the caller can fall through to the bestiary card
+-- target double-click entry: false when the target is not a harvest node
 function ResourceCard:toggle_for_target(target, anchor)
     if target == nil or target.GetName == nil then
         return false

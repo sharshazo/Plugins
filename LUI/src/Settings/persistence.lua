@@ -3,13 +3,10 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 local ACCOUNT_DATA_SCOPE = Turbine.DataScope.Account
-local SERVER_DATA_SCOPE = Turbine.DataScope.Server
 local CHARACTER_DATA_SCOPE = Turbine.DataScope.Character
 
 local ACCOUNT_DATA_KEY = "LUI_PROFILES"
 local CHARACTER_DATA_KEY = "LUI_CHARACTER"
-local SERVER_ASSETS_CACHE_KEY = "LUI_ASSETS_CACHE"
-local SERVER_BESTIARY_CACHE_KEY = "LUI_BESTIARY_CACHE"
 
 local FALLBACK_PROFILE_NAME = "Configuration"
 local UNKNOWN_CHARACTER_NAME = "__unknown_character__"
@@ -21,16 +18,11 @@ local Migrations = Settings.Migrations
 local Defaults = Settings.Defaults
 local PluginDataTypes = Settings.PluginDataTypes
 local Windows = LUI.Runtime.Windows
-local Stores = LUI.Runtime.Stores
 local Flags = LUI.Runtime.Flags
-local AssetCache = LUI.Runtime.Caches.Assets
-local BestiaryCache = LUI.Runtime.Caches.Bestiary
 
 local PLUGIN_DATA_SCHEMAS = {
     [ACCOUNT_DATA_KEY] = PluginDataTypes.ACCOUNT,
     [CHARACTER_DATA_KEY] = PluginDataTypes.CHARACTER,
-    [SERVER_ASSETS_CACHE_KEY] = PluginDataTypes.ASSETS_CACHE,
-    [SERVER_BESTIARY_CACHE_KEY] = PluginDataTypes.BESTIARY_CACHE,
 }
 
 local function _copy_table(value)
@@ -281,193 +273,6 @@ function Persistence.ensure_character_settings()
     end
 end
 
-local function _merge_assets_cache(loaded)
-    if type(loaded) ~= "table" then
-        return
-    end
-
-    if type(AssetCache.data) ~= "table" or next(AssetCache.data) == nil then
-        AssetCache.data = loaded
-        return
-    end
-
-    local current = AssetCache.data
-    if type(current.characters) ~= "table" then
-        current.characters = {}
-    end
-    if type(loaded.characters) == "table" then
-        for character_name, loaded_character_cache in pairs(loaded.characters) do
-            if type(current.characters[character_name]) ~= "table" then
-                current.characters[character_name] = loaded_character_cache
-            elseif type(loaded_character_cache) == "table" then
-                local current_character_cache = current.characters[character_name]
-                local source_names = { "backpack", "bank", "vault" }
-                for i = 1, #source_names do
-                    local source_name = source_names[i]
-                    local current_source = current_character_cache[source_name]
-                    local loaded_source = loaded_character_cache[source_name]
-                    if type(current_source) ~= "table" or type(current_source.items) ~= "table" or #current_source.items <= 0 then
-                        current_character_cache[source_name] = loaded_source
-                    end
-                end
-            end
-        end
-    end
-
-    if type(current.shared_storage) ~= "table" or type(current.shared_storage.items) ~= "table" or #current.shared_storage.items <= 0 then
-        current.shared_storage = loaded.shared_storage
-    end
-end
-
-local function _merge_count_map(target, source)
-    if type(source) ~= "table" then
-        return
-    end
-    if type(target) ~= "table" then
-        return
-    end
-
-    for key, value in pairs(source) do
-        target[key] = (tonumber(target[key]) or 0) + (tonumber(value) or 0)
-    end
-end
-
-local function _merge_bestiary_level_map(target, source)
-    if type(source) ~= "table" then
-        return
-    end
-
-    for level, info in pairs(source) do
-        local target_info = target[level]
-        local morale = tonumber(info.m) or 0
-        local power = tonumber(info.p) or 0
-        if type(target_info) ~= "table" then
-            target[level] = {
-                m = morale,
-                p = power,
-            }
-        else
-            if morale > (tonumber(target_info.m) or 0) then
-                target_info.m = morale
-            end
-            if power > (tonumber(target_info.p) or 0) then
-                target_info.p = power
-            end
-        end
-    end
-end
-
-local function _merge_bestiary_cache(loaded)
-    if type(loaded) ~= "table" then
-        return
-    end
-
-    if type(BestiaryCache.data) ~= "table" or next(BestiaryCache.data) == nil then
-        BestiaryCache.data = loaded
-        return
-    end
-
-    local current = BestiaryCache.data
-    for name, loaded_entry in pairs(loaded) do
-        if type(current[name]) ~= "table" then
-            current[name] = loaded_entry
-        elseif type(loaded_entry) == "table" then
-            local current_entry = current[name]
-            current_entry.k = (tonumber(current_entry.k) or 0) + (tonumber(loaded_entry.k) or 0)
-            if type(current_entry.levels) ~= "table" then
-                current_entry.levels = {}
-            end
-            if type(current_entry.d) ~= "table" then
-                current_entry.d = {}
-            end
-            _merge_bestiary_level_map(current_entry.levels, loaded_entry.levels)
-            _merge_count_map(current_entry.d, loaded_entry.d)
-        end
-    end
-end
-
-function Persistence.ensure_assets_cache()
-    if AssetCache.loaded ~= true and AssetCache.loading ~= true then
-        AssetCache.loading = true
-        local loaded = _load_plugin_data(SERVER_DATA_SCOPE, SERVER_ASSETS_CACHE_KEY, function(data)
-            if Flags.is_unloading == true then
-                return
-            end
-            _merge_assets_cache(data)
-            AssetCache.loaded = true
-            AssetCache.loading = false
-            if AssetCache.dirty ~= true then
-                AssetCache.dirty = false
-            end
-            if Stores.assets ~= nil then
-                Stores.assets.generation = (tonumber(Stores.assets.generation) or 0) + 1
-            end
-        end)
-        if loaded ~= nil then
-            _merge_assets_cache(loaded)
-            AssetCache.loaded = true
-            AssetCache.loading = false
-            if AssetCache.dirty ~= true then
-                AssetCache.dirty = false
-            end
-        end
-    end
-
-    if type(AssetCache.data) ~= "table" then
-        AssetCache.data = {}
-    end
-
-    local cache = AssetCache.data
-    if type(cache.characters) ~= "table" then
-        cache.characters = {}
-    end
-    if type(cache.shared_storage) ~= "table" then
-        cache.shared_storage = { items = {} }
-    elseif type(cache.shared_storage.items) ~= "table" then
-        cache.shared_storage.items = {}
-    end
-
-    return cache
-end
-
-function Persistence.ensure_bestiary_cache()
-    if BestiaryCache.loaded ~= true and BestiaryCache.loading ~= true then
-        BestiaryCache.loading = true
-        local loaded = _load_plugin_data(SERVER_DATA_SCOPE, SERVER_BESTIARY_CACHE_KEY, function(data)
-            if Flags.is_unloading == true then
-                return
-            end
-            _merge_bestiary_cache(data)
-            BestiaryCache.loaded = true
-            BestiaryCache.loading = false
-            if BestiaryCache.dirty ~= true then
-                BestiaryCache.dirty = false
-            end
-            -- a whole-cache merge invalidates every record, not a named
-            -- few; consumers must rebuild instead of patching dirty names
-            BestiaryCache.dirty_all = true
-            BestiaryCache.generation = (BestiaryCache.generation or 0) + 1
-        end)
-        if loaded ~= nil then
-            _merge_bestiary_cache(loaded)
-            BestiaryCache.loaded = true
-            BestiaryCache.loading = false
-            if BestiaryCache.dirty ~= true then
-                BestiaryCache.dirty = false
-            end
-        end
-    end
-
-    if type(BestiaryCache.data) ~= "table" then
-        BestiaryCache.data = {}
-    end
-    if type(BestiaryCache.generation) ~= "number" then
-        BestiaryCache.generation = 1
-    end
-
-    return BestiaryCache.data
-end
-
 function Persistence.create_configuration(name, settings)
     Persistence.ensure_account_settings()
 
@@ -645,10 +450,6 @@ function Persistence.capture_runtime_geometry()
         Windows.inventory:capture_geometry()
     end
 
-    if Windows.assets ~= nil then
-        Windows.assets:capture_geometry()
-    end
-
     if Windows.encyclopedia ~= nil then
         Windows.encyclopedia:capture_geometry()
     end
@@ -656,45 +457,11 @@ function Persistence.capture_runtime_geometry()
     if Flags.is_unloading ~= true and Windows.crafting ~= nil then
         Windows.crafting:capture_geometry()
     end
-
-    if Flags.is_unloading ~= true and Windows.travel ~= nil then
-        Windows.travel:capture_geometry()
-    end
-end
-
-function Persistence.save_assets_cache()
-    if AssetCache.dirty ~= true then
-        return
-    end
-    if type(AssetCache.data) ~= "table" then
-        AssetCache.data = {}
-    end
-    _save_plugin_data(SERVER_DATA_SCOPE, SERVER_ASSETS_CACHE_KEY, AssetCache.data)
-    AssetCache.dirty = false
-end
-
-function Persistence.save_bestiary_cache()
-    if BestiaryCache.dirty ~= true then
-        return
-    end
-    if type(BestiaryCache.data) ~= "table" then
-        BestiaryCache.data = {}
-    end
-    _save_plugin_data(SERVER_DATA_SCOPE, SERVER_BESTIARY_CACHE_KEY, BestiaryCache.data)
-    BestiaryCache.dirty = false
 end
 
 function Persistence.load_settings()
     State.account_settings = _load_plugin_data(ACCOUNT_DATA_SCOPE, ACCOUNT_DATA_KEY)
     State.character_settings = _load_plugin_data(CHARACTER_DATA_SCOPE, CHARACTER_DATA_KEY)
-    AssetCache.data = nil
-    AssetCache.loaded = false
-    AssetCache.loading = false
-    AssetCache.dirty = false
-    BestiaryCache.data = nil
-    BestiaryCache.loaded = false
-    BestiaryCache.loading = false
-    BestiaryCache.dirty = false
 
     local migrated_any = false
 

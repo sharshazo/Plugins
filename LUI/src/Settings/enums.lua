@@ -149,11 +149,6 @@ e.vertical_align = {
     BOTTOM = 2,
 }
 
-e.assets_view_mode = {
-    ICONS = 1,
-    DETAILS = 2,
-}
-
 e.side_is_left = {
     [e.side.LEFT] = true,
     [e.side.RIGHT] = false,

@@ -22,12 +22,12 @@ local Shortcuts = UI.Shortcuts
 import "Turbine.UI"
 import "LUI.src.UI.Widgets.item_icon"
 
--- control metrics match the bestiary filter bar (21px controls, 4px gaps)
+-- control metrics: 21px controls, 4px gaps
 local BASE_BAR_H = 21
 -- native item art is 32px and must never be scaled (stretch mode 0 tiles)
 local BASE_ICON_SIDE = 32
 local BASE_GAP = 4
--- page bar matches the bestiary tab exactly (22x21 square nav buttons)
+-- page bar: 22x21 square nav buttons
 local BASE_NAV_W = 22
 local BASE_PAGE_BAR_H = 21
 local BASE_PAGE_W = 74
@@ -48,10 +48,8 @@ end
 
 local _scaled_font = BrowserShared.scaled_font
 
--- link action icons: identical treatment to the crafting window's
--- bestiary button on drop resources (16px icon in a 22px square button)
+-- link action icon: 16px icon in a 22px square button
 local CRAFT_ACTION_ICON = UI.AssetIds.anvil_silver_glow
-local BESTIARY_ACTION_ICON = UI.AssetIds.book_orange_cover
 local BASE_LINK_BUTTON_W = 22
 
 local function _apply_link_icon(button, icon)
@@ -92,8 +90,6 @@ function ItemBrowserPanel:Constructor(bucket_name, popup_host)
     self._class_filter = FILTER_ALL_CODE
     self._level_min = nil
     self._level_max = nil
-    self._ilvl_min = nil
-    self._ilvl_max = nil
 
     self:SetMouseVisible(true)
     self:SetBackColor(Style.PANEL_BACKGROUND)
@@ -155,70 +151,6 @@ function ItemBrowserPanel:Constructor(bucket_name, popup_host)
         self:_on_filters_changed()
     end
 
-    -- traceries only: player-class filter; the level boxes switch to
-    -- LI item-level band semantics in _rebuild_filtered
-    self._pclass_filter = nil
-    if self._bucket == "tracery" then
-        Lore.load_traceries()
-        self._pclass_filter = FILTER_ALL_CODE
-        self.pclass_label = UI.Widgets.LuiLabel()
-        self.pclass_label:SetParent(self)
-        self.pclass_label:SetMouseVisible(false)
-        self.pclass_label:SetSelectable(false)
-        self.pclass_label:SetMultiline(false)
-        self.pclass_label:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
-        self.pclass_label:SetText(TR["Class"] .. ":")
-
-        self.pclass_dropdown = UI.Widgets.LuiDropdown()
-        self.pclass_dropdown:SetParent(self)
-        self.pclass_dropdown:SetPopupHost(popup_host)
-        self.pclass_dropdown:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
-        local pclass_labels, pclass_values = { TR["All"] }, { FILTER_ALL_CODE }
-        for idx = 1, #Lore.Traceries.CLASS_LABELS do
-            pclass_labels[#pclass_labels + 1] = Lore.Traceries.CLASS_LABELS[idx]
-            pclass_values[#pclass_values + 1] = idx
-        end
-        self.pclass_dropdown:SetMappedOptions(pclass_labels, pclass_values)
-        self._pclass_dd_base_w = _dropdown_base_w(pclass_labels)
-        self.pclass_dropdown.ValueChanged = function(_, value)
-            self._pclass_filter = tonumber(value) or FILTER_ALL_CODE
-            self:_on_filters_changed()
-        end
-
-        -- a second range next to Level: the Level boxes match the usable
-        -- character band, these match the tracery's BASE iLvl
-        self.ilvl_label = UI.Widgets.LuiLabel()
-        self.ilvl_label:SetParent(self)
-        self.ilvl_label:SetMouseVisible(false)
-        self.ilvl_label:SetSelectable(false)
-        self.ilvl_label:SetMultiline(false)
-        self.ilvl_label:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
-        self.ilvl_label:SetText("iLvl:")
-
-        self.ilvl_min_box = UI.Widgets.LuiLineEdit()
-        self.ilvl_min_box:SetParent(self)
-        self.ilvl_min_box:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
-        self.ilvl_min_box.TextChanged = function()
-            self:_on_filters_changed()
-        end
-
-        self.ilvl_dash_label = UI.Widgets.LuiLabel()
-        self.ilvl_dash_label:SetParent(self)
-        self.ilvl_dash_label:SetMouseVisible(false)
-        self.ilvl_dash_label:SetSelectable(false)
-        self.ilvl_dash_label:SetMultiline(false)
-        self.ilvl_dash_label:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
-        self.ilvl_dash_label:SetText("-")
-
-        self.ilvl_max_box = UI.Widgets.LuiLineEdit()
-        self.ilvl_max_box:SetParent(self)
-        self.ilvl_max_box:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
-        self.ilvl_max_box.TextChanged = function()
-            self:_on_filters_changed()
-        end
-
-    end
-
     -- every tab lists through a LuiTable (paged mode; this panel's footer
     -- drives the pagination); rows are pooled cell widgets updated in
     -- place per page. Chrome comes entirely from the shared style
@@ -226,25 +158,13 @@ function ItemBrowserPanel:Constructor(bucket_name, popup_host)
     self.table = UI.Widgets.LuiTable()
     self.table:SetParent(self)
     self.table:set_auto_height(true)
-    if self._bucket == "tracery" then
-        self.table:set_columns({
-            { title = "", width = 40 },
-            { title = TR["Name"] },
-            { title = TR["Type"], width = 140 },
-            { title = TR["Class"], width = 110 },
-            { title = TR["Level"], width = 76 },
-            { title = "iLvl", width = 46 },
-            { title = TR["Limit"], width = 46 },
-        })
-    else
-        self.table:set_columns({
-            { title = "", width = 40 },
-            { title = TR["Name"] },
-            { title = TR["Type"], width = 170 },
-            { title = TR["Level"], width = 70 },
-            { title = "", width = 60 },
-        })
-    end
+    self.table:set_columns({
+        { title = "", width = 40 },
+        { title = TR["Name"] },
+        { title = TR["Type"], width = 170 },
+        { title = TR["Level"], width = 70 },
+        { title = "", width = 60 },
+    })
     self._table_cells = {}
 
     self.level_label = UI.Widgets.LuiLabel()
@@ -277,7 +197,7 @@ function ItemBrowserPanel:Constructor(bucket_name, popup_host)
         self:_on_filters_changed()
     end
 
-    -- same pager as the bestiary page bar; during _sync_pager the caller
+    -- during _sync_pager the caller
     -- renders right after, so the callback skips its own render
     self.pager = UI.Widgets.LuiPager()
     self.pager:SetParent(self)
@@ -341,15 +261,6 @@ function ItemBrowserPanel:apply_fonts()
     self.quality_dropdown:set_scale(State.settings.global.scale)
     self.class_dropdown:SetFont(font)
     self.class_dropdown:set_scale(State.settings.global.scale)
-    if self.pclass_dropdown ~= nil then
-        self.pclass_label:SetFont(font)
-        self.pclass_dropdown:SetFont(font)
-        self.pclass_dropdown:set_scale(State.settings.global.scale)
-        self.ilvl_label:SetFont(font)
-        self.ilvl_min_box:SetFont(font)
-        self.ilvl_dash_label:SetFont(font)
-        self.ilvl_max_box:SetFont(font)
-    end
     self.table:set_header_font(font)
     for slot = 1, #self._table_cells do
         local cells = self._table_cells[slot]
@@ -359,8 +270,6 @@ function ItemBrowserPanel:apply_fonts()
         if cells.craft_button ~= nil then
             cells.craft_button:set_scale(1)
             _apply_link_icon(cells.craft_button, CRAFT_ACTION_ICON)
-            cells.bestiary_button:set_scale(1)
-            _apply_link_icon(cells.bestiary_button, BESTIARY_ACTION_ICON)
         end
     end
     self.level_label:SetFont(font)
@@ -379,10 +288,6 @@ end
 function ItemBrowserPanel:_on_filters_changed()
     self._level_min = self:_parse_level(self.level_min_box:GetText())
     self._level_max = self:_parse_level(self.level_max_box:GetText())
-    if self.ilvl_min_box ~= nil then
-        self._ilvl_min = self:_parse_level(self.ilvl_min_box:GetText())
-        self._ilvl_max = self:_parse_level(self.ilvl_max_box:GetText())
-    end
     self:_sync_pager(1)
     self:_refresh_list()
 end
@@ -414,11 +319,8 @@ function ItemBrowserPanel:_rebuild_filtered()
     local filter_sig = table.concat({
         tostring(self._quality_filter),
         tostring(self._class_filter),
-        tostring(self._pclass_filter or ""),
         tostring(self._level_min or ""),
         tostring(self._level_max or ""),
-        tostring(self._ilvl_min or ""),
-        tostring(self._ilvl_max or ""),
     }, "\30")
     local signature = query .. "\30" .. filter_sig
     if signature == self._signature and self._filtered ~= nil then
@@ -463,12 +365,8 @@ function ItemBrowserPanel:_rebuild_filtered()
     local quality = self._quality_filter
     local class_code = self._class_filter
     local recipe_class_set = class_code == FILTER_RECIPES_CODE and Items.RECIPE_CLASS_SET or nil
-    local is_tracery = self._bucket == "tracery"
-    local pclass = self._pclass_filter
     local level_min = self._level_min
     local level_max = self._level_max
-    local ilvl_min = self._ilvl_min
-    local ilvl_max = self._ilvl_max
     local list = Items.bucket_list(self._bucket)
     local filtered, n = {}, 0
     for i = 1, #list do
@@ -479,29 +377,7 @@ function ItemBrowserPanel:_rebuild_filtered()
                     or (recipe_class_set ~= nil and recipe_class_set[Items.class_code(ordinal)] == true)
                     or Items.class_code(ordinal) == class_code then
                     local ok = true
-                    if is_tracery == true then
-                        local min_il, max_il, _, tr_class, char_max = Lore.Traceries.info(ordinal)
-                        if pclass ~= FILTER_ALL_CODE and tr_class ~= pclass then
-                            ok = false
-                        end
-                        -- Level range: the usable character band must
-                        -- overlap it (a single value means "usable at X")
-                        if ok and (level_min ~= nil or level_max ~= nil) then
-                            local char_min = Items.min_level(ordinal) or 1
-                            local lo = level_min or level_max
-                            local hi = level_max or level_min
-                            if char_max < lo or char_min > hi then
-                                ok = false
-                            end
-                        end
-                        -- iLvl range: the tracery's BASE iLvl within it,
-                        -- so 450-499 shows the 450 tier only, never lower
-                        -- tiers whose enhancement cap merely covers 450
-                        if ok and ((ilvl_min ~= nil and min_il < ilvl_min)
-                            or (ilvl_max ~= nil and min_il > ilvl_max)) then
-                            ok = false
-                        end
-                    elseif level_min ~= nil or level_max ~= nil then
+                    if level_min ~= nil or level_max ~= nil then
                         -- equipable/required character level; items with
                         -- no requirement are usable from level 1
                         local level = Items.min_level(ordinal) or 1
@@ -535,8 +411,8 @@ function ItemBrowserPanel:_page_count()
     return math.max(1, math.ceil(#self._filtered / capacity))
 end
 
--- one pooled row of cell widgets for the traceries table; updated in
--- place per page, never recreated
+-- one pooled row of cell widgets for the table; updated in place per
+-- page, never recreated
 function ItemBrowserPanel:_ensure_table_row(slot)
     if self._table_cells[slot] ~= nil then
         return self._table_cells[slot]
@@ -561,11 +437,7 @@ function ItemBrowserPanel:_ensure_table_row(slot)
     cells.name:SetSelectable(false)
     cells.name:SetMultiline(true)
     cells.name:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
-    if self._bucket == "tracery" then
-        cells.label_keys = { "name", "type", "class", "level", "ilvl", "limit" }
-    else
-        cells.label_keys = { "name", "type", "level" }
-    end
+    cells.label_keys = { "name", "type", "level" }
     for _, key in ipairs(cells.label_keys) do
         if key ~= "name" then
             local label = UI.Widgets.LuiLabel()
@@ -583,53 +455,35 @@ function ItemBrowserPanel:_ensure_table_row(slot)
         cells[key]:SetForeColor(Style.FOREGROUND)
     end
 
-    if self._bucket == "tracery" then
-        self.table:append_row({ cells.icon_host, cells.name, cells.type, cells.class,
-            cells.level, cells.ilvl, cells.limit })
-    else
-        -- action cell: crafting anvil + bestiary book, the batch-1 links
-        cells.actions = Turbine.UI.Control()
-        cells.actions:SetMouseVisible(false)
-        cells.craft_button = UI.Widgets.LuiButton()
-        cells.craft_button:SetParent(cells.actions)
-        cells.craft_button:set_scale(1)
-        _apply_link_icon(cells.craft_button, CRAFT_ACTION_ICON)
-        cells.craft_button:SetVisible(false)
-        cells.craft_button.Click = function()
-            Shortcuts.open_crafting_item_search(cells._craft_search_name, cells._link_recipe_id)
-        end
-        cells.bestiary_button = UI.Widgets.LuiButton()
-        cells.bestiary_button:SetParent(cells.actions)
-        cells.bestiary_button:set_scale(1)
-        _apply_link_icon(cells.bestiary_button, BESTIARY_ACTION_ICON)
-        cells.bestiary_button:SetVisible(false)
-        cells.bestiary_button.Click = function()
-            Shortcuts.open_bestiary_item_search(cells._link_name)
-        end
-        -- explicit layout at render time (no SizeChanged on internal
-        -- widgets): the two-slot block is centered in the cell, slots stay
-        -- fixed (anvil left, book right) so buttons align across rows
-        cells.layout_actions = function()
-            local w, h = cells.actions:GetSize()
-            local side = math.min(scaled_int(BASE_LINK_BUTTON_W), math.max(0, h - 2))
-            local y = math.max(0, math.floor((h - side) / 2))
-            local gap = scaled_int(BASE_GAP)
-            local block_x = math.max(0, math.floor((w - (2 * side) - gap) / 2))
-            cells.craft_button:SetSize(side, side)
-            cells.craft_button:SetPosition(block_x, y)
-            cells.bestiary_button:SetSize(side, side)
-            cells.bestiary_button:SetPosition(block_x + side + gap, y)
-        end
-        self.table:append_row({ cells.icon_host, cells.name, cells.type,
-            cells.level, cells.actions })
+    -- action cell: crafting anvil link
+    cells.actions = Turbine.UI.Control()
+    cells.actions:SetMouseVisible(false)
+    cells.craft_button = UI.Widgets.LuiButton()
+    cells.craft_button:SetParent(cells.actions)
+    cells.craft_button:set_scale(1)
+    _apply_link_icon(cells.craft_button, CRAFT_ACTION_ICON)
+    cells.craft_button:SetVisible(false)
+    cells.craft_button.Click = function()
+        Shortcuts.open_crafting_item_search(cells._craft_search_name, cells._link_recipe_id)
     end
+    -- explicit layout at render time (no SizeChanged on internal
+    -- widgets): the button is centered in the cell
+    cells.layout_actions = function()
+        local w, h = cells.actions:GetSize()
+        local side = math.min(scaled_int(BASE_LINK_BUTTON_W), math.max(0, h - 2))
+        local y = math.max(0, math.floor((h - side) / 2))
+        local x = math.max(0, math.floor((w - side) / 2))
+        cells.craft_button:SetSize(side, side)
+        cells.craft_button:SetPosition(x, y)
+    end
+    self.table:append_row({ cells.icon_host, cells.name, cells.type,
+        cells.level, cells.actions })
     self._table_cells[slot] = cells
     return cells
 end
 
 function ItemBrowserPanel:_render_table_page(capacity, first)
     local Items = Lore.Items
-    local Tr = Lore.Traceries
     -- the table ends on the last filled row (auto height)
     self.table:set_visible_rows(math.max(0, math.min(capacity, #self._filtered - first)))
     for slot = 1, math.max(capacity, self.table:row_count()) do
@@ -641,61 +495,44 @@ function ItemBrowserPanel:_render_table_page(capacity, first)
             cells.center_icon()
             local name = Items.label(ordinal)
             cells.name:SetText(name)
-            if self._bucket == "tracery" then
-                local min_il, max_il, _, tr_class, char_max = Tr.info(ordinal)
-                cells.type:SetText(Items.class_name(ordinal))
-                -- unrestricted traceries (heraldic/power/craft): no class
-                cells.class:SetText(Tr.class_label(tr_class) or "-")
-                local char_min = Items.min_level(ordinal)
-                cells.level:SetText(char_min ~= nil
-                    and (tostring(char_min) .. " - " .. tostring(char_max)) or "-")
-                cells.ilvl:SetText(tostring(min_il))
-                cells.limit:SetText(tostring(max_il))
-            else
-                cells.type:SetText(Items.class_name(ordinal) or "")
-                -- equipable/required character level, never the item level
-                local level = Items.min_level(ordinal)
-                cells.level:SetText(level ~= nil and tostring(level) or "")
-                -- O(1) name probes decide the crafting link; the store is
-                -- nil only while the crafting feature is disabled
-                local store = Crafting.get_shared_store()
-                local linkable = false
-                local craft_search_name = name
-                local craft_recipe_id = nil
-                if store ~= nil then
-                    local producing = store:first_recipe_producing_name(name)
-                    linkable = producing ~= nil or store:has_recipes_using_name(name) == true
-                    if producing ~= nil then
-                        craft_recipe_id = producing.id
-                    end
-                    if linkable ~= true then
-                        -- recipe scrolls: the anvil opens the recipe the
-                        -- scroll teaches, searched by its result name
-                        local taught = store:recipe_taught_by_item_id(Items.id_of(ordinal))
-                        if taught ~= nil then
-                            linkable = true
-                            craft_recipe_id = taught.id
-                            craft_search_name = store:recipe_result_display_name(taught)
-                        end
+            cells.type:SetText(Items.class_name(ordinal) or "")
+            -- equipable/required character level, never the item level
+            local level = Items.min_level(ordinal)
+            cells.level:SetText(level ~= nil and tostring(level) or "")
+            -- O(1) name probes decide the crafting link; the store is
+            -- nil only while the crafting feature is disabled
+            local store = Crafting.get_shared_store()
+            local linkable = false
+            local craft_search_name = name
+            local craft_recipe_id = nil
+            if store ~= nil then
+                local producing = store:first_recipe_producing_name(name)
+                linkable = producing ~= nil or store:has_recipes_using_name(name) == true
+                if producing ~= nil then
+                    craft_recipe_id = producing.id
+                end
+                if linkable ~= true then
+                    -- recipe scrolls: the anvil opens the recipe the
+                    -- scroll teaches, searched by its result name
+                    local taught = store:recipe_taught_by_item_id(Items.id_of(ordinal))
+                    if taught ~= nil then
+                        linkable = true
+                        craft_recipe_id = taught.id
+                        craft_search_name = store:recipe_result_display_name(taught)
                     end
                 end
-                cells._link_name = name
-                cells._craft_search_name = craft_search_name
-                cells._link_recipe_id = craft_recipe_id
-                cells.craft_button:SetVisible(linkable == true)
-                cells.bestiary_button:SetVisible(Encyclopedia.has_droppable_item(name) == true)
-                cells.layout_actions()
             end
+            cells._craft_search_name = craft_search_name
+            cells._link_recipe_id = craft_recipe_id
+            cells.craft_button:SetVisible(linkable == true)
+            cells.layout_actions()
             self.table:set_row_data(slot, ordinal)
         else
             cells.icon:bind(nil, nil, nil)
             for _, key in ipairs(cells.label_keys) do
                 cells[key]:SetText("")
             end
-            if cells.craft_button ~= nil then
-                cells.craft_button:SetVisible(false)
-                cells.bestiary_button:SetVisible(false)
-            end
+            cells.craft_button:SetVisible(false)
             self.table:set_row_data(slot, nil)
         end
     end
@@ -728,16 +565,8 @@ function ItemBrowserPanel:open_item_search(item_name)
     self._class_filter = FILTER_ALL_CODE
     self.quality_dropdown:SetValue(FILTER_ALL_CODE)
     self.class_dropdown:SetValue(FILTER_ALL_CODE)
-    if self.pclass_dropdown ~= nil then
-        self._pclass_filter = FILTER_ALL_CODE
-        self.pclass_dropdown:SetValue(FILTER_ALL_CODE)
-    end
     self.level_min_box:SetText("")
     self.level_max_box:SetText("")
-    if self.ilvl_min_box ~= nil then
-        self.ilvl_min_box:SetText("")
-        self.ilvl_max_box:SetText("")
-    end
     self.search_box:SetText(query)
     self.search_box:refresh_text_async()
     -- programmatic SetText does not fire TextChanged: refresh explicitly
@@ -758,18 +587,13 @@ function ItemBrowserPanel:layout()
     local quality_w = scaled_int(self._quality_dd_base_w)
     local class_w = scaled_int(self._class_dd_base_w)
 
-    -- row 1: Type / Rarity left, Level block flush right. Traceries swap
-    -- the min-max range for two single-value inputs (Level and iLvl)
+    -- row 1: Type / Rarity left, Level block flush right
     local type_label_w = scaled_int(38)
     local rarity_label_w = scaled_int(48)
     local dash_w = scaled_int(10)
     local level_label_w = scaled_int(42)
-    local ilvl_label_w = scaled_int(34)
     local range_w = level_w + gap + dash_w + gap + level_w
     local level_block_w = level_label_w + gap + range_w
-    if self.ilvl_label ~= nil then
-        level_block_w = level_block_w + (2 * gap) + ilvl_label_w + gap + range_w
-    end
 
     local x = margin_l
     self.type_label:SetPosition(x, margin_t)
@@ -784,17 +608,6 @@ function ItemBrowserPanel:layout()
     self.quality_dropdown:SetPosition(x, margin_t)
     self.quality_dropdown:SetSize(quality_w, bar_h)
 
-    if self.pclass_dropdown ~= nil then
-        local pclass_label_w = scaled_int(46)
-        local pclass_w = scaled_int(self._pclass_dd_base_w)
-        x = x + quality_w + (2 * gap)
-        self.pclass_label:SetPosition(x, margin_t)
-        self.pclass_label:SetSize(pclass_label_w, bar_h)
-        x = x + pclass_label_w + gap
-        self.pclass_dropdown:SetPosition(x, margin_t)
-        self.pclass_dropdown:SetSize(pclass_w, bar_h)
-    end
-
     local level_x = width - margin_r - level_block_w
     self.level_label:SetPosition(level_x, margin_t)
     self.level_label:SetSize(level_label_w, bar_h)
@@ -807,20 +620,6 @@ function ItemBrowserPanel:layout()
     level_x = level_x + dash_w + gap
     self.level_max_box:SetPosition(level_x, margin_t)
     self.level_max_box:SetSize(level_w, bar_h)
-    if self.ilvl_label ~= nil then
-        level_x = level_x + level_w + (2 * gap)
-        self.ilvl_label:SetPosition(level_x, margin_t)
-        self.ilvl_label:SetSize(ilvl_label_w, bar_h)
-        level_x = level_x + ilvl_label_w + gap
-        self.ilvl_min_box:SetPosition(level_x, margin_t)
-        self.ilvl_min_box:SetSize(level_w, bar_h)
-        level_x = level_x + level_w + gap
-        self.ilvl_dash_label:SetPosition(level_x, margin_t)
-        self.ilvl_dash_label:SetSize(dash_w, bar_h)
-        level_x = level_x + dash_w + gap
-        self.ilvl_max_box:SetPosition(level_x, margin_t)
-        self.ilvl_max_box:SetSize(level_w, bar_h)
-    end
 
     -- row 2: search across the full width
     local search_y = margin_t + bar_h + gap
@@ -846,17 +645,9 @@ function ItemBrowserPanel:layout()
     self.table:set_header_height(scaled_int(20))
     self.table:set_row_height(_even_int(scaled_int(38)))
     self.table:set_column_width(1, scaled_int(40))
-    if self._bucket == "tracery" then
-        self.table:set_column_width(3, scaled_int(140))
-        self.table:set_column_width(4, scaled_int(110))
-        self.table:set_column_width(5, scaled_int(76))
-        self.table:set_column_width(6, scaled_int(46))
-        self.table:set_column_width(7, scaled_int(46))
-    else
-        self.table:set_column_width(3, scaled_int(170))
-        self.table:set_column_width(4, scaled_int(70))
-        self.table:set_column_width(5, scaled_int(60))
-    end
+    self.table:set_column_width(3, scaled_int(170))
+    self.table:set_column_width(4, scaled_int(70))
+    self.table:set_column_width(5, scaled_int(60))
     self.table:SetPosition(margin_l, list_top)
     self.table:SetSize(list_w, list_h)
 

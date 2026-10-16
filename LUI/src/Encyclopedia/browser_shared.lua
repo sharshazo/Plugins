@@ -3,7 +3,7 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 --
 -- Shared scaffolding helpers for the Encyclopedia browser panels (item
--- and quest tabs): sizing and parsing math that must behave identically
+-- tabs): sizing and parsing math that must behave identically
 -- in every tab lives here; panel-specific layout stays in each file.
 
 local FONT_TO_LOTRO = _G.LUI.Utils.FONT_TO_LOTRO
@@ -15,7 +15,7 @@ Encyclopedia.BrowserShared = BrowserShared
 
 -- filter dropdowns size to their longest option (estimate, same approach
 -- as the card chips): byte length x char width + arrow/padding, clamped.
--- The max clamp is per-tab (quest categories run longer than item types).
+-- The max clamp is per-tab.
 local BASE_FILTER_CHAR_W = 6.2
 local BASE_DROPDOWN_PAD = 26
 local BASE_DROPDOWN_MIN_W = 70

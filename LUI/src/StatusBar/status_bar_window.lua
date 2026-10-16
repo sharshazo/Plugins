@@ -25,8 +25,6 @@ local Style = UI.Widgets.Style
 local SHORTCUT_WIDGETS = {
     config = { shortcut_key = "config", display_mode = "icon" },
     craft = { shortcut_key = "craft", display_mode = "icon" },
-    travel = { shortcut_key = "travel", display_mode = "icon" },
-    assets = { shortcut_key = "assets", display_mode = "icon" },
     encyclopedia = { shortcut_key = "encyclopedia", display_mode = "icon" },
     raid = { shortcut_key = "raid", display_mode = "icon" },
 }

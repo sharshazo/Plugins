@@ -219,9 +219,11 @@ function GroupQuest.FoldAscii(s)
 end
 
 -- Comando de chat completo, en ingles, corto y simple. Ejemplos:
---   /world LFF Skumfil (Fellowship, 6) - Quest: A Fellowship's Heart
---   /world LFF Helegrod (Raid, 12+) - Quest: The Dragon's Hoard
---   /world LFF Gramsfoot, The Ettenmoors (Raid, 12+) - Quest: ...
+--   /world LFF Skumfil (Fellowship, 6) - send me a tell
+--   /world LFF Helegrod (Raid, 12+) - send me a tell
+--   /world LFF Gramsfoot, The Ettenmoors (Raid, 12+) - send me a tell
+-- (2026-10-16, pedido del usuario: ya no lleva el nombre de la mision,
+-- solo el lugar y que le hablen por privado)
 -- Devuelve nil si la mision no es de grupo.
 function GroupQuest.LffCommand(quest)
     local entry = GroupQuest.Get(quest)
@@ -231,9 +233,7 @@ function GroupQuest.LffCommand(quest)
     local place = entry.p
     if not place or place == "" then place = KIND_EN[kindKey] or "group" end
     local msg = "LFF " .. place .. " (" .. (SIZE_EN[entry.s] or "group") .. ")"
-    if quest.nameEN and quest.nameEN ~= "" then
-        msg = msg .. " - Quest: " .. quest.nameEN
-    end
+    msg = msg .. " - send me a tell"
     msg = GroupQuest.FoldAscii(msg)
     -- Tope de largo por las dudas (el chat de LOTRO corta mensajes largos).
     if #msg > 200 then msg = string.sub(msg, 1, 200) end

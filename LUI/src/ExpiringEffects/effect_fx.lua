@@ -97,6 +97,41 @@ local function _with_alpha(color, a)
     return Turbine.UI.Color(a, color.R, color.G, color.B)
 end
 
+-- (2026-10-16, rendimiento) los colores animados se crean UNA vez por
+-- nivel (los niveles ya van en pasos de 1/20) y se reutilizan: sin un
+-- objeto Color nuevo en cada cuadro no hay basura para el recolector
+-- (los tirones en combate venian de ahi)
+local _veil_colors = {}
+local _tint_colors = {}
+local _tint_border_colors = {}
+
+local function _veil_color(op)
+    local c = _veil_colors[op]
+    if c == nil then
+        c = Turbine.UI.Color(0.85 * (1 - op), 0.02, 0.02, 0.03)
+        _veil_colors[op] = c
+    end
+    return c
+end
+
+local function _tint_color(tint)
+    local c = _tint_colors[tint]
+    if c == nil then
+        c = Turbine.UI.Color(tint, 1, 0.15, 0.1)
+        _tint_colors[tint] = c
+    end
+    return c
+end
+
+local function _tint_border_color(tint)
+    local c = _tint_border_colors[tint]
+    if c == nil then
+        c = Turbine.UI.Color(1, 1, 0.25 + 0.5 * (1 - tint), 0.2)
+        _tint_border_colors[tint] = c
+    end
+    return c
+end
+
 ---------------------------------------------------------------------
 -- Controles propios (se crean una sola vez por entrada)
 ---------------------------------------------------------------------
@@ -153,6 +188,8 @@ local function _after_apply(self, s)
     f.sweep_frame = -1
     f.tint_a = -1
     f.name_key = nil
+    f.time_key = nil
+    f.time_text = nil
 
     -- posiciones base (para la entrada deslizante)
     f.bar_x, f.bar_y = self.bar_border:GetPosition()
@@ -338,7 +375,9 @@ local function _after_update(self, s, remaining, base)
         f.sweep_clip:SetVisible(false)
         f.tint:SetVisible(false)
         f.shine:SetVisible(false)
-        if f.style == "icons" then
+        if f.style == "icons" and f.time_text ~= "" then
+            f.time_text = ""
+            f.time_key = nil
             f.time:SetText("")
         end
         return
@@ -405,7 +444,7 @@ local function _after_update(self, s, remaining, base)
     if op ~= f.opacity then
         f.opacity = op
         if op < 1 then
-            f.veil:SetBackColor(Turbine.UI.Color(0.85 * (1 - op), 0.02, 0.02, 0.03))
+            f.veil:SetBackColor(_veil_color(op))
             f.veil:SetVisible(true)
         else
             f.veil:SetVisible(false)
@@ -421,7 +460,16 @@ local function _after_update(self, s, remaining, base)
 
     -- tiempo (colores en los disenos nuevos)
     if style == "icons" then
-        f.time:SetText(Utils.lui_timed_row_format_time(remaining, Utils.lui_timed_row_time_format.AUTO))
+        -- el texto solo se arma y se pone cuando cambia la decima de segundo
+        local tkey = math.floor(remaining * 10)
+        if tkey ~= f.time_key then
+            f.time_key = tkey
+            local text = Utils.lui_timed_row_format_time(remaining, Utils.lui_timed_row_time_format.AUTO)
+            if text ~= f.time_text then
+                f.time_text = text
+                f.time:SetText(text)
+            end
+        end
     end
     if style ~= "classic" then
         local label = (style == "icons") and f.time or self.time_label
@@ -472,10 +520,10 @@ local function _after_update(self, s, remaining, base)
     if tint ~= f.tint_a then
         f.tint_a = tint
         if tint > 0 then
-            f.tint:SetBackColor(Turbine.UI.Color(tint, 1, 0.15, 0.1))
+            f.tint:SetBackColor(_tint_color(tint))
             f.tint:SetVisible(true)
             if style ~= "classic" then
-                self.icon_border:SetBackColor(Turbine.UI.Color(1, 1, 0.25 + 0.5 * (1 - tint), 0.2))
+                self.icon_border:SetBackColor(_tint_border_color(tint))
             end
         else
             f.tint:SetVisible(false)

@@ -2,8 +2,8 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 --
--- Shared right-click actions menu for item names (bestiary card drop
--- chips). Entry presence is decided here, at menu-open time, with cheap
+-- Shared right-click actions menu for item names (resource card chips).
+-- Entry presence is decided here, at menu-open time, with cheap
 -- probes -- never during binds, so adding entries can never slow a list.
 
 local TR = _G.LUI.Locale.TR

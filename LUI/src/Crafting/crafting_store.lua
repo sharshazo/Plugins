@@ -3,9 +3,6 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 local TR = _G.LUI.Locale.TR
-local Persistence = _G.LUI.Settings.Persistence
-local AssetCache = _G.LUI.Runtime.Caches.Assets
-local Stores = _G.LUI.Runtime.Stores
 local State = _G.LUI.Settings.State
 local Lore = _G.LUI.Data.Lore
 local class = _G.LUI.Core.class
@@ -369,64 +366,6 @@ local function _current_character_name()
     return "__unknown_character__"
 end
 
-local function _copy_asset_record(record)
-    if type(record) ~= "table" then
-        return nil
-    end
-
-    return {
-        name = record.name,
-        quantity = record.quantity,
-        owner = record.owner,
-        source_key = record.source_key,
-        source_name = record.source_name,
-        icon_id = record.icon_id,
-        background_image_id = record.background_image_id,
-        quality = record.quality,
-    }
-end
-
-local function _collect_asset_entries_from_cache()
-    local entries = {}
-    local cache = Persistence.ensure_assets_cache ~= nil and Persistence.ensure_assets_cache() or AssetCache.data
-    if type(cache) ~= "table" then
-        return entries
-    end
-
-    local characters = type(cache.characters) == "table" and cache.characters or {}
-    local character_names = {}
-    for character_name, _ in pairs(characters) do
-        character_names[#character_names + 1] = character_name
-    end
-    table.sort(character_names, function(left, right)
-        return _lower(left) < _lower(right)
-    end)
-
-    local function append_items(items)
-        if type(items) ~= "table" then
-            return
-        end
-        for i = 1, #items do
-            local copy = _copy_asset_record(items[i])
-            if copy ~= nil then
-                entries[#entries + 1] = copy
-            end
-        end
-    end
-
-    for i = 1, #character_names do
-        local character_cache = characters[character_names[i]]
-        if type(character_cache) == "table" then
-            append_items(character_cache.backpack ~= nil and character_cache.backpack.items or nil)
-            append_items(character_cache.bank ~= nil and character_cache.bank.items or nil)
-            append_items(character_cache.vault ~= nil and character_cache.vault.items or nil)
-        end
-    end
-
-    append_items(cache.shared_storage ~= nil and cache.shared_storage.items or nil)
-    return entries
-end
-
 local function _source_option_labels()
     return {
         TR["Backpack"],
@@ -536,7 +475,6 @@ function CraftingStore:Constructor()
     self.source_option_labels = _source_option_labels()
     self.source_option_values = _source_option_values()
     self:_reset_status_caches()
-    self._assets_token = nil
     self._recipe_token = nil
     self._recipes_initialized = false
     self._recipe_loading = false
@@ -692,7 +630,6 @@ end
 
 function CraftingStore:refresh(force, recipe_batch_size)
     local current_character = _current_character_name()
-    local assets_token = Stores.assets ~= nil and (tonumber(Stores.assets.generation) or 0) or 0
     local live_inventory_counts = self:_capture_live_backpack_counts(current_character)
     local live_inventory_token = _count_map_signature(live_inventory_counts)
     local changed = false
@@ -710,7 +647,7 @@ function CraftingStore:refresh(force, recipe_batch_size)
         changed = true
     end
 
-    local ownership_refresh_needed = force == true or recipe_refresh_needed == true or self._assets_token ~= assets_token or
+    local ownership_refresh_needed = force == true or recipe_refresh_needed == true or
         self._live_inventory_token ~= live_inventory_token
 
     if changed ~= true and ownership_refresh_needed ~= true then
@@ -721,8 +658,7 @@ function CraftingStore:refresh(force, recipe_batch_size)
     if ownership_refresh_needed == true then
         local previous_counts = self._live_inventory_counts
         self.source_ownership = self:_build_source_ownership(current_character, live_inventory_counts)
-        if force ~= true and recipe_refresh_needed ~= true and self._assets_token == assets_token and
-            previous_counts ~= nil then
+        if force ~= true and recipe_refresh_needed ~= true and previous_counts ~= nil then
             -- only the live backpack changed: drop just the statuses that
             -- can depend on the changed items instead of nuking everything
             self:_invalidate_statuses_for_changes(previous_counts, live_inventory_counts)
@@ -730,7 +666,6 @@ function CraftingStore:refresh(force, recipe_batch_size)
             self:_reset_status_caches()
         end
         self._live_inventory_counts = live_inventory_counts
-        self._assets_token = assets_token
         self._live_inventory_token = live_inventory_token
     end
     self.version = self.version + 1
@@ -977,7 +912,7 @@ function CraftingStore:item_display_by_id(item_id)
     }
 end
 
--- Cross-window link probes (Encyclopedia rows, bestiary card drops): both
+-- Cross-window link probes (Encyclopedia rows, resource card chips): both
 -- indexes are keyed by normalized item name, the same normalization used
 -- when recipe records are registered.
 function CraftingStore:has_recipes_using_name(item_name)
@@ -1360,40 +1295,6 @@ function CraftingStore:_build_source_ownership(current_character, live_inventory
         [SOURCE_SHARED] = {},
         [SOURCE_OTHER_CHARACTERS] = {},
     }
-
-    local entries
-    if Stores.assets ~= nil and Stores.assets.get_entries ~= nil then
-        entries = Stores.assets:get_entries()
-    else
-        entries = _collect_asset_entries_from_cache()
-    end
-
-    if type(entries) ~= "table" then
-        return source_ownership
-    end
-
-    for i = 1, #entries do
-        local record = entries[i]
-        local key = _normalize_name(record ~= nil and record.name or nil)
-        local quantity = tonumber(record ~= nil and record.quantity or nil) or 0
-        if key ~= "" and quantity > 0 then
-            local is_current_backpack = record.owner == current_character and record.source_key == SOURCE_BACKPACK
-            if is_current_backpack ~= true then
-                if record.owner == current_character and record.source_key == SOURCE_BANK then
-                    _add_count(source_ownership[SOURCE_BANK], key, quantity)
-                elseif record.owner == current_character and record.source_key == SOURCE_VAULT then
-                    _add_count(source_ownership[SOURCE_VAULT], key, quantity)
-                elseif record.owner ~= current_character and
-                    (record.source_key == SOURCE_BACKPACK or record.source_key == SOURCE_BANK or record.source_key == SOURCE_VAULT) then
-                    _add_count(source_ownership[SOURCE_OTHER_CHARACTERS], key, quantity)
-                end
-
-                if record.source_key == SOURCE_SHARED then
-                    _add_count(source_ownership[SOURCE_SHARED], key, quantity)
-                end
-            end
-        end
-    end
 
     if type(live_inventory_counts) == "table" then
         for key, quantity in pairs(live_inventory_counts) do

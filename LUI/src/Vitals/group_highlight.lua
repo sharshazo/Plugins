@@ -103,16 +103,36 @@ local function _layout_glow(window, frame_w, frame_h)
     end
 end
 
+-- (2026-10-16, rendimiento) la fuerza del aura va en pasos de 1/40 y los
+-- colores de cada paso se crean una sola vez (antes: 5 colores nuevos 20
+-- veces por segundo); si el paso no cambio, no se vuelve a pintar
 local function _paint_glow(window, color, strength)
     local r, g, b = 1, 0.82, 0.25
     if color ~= nil then
         r, g, b = color.R or r, color.G or g, color.B or b
     end
+    if window._glow_r ~= r or window._glow_g ~= g or window._glow_b ~= b then
+        window._glow_r, window._glow_g, window._glow_b = r, g, b
+        window._glow_cache = {}
+        window._glow_q = nil
+    end
+    local q = math.floor(strength * 40 + 0.5)
+    if q == window._glow_q then
+        return
+    end
+    window._glow_q = q
+    local colors = window._glow_cache[q]
+    if colors == nil then
+        colors = {}
+        for i = 1, GLOW_RINGS do
+            -- mas fuerte pegado al marco, se desvanece hacia afuera
+            local falloff = 1 - (i - 1) / GLOW_RINGS
+            colors[i] = Turbine.UI.Color((q / 40) * falloff * falloff, r, g, b)
+        end
+        window._glow_cache[q] = colors
+    end
     for i = 1, GLOW_RINGS do
-        -- mas fuerte pegado al marco, se desvanece hacia afuera
-        local falloff = 1 - (i - 1) / GLOW_RINGS
-        local alpha = strength * falloff * falloff
-        local c = Turbine.UI.Color(alpha, r, g, b)
+        local c = colors[i]
         local ring = window.rings[i]
         ring.top:SetBackColor(c)
         ring.bottom:SetBackColor(c)
@@ -159,14 +179,19 @@ local function _has_low_members()
     return next(Highlight.low_members) ~= nil
 end
 
+local _wants = nil
+
 local function _update_wants_updates()
     if _ticker == nil then
         return
     end
     local busy = Highlight.glow_owner ~= nil or _has_low_members()
-    pcall(function()
-        _ticker:SetWantsUpdates(busy)
-    end)
+    -- solo cuando cambia (antes: una llamada y una funcion nueva por cuadro)
+    if busy == _wants then
+        return
+    end
+    _wants = busy
+    pcall(_ticker.SetWantsUpdates, _ticker, busy)
 end
 
 local function _hide_glow()
@@ -177,6 +202,40 @@ local function _hide_glow()
     end
 end
 
+local function _glow_step(owner, now)
+    local anchor = owner.entity_control
+    if anchor == nil or _chain_visible(owner) ~= true then
+        Highlight.glow_window:SetVisible(false)
+        return
+    end
+    local window = Highlight.glow_window
+    local frame_w, frame_h = anchor:GetSize()
+    if frame_w <= 0 or frame_h <= 0 then
+        window:SetVisible(false)
+        return
+    end
+    _layout_glow(window, frame_w, frame_h)
+    local sx, sy = anchor:PointToScreen(0, 0)
+    sx, sy = sx - GLOW_RINGS, sy - GLOW_RINGS
+    if window._sx ~= sx or window._sy ~= sy then
+        window._sx, window._sy = sx, sy
+        window:SetPosition(sx, sy)
+    end
+
+    local root = _root_of(owner)
+    if root ~= nil and root ~= window then
+        local z = root:GetZOrder() or 0
+        if window._z ~= z + 1 then
+            window._z = z + 1
+            window:SetZOrder(z + 1)
+        end
+    end
+
+    local strength = 0.35 + 0.55 * _pulse(now, GLOW_PERIOD)
+    _paint_glow(window, owner:_select_color(), strength)
+    window:SetVisible(true)
+end
+
 local function _update_glow(now)
     local owner = Highlight.glow_owner
     if owner == nil then
@@ -184,46 +243,24 @@ local function _update_glow(now)
         return
     end
 
-    local ok = pcall(function()
-        local anchor = owner.entity_control
-        if anchor == nil or _chain_visible(owner) ~= true then
-            Highlight.glow_window:SetVisible(false)
-            return
-        end
-        local window = Highlight.glow_window
-        local frame_w, frame_h = anchor:GetSize()
-        if frame_w <= 0 or frame_h <= 0 then
-            window:SetVisible(false)
-            return
-        end
-        _layout_glow(window, frame_w, frame_h)
-        local sx, sy = anchor:PointToScreen(0, 0)
-        sx, sy = sx - GLOW_RINGS, sy - GLOW_RINGS
-        if window._sx ~= sx or window._sy ~= sy then
-            window._sx, window._sy = sx, sy
-            window:SetPosition(sx, sy)
-        end
-
-        local root = _root_of(owner)
-        if root ~= nil and root ~= window then
-            local z = root:GetZOrder() or 0
-            if window._z ~= z + 1 then
-                window._z = z + 1
-                window:SetZOrder(z + 1)
-            end
-        end
-
-        local strength = 0.35 + 0.55 * _pulse(now, GLOW_PERIOD)
-        _paint_glow(window, owner:_select_color(), strength)
-        window:SetVisible(true)
-    end)
+    -- sin funciones nuevas por cuadro: pcall directo sobre _glow_step
+    local ok = pcall(_glow_step, owner, now)
     if ok ~= true then
         _hide_glow()
     end
 end
 
-local function _update_low(now)
-    local p = _pulse(now, LOW_PERIOD)
+-- el latido va en pasos de 1/30: si el paso no cambio desde el ultimo
+-- cuadro no se vuelve a pintar (force: un miembro recien marcado)
+local _low_q = nil
+
+local function _update_low(now, force)
+    local q = math.floor(_pulse(now, LOW_PERIOD) * 30 + 0.5)
+    if force ~= true and q == _low_q then
+        return
+    end
+    _low_q = q
+    local p = q / 30
     local fill_alpha = LOW_ALPHA_MIN + (LOW_ALPHA_MAX - LOW_ALPHA_MIN) * p
     local border_alpha = LOW_BORDER_ALPHA_MIN + (LOW_BORDER_ALPHA_MAX - LOW_BORDER_ALPHA_MIN) * p
     for member in pairs(Highlight.low_members) do
@@ -300,7 +337,7 @@ function Highlight.set_low(member, active)
             return
         end
         Highlight.low_members[member] = true
-        pcall(_update_low, _now())
+        pcall(_update_low, _now(), true)
     else
         if Highlight.low_members[member] == nil then
             return
@@ -324,6 +361,7 @@ function Highlight.shutdown()
             _ticker:SetWantsUpdates(false)
         end)
     end
+    _wants = false
     if Highlight.glow_window ~= nil then
         pcall(function()
             Highlight.glow_window:SetVisible(false)

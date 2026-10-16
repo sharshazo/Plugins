@@ -643,13 +643,11 @@ function ConfigWindow:refresh_runtime_settings()
         pcall(Apply.minimap_settings)
     end
     Apply.inventory_settings()
-    Apply.assets_settings()
     Apply.status_bar_settings()
     Apply.cooldowns_settings()
     Apply.upkeep_settings()
     Apply.drops_settings()
     Apply.crafting_settings()
-    Apply.travel_settings()
     Apply.launcher_settings()
     Apply.lotro_vitals_handoff()
 
@@ -688,9 +686,6 @@ function ConfigWindow:refresh_runtime_settings()
     if Windows.inventory ~= nil then
         Windows.inventory:apply_settings()
     end
-    if Windows.assets ~= nil then
-        Windows.assets:apply_settings()
-    end
     if Windows.cooldowns ~= nil then
         Windows.cooldowns:apply_settings()
     end
@@ -703,20 +698,11 @@ function ConfigWindow:refresh_runtime_settings()
     if Windows.encyclopedia ~= nil then
         Windows.encyclopedia:apply_settings()
     end
-    if Windows.bestiary_card ~= nil then
-        Windows.bestiary_card:apply_settings()
-    end
     if Windows.resource_card ~= nil then
         Windows.resource_card:apply_settings()
     end
-    if Windows.quest_card ~= nil then
-        Windows.quest_card:apply_settings()
-    end
     if Windows.crafting ~= nil then
         Windows.crafting:apply_settings()
-    end
-    if Windows.bestiary_tracker ~= nil then
-        Windows.bestiary_tracker:apply_settings()
     end
     if Windows.player_vital ~= nil then
         Windows.player_vital:on_target_changed()

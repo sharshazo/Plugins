@@ -1104,8 +1104,8 @@ function DropsWindow:_promote_pending_chat_drops(now)
     end
 end
 
--- The lore Items DB is staged in the background by the bestiary prewarm
--- pump (src/Data/bestiary_db.lua); this window never imports it itself.
+-- The lore Items DB is staged in the background by the items prewarm
+-- pump (src/Data/items_prewarm.lua); this window never imports it itself.
 -- Until it is staged, carry-all loot shows without an icon and matures
 -- one via the pending/_db_icon_for retry once the domain loads.
 

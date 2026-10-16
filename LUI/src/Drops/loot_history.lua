@@ -5,8 +5,8 @@
 -- Botin: color por rareza + historial de la sesion.
 --
 --   Drops.Quality  -> rareza de un item (item vivo de la mochila o registro
---                     de la base de items) y el color de su nombre, con la
---                     misma paleta que ya usa la ventana de Bienes (Assets).
+--                     de la base de items) y el color de su nombre (paleta
+--                     por rareza).
 --   Drops.History  -> todo lo looteado en la sesion (solo en memoria, no se
 --                     guarda nada en PluginData: el esquema de ajustes de LUI
 --                     no cambia) + el dinero ganado desde que se entro.
@@ -37,8 +37,7 @@ Drops.Quality = Quality
 
 local IQ = Turbine.Gameplay.ItemQuality
 
--- misma paleta que src/Assets/assets_entry.lua (QUALITY_NAME_COLORS);
--- Comun no se colorea: conserva el blanco de siempre
+-- paleta por rareza; Comun no se colorea: conserva el blanco de siempre
 local NAME_COLORS = {
     [IQ.Uncommon] = Turbine.UI.Color(1, 0.43, 0.88, 0.43),
     [IQ.Rare] = Turbine.UI.Color(1, 0.36, 0.88, 0.96),

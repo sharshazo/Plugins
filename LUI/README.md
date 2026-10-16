@@ -123,11 +123,11 @@ Versión: **2.3.0** · Basado en el [LUI original de Geldahr](https://github.com
 
 **Para qué sirve:** buscar cualquier objeto del juego y ver su información.
 
-**Cómo se usa:** abre la Enciclopedia con `/lui encyclopedia` (o `/lui b`).
-- Pestañas: **Bestiario, Equipo, Recursos, Consumibles, Vivienda y Filigranas**.
+**Cómo se usa:** abre la Enciclopedia con `/lui encyclopedia` (o `/lui ency`).
+- Pestañas: **Equipo, Recursos y Consumibles**.
 - **Búsqueda mientras escribes** (espacio = Y, `|` = O, comillas = frase exacta).
-- Filtros por **tipo** y **rango de nivel**, botón **Limpiar** y páginas.
-- Cada resultado con su icono, su nombre en el **color de su calidad** y su nivel; al elegirlo se abre su **ficha** (estadísticas y dónde se obtiene) y un enlace al **bestiario** para ver qué monstruo lo suelta.
+- Filtros por **tipo**, **rareza** y **rango de nivel**, y páginas.
+- Cada resultado con su icono, su nombre y su nivel, y un enlace a **Artesanía** cuando el objeto se fabrica o se usa en recetas.
 
 ![Buscador de objetos de la Enciclopedia: pestañas, búsqueda, filtros y ficha del objeto](media/buscador_objetos.gif)
 
@@ -145,10 +145,9 @@ Versión: **2.3.0** · Basado en el [LUI original de Geldahr](https://github.com
 
 - Marcos de **vida y poder** del jugador, objetivo, jefe, grupo e incursión, y objetivo del objetivo.
 - **Beneficios y perjuicios** en los marcos, barras de **efectos que expiran** y **enfriamientos** con umbrales y listas.
-- **Inventario** propio (opcional) y ventana de **Bienes** con los objetos de todos tus personajes del servidor.
+- **Inventario** propio (opcional).
 - **Artesanía:** buscador de recetas, favoritos, ingredientes paso a paso y planes por personaje.
 - **Barra de estado:** hora, espacio de inventario, dinero, accesos de artesanía, recursos y botones de otros plugins.
-- **Viaje** (`/lui travel`).
 - **Perfiles** por personaje, configuración inicial rápida y modo mover con cuadrícula. Todo se configura con `/lui config`.
 
 ---
@@ -161,12 +160,9 @@ Versión: **2.3.0** · Basado en el [LUI original de Geldahr](https://github.com
 | `/lui config` | Abre o cierra la configuración. |
 | `/lui move` / `/lui move cancel` | Entra en el modo mover / sale sin guardar. |
 | `/lui inventory` o `/lui inv` | Inventario. |
-| `/lui assets` o `/lui a` | Ventana de Bienes. |
 | `/lui craft` | Artesanía. |
-| `/lui travel` o `/lui trav` | Viaje. |
 | `/lui raid` | Gestor de grupos de incursión. |
-| `/lui encyclopedia`, `/lui ency`, `/lui bestiary`, `/lui beast` o `/lui b` | Enciclopedia. |
-| `/lui card <monstruo>` | Ficha de bestiario de un monstruo. |
+| `/lui encyclopedia` o `/lui ency` | Enciclopedia. |
 | `/lui menu` / `/lui menu off` | Muestra / oculta el icono del menú de LUI. |
 | `/lui diag` | Revisión de imágenes tras una actualización del juego. |
 | `/lui puntero [on, off, estilo, color, prueba]` | Aura del puntero. |
@@ -226,10 +222,9 @@ LUI is a custom user interface plugin for The Lord of the Rings Online. It focus
 - Expiring effect countdown bars for self and target
 - Cooldown tracker with thresholds, whitelist and blacklist support
 - Inventory window with optional default backpack replacement
-- Assets window for server-wide item holdings across characters
-- Crafting browser with recipe search, source filters, favorites, recursive ingredient breakdowns, per-character tracked plans, and bestiary search links for supported client languages
+- Crafting browser with recipe search, source filters, favorites, recursive ingredient breakdowns, and per-character tracked plans
 - Status bar widgets for local time, inventory space, money, crafting shortcuts, tracked crafting resources, and more planned
-- Encyclopedia (bestiary, equipment, resources, consumables, housing, and traceries browsing), bestiary cards, and optional bestiary capture on English clients
+- Encyclopedia (equipment, resources, and consumables browsing) and resource node cards
 - First-run quick setup to get you up and running quickly
 - Profile management so multiple characters can reuse or switch configurations
 - Localized UI strings for English, German, and French
@@ -269,14 +264,6 @@ LUI cannot disable that frame directly through the plugin API. Disable it in Lot
 
 No. Native pet vitals cannot be hidden properly through the plugin like the other built-in vitals. As a workaround, reduce their size in the LotRO settings and move them under the minimap so they are effectively not visible.
 
-### Why is Bestiary capture only available on English clients?
-
-Bestiary capture needs game text to match LUI's structured Bestiary data, which is keyed by English names. On French and German clients, target-vitals double-click cards work through a localized name bridge, and Bestiary content is displayed translated where the game data provides a label (untranslated details stay English); Crafting-to-Bestiary links are disabled.
-
-### Why does the Bestiary show deed information but not my deed completion?
-
-LUI can show deed information that exists in its Bestiary data, but LotRO does not expose reliable character deed completion state to plugins.
-
 ### Why do some monster or item details not appear?
 
 Some details, such as monster rank, difficulty, aggressive/passive state, item sources, and gathering locations, are not directly exposed by the LotRO plugin API. LUI can only show that information when it has its own structured data for it.
@@ -315,7 +302,6 @@ When an item is registered, it becomes available in two places:
 - The global LUI scale is separate from the built-in LotRO UI scale.
 - Profile management is available from the configuration window and lets multiple characters share or switch settings.
 - Shared UI styling is available under `Global > UI`.
-- Bestiary capture is only available on English clients.
 
 ## Scaling Notes
 
@@ -328,8 +314,6 @@ LUI uses pixel-based scaling instead of LotRO UI scaling. That keeps borders and
 ## Limitations
 
 - Automatic item locking based on a whitelist or blacklist is not currently possible through the LotRO API.
-- Bestiary capture is restricted to English clients.
-- Bestiary data is keyed by English names; on French and German clients, names and details are displayed translated where the game data provides a label, and the rest stays English. Bestiary search and Crafting-to-Bestiary links remain English-only.
 - Translations are not up to date.
 
 ## Known Issues
@@ -343,7 +327,7 @@ LUI uses pixel-based scaling instead of LotRO UI scaling. That keeps borders and
 
 ## Acknowledgements
 
-- See [Attributions](ATTRIBUTIONS.md) for third-party data credits, Lotro-Wiki data licensing, and the unofficial fan project disclaimer.
+- See [Attributions](ATTRIBUTIONS.md) for third-party data credits and the unofficial fan project disclaimer.
 
 ## Support
 

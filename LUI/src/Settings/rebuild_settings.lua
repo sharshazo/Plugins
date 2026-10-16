@@ -157,9 +157,6 @@ function Settings.rebuild()
             number_abbrev = {},
             style = {},
         },
-        encyclopedia = {
-            bestiary_capture = false,
-        },
         ui = {
             windows = {},
             hud = {},
@@ -268,9 +265,6 @@ function Settings.rebuild()
         inventory = {},
         drops = { hud = {}, item = {} },
         crafting = {},
-        travel = {},
-        assets = { tile = {}, layouts = { icons = {}, details = {} } },
-        bestiary = {},
         launcher = {},
     }
 
@@ -288,7 +282,6 @@ function Settings.rebuild()
     -- (Locale.reload_translations) caia siempre en "auto" -> ingles, sin
     -- importar lo que se eligiera en el dropdown.
     State.settings.global.language = raw.global.language
-    State.settings.encyclopedia.bestiary_capture = raw.encyclopedia.bestiary_capture == true
     State.settings.ui.windows = raw.ui.windows
     State.settings.ui.hud = raw.ui.hud
 
@@ -524,6 +517,14 @@ function Settings.rebuild()
     local function build_group_vital(dst, src)
         build_vital(dst, src)
 
+        -- (2026-10-16, pedido del usuario) barra de poder de los miembros:
+        -- "all" = todos, "healers" = solo sanadores, "none" = nadie
+        local members = src.power ~= nil and src.power.members or nil
+        if members ~= "all" and members ~= "none" then
+            members = "healers"
+        end
+        dst.power.members = members
+
         -- Mismo fallback defensivo que build_vital_class_icon (ver esa nota
         -- grande mas arriba) -- por las dudas de un perfil guardado que
         -- tampoco tenga estas claves.
@@ -549,6 +550,8 @@ function Settings.rebuild()
         dst.select.hover = raw_select.hover ~= false
         dst.select.low_health = raw_select.low_health ~= false
         dst.select.low_health_pct = tonumber(raw_select.low_health_pct) or 35
+        -- color por estado curable (veneno, enfermedad, herida, miedo)
+        dst.select.cure = raw_select.cure ~= false
 
         local raw_layout = src.layout
         dst.layout.rows = raw_layout.rows
@@ -583,24 +586,9 @@ function Settings.rebuild()
         inv.tile_size = scaled_int(raw_inv.tile_size)
     end
 
-    local raw_assets = raw.assets
-    if raw_assets ~= nil then
-        local assets = State.settings.assets
-        assets.layouts = raw_assets.layouts
-        assets.enabled = raw_assets.enabled
-        assets.view_mode = raw_assets.view_mode
-        assets.stack_items = raw_assets.stack_items
-        assets.tile.icons = scaled_int(raw_assets.tile.icons)
-        assets.tile.details = scaled_int(raw_assets.tile.details)
-    end
-
     local raw_crafting = raw.crafting
     State.settings.crafting.display_mode = raw_crafting.display_mode
     State.settings.crafting.enabled = raw_crafting.enabled
-
-    local raw_travel = raw.travel
-    State.settings.travel.display_mode = raw_travel.display_mode
-    State.settings.travel.enabled = raw_travel.enabled
 
     local raw_launcher = raw.launcher
     local launcher = State.settings.launcher
@@ -873,10 +861,8 @@ function Settings.rebuild()
     end
 
     sb.widgets.config = build_shortcut_widget("config")
-    sb.widgets.assets = build_shortcut_widget("assets")
     sb.widgets.encyclopedia = build_shortcut_widget("encyclopedia")
     sb.widgets.craft = build_shortcut_widget("craft")
-    sb.widgets.travel = build_shortcut_widget("travel")
     sb.widgets.raid = build_shortcut_widget("raid")
 
     local raw_cd = raw.self.cooldowns

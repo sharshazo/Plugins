@@ -1648,6 +1648,7 @@ _G.LUI.Settings.Defaults.Schema =
 			["bubble_format"] = " - %b",
 		},
 		["power"] = {
+			["members"] = "healers",
 			["color"] = {
 				["power"] = {
 					["A"] = 1.000000,
@@ -1762,6 +1763,7 @@ _G.LUI.Settings.Defaults.Schema =
 			["hover"] = true,
 			["low_health"] = true,
 			["low_health_pct"] = 35.000000,
+			["cure"] = true,
 			["setup_select_v2"] = false,
 		},
 		["layout"] = {
@@ -1956,6 +1958,7 @@ _G.LUI.Settings.Defaults.Schema =
 			["bubble_format"] = " - %b",
 		},
 		["power"] = {
+			["members"] = "healers",
 			["color"] = {
 				["power"] = {
 					["A"] = 1.000000,
@@ -2070,6 +2073,7 @@ _G.LUI.Settings.Defaults.Schema =
 			["hover"] = true,
 			["low_health"] = true,
 			["low_health_pct"] = 35.000000,
+			["cure"] = true,
 			["setup_select_v2"] = false,
 		},
 		["group_border_width"] = 1.000000,
@@ -2301,10 +2305,8 @@ _G.LUI.Settings.Defaults.Schema =
 		["buttons"] = {
 			[1] = "config",
 			[2] = "inventory",
-			[3] = "assets",
-			[4] = "craft",
-			[5] = "travel",
-			[6] = "encyclopedia",
+			[3] = "craft",
+			[4] = "encyclopedia",
 		},
 	},
 	["drops"] = {
@@ -2350,50 +2352,8 @@ _G.LUI.Settings.Defaults.Schema =
 		["enabled"] = true,
 		["display_mode"] = "pages",
 	},
-	["travel"] = {
-		["enabled"] = true,
-		["display_mode"] = "grid",
-	},
-	["assets"] = {
-		["enabled"] = true,
-		["layouts"] = {
-			["details"] = {
-				["cols"] = 4.000000,
-				["width"] = 1154.000000,
-				["height"] = 1333.000000,
-				["left"] = 860.000000,
-				["rows"] = 10.000000,
-				["top"] = 180.000000,
-			},
-			["icons"] = {
-				["cols"] = 16.000000,
-				["width"] = 1154.000000,
-				["height"] = 1333.000000,
-				["left"] = 860.000000,
-				["rows"] = 8.000000,
-				["top"] = 180.000000,
-			},
-		},
-		["stack_items"] = true,
-		["tile"] = {
-			["details"] = 40.000000,
-			["icons"] = 40.000000,
-		},
-		["view_mode"] = 2.000000,
-	},
-	["bestiary"] = {
-		["card_window"] = {
-			["left"] = 1791.000000,
-			["top"] = 515.000000,
-		},
-	},
 	["encyclopedia"] = {
-		["bestiary_capture"] = false,
 		["resource_card_window"] = {
-			["left"] = 1791.000000,
-			["top"] = 515.000000,
-		},
-		["quest_card_window"] = {
 			["left"] = 1791.000000,
 			["top"] = 515.000000,
 		},
@@ -2660,14 +2620,7 @@ _G.LUI.Settings.Defaults.Schema =
 				["tile"] = "none",
 				["top"] = 476.000000,
 			},
-			["assets"] = {
-				["width"] = 1154.000000,
-				["height"] = 1333.000000,
-				["left"] = 860.000000,
-				["tile"] = "none",
-				["top"] = 180.000000,
-			},
-			["bestiary"] = {
+			["encyclopedia"] = {
 				["width"] = 700.000000,
 				["height"] = 520.000000,
 				["left"] = 900.000000,
@@ -2680,13 +2633,6 @@ _G.LUI.Settings.Defaults.Schema =
 				["left"] = 720.000000,
 				["tile"] = "none",
 				["top"] = 150.000000,
-			},
-			["travel"] = {
-				["width"] = 361.000000,
-				["height"] = 225.000000,
-				["left"] = 0.000000,
-				["tile"] = "none",
-				["top"] = 27.000000,
 			},
 			["config"] = {
 				["width"] = 1052.000000,

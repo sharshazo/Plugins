@@ -553,6 +553,10 @@ function Win:_marker(i)
 end
 
 function Win:_showTip(m)
+    local okC, shown = pcall(function() return self:_showCard(m) end)
+    if okC and shown == true then
+        return
+    end
     pcall(function()
         self.tipLabel:SetText(m.text or "")
         local lines = 1
@@ -577,6 +581,9 @@ end
 
 function Win:_hideTip()
     pcall(function() self.tipWin:SetVisible(false) end)
+    if self.card ~= nil then
+        pcall(function() self.card.win:SetVisible(false) end)
+    end
 end
 
 local function Coord(ns, ew)
@@ -584,6 +591,268 @@ local function Coord(ns, ew)
     local b = string.format("%.1f", math.abs(ew)):gsub(",", ".")
     return a .. (ns < 0 and "S" or "N") .. ", " .. b .. (ew < 0 and "O" or "E")
 end
+
+-- ---------------------------------------------------------------------
+-- v3.15.1 (pedido del usuario): tarjeta detallada al pasar el mouse, con
+-- el mismo estilo que las del Mapa del Mundo (esquinas redondeadas, barra
+-- de color, icono, titulo, subtitulo, pastillas y lineas).
+-- ---------------------------------------------------------------------
+local CARD_W = 290
+local CARD_R = 12
+local CARD_PAD = 18
+local CARD_LINE_H = 16
+local CARD_BG = Turbine.UI.Color(0.96, 16 / 255, 18 / 255, 24 / 255)
+local CARD_BORDER = Turbine.UI.Color(1, 60 / 255, 66 / 255, 80 / 255)
+local DOT = " \194\183 "
+local PROF_ACCENT = {
+    MINERO = { 205, 150, 90 }, ["LE\195\145ADOR"] = { 120, 200, 90 },
+    ERUDITO = { 150, 175, 255 }, GRANJERO = { 255, 150, 60 },
+}
+local ACCENT_DEF = { 150, 160, 180 }
+local PILL = {
+    green = { "green", { 140, 240, 170 }, { 22, 70, 40 } },
+    amber = { "amber", { 255, 200, 90 }, { 90, 60, 10 } },
+    blue = { "blue", { 160, 200, 255 }, { 30, 45, 70 } },
+}
+-- rango del nodo (como lo guarda Quest Assistant) en español
+local RANK_ES = {
+    Apprentice = "Aprendiz", Journeyman = "Oficial", Expert = "Experto", Artisan = "Artesano",
+    Master = "Maestro", Supreme = "Supremo", Westfold = "Folde Oeste", Eastemnet = "Estemnet",
+    Westemnet = "Oestemnet", Doomfold = "Doomfold", Ironfold = "Pliegue de Hierro",
+    Minas = "Minas Ithil", Gundabad = "Gundabad", ["Falathlorn"] = "Falathlorn",
+}
+
+local function RGB(t, a)
+    return Turbine.UI.Color(a or 1, t[1] / 255, t[2] / 255, t[3] / 255)
+end
+
+-- ancho aproximado de un texto (en el juego no se puede medir)
+local function TextW(text, px)
+    local n = 0
+    for _ in tostring(text or ""):gmatch("[^\128-\191]") do
+        n = n + 1
+    end
+    return math.floor(n * (px or 6.6) + 0.5)
+end
+
+local function TextLines(text, w, px)
+    local per = math.max(1, math.floor(w / (px or 6.9)))
+    local n = 0
+    for part in (tostring(text or "") .. "\n"):gmatch("(.-)\n") do
+        local len = 0
+        for _ in part:gmatch("[^\128-\191]") do
+            len = len + 1
+        end
+        n = n + math.max(1, math.ceil(len / per))
+    end
+    return math.max(1, n)
+end
+
+function Win:_buildCard()
+    local c = {}
+    local win = Turbine.UI.Window()
+    win:SetSize(CARD_W, 100)
+    win:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+    win:SetZOrder(0x7FFFFFFF)
+    win:SetMouseVisible(false)
+    win:SetVisible(false)
+    c.win = win
+    local function box(color)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetMouseVisible(false)
+        if color ~= nil then
+            k:SetBackColor(color)
+        end
+        return k
+    end
+    local function img(file, w, h)
+        local k = Turbine.UI.Control()
+        k:SetParent(win)
+        k:SetSize(w, h)
+        if file ~= nil then
+            k:SetBackground(RES .. file)
+        end
+        k:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+        k:SetMouseVisible(false)
+        return k
+    end
+    local function label(font, color, align)
+        local l = Turbine.UI.Label()
+        l:SetParent(win)
+        l:SetFont(font)
+        l:SetForeColor(color)
+        l:SetTextAlignment(align or Turbine.UI.ContentAlignment.TopLeft)
+        l:SetMouseVisible(false)
+        return l
+    end
+    c.tl = img("card_tl.tga", CARD_R, CARD_R)
+    c.tr = img("card_tr.tga", CARD_R, CARD_R)
+    c.bl = img("card_bl.tga", CARD_R, CARD_R)
+    c.br = img("card_br.tga", CARD_R, CARD_R)
+    c.top, c.mid, c.bot = box(CARD_BG), box(CARD_BG), box(CARD_BG)
+    c.lineT, c.lineB, c.lineL, c.lineR = box(CARD_BORDER), box(CARD_BORDER), box(CARD_BORDER), box(CARD_BORDER)
+    c.accent = box(RGB(ACCENT_DEF))
+    c.iconBg = box(Turbine.UI.Color(1, 0.12, 0.13, 0.17))
+    c.icon = img(nil, 24, 24)
+    local V12 = Font("Verdana12", "Verdana12")
+    c.title = label(Font("Verdana16", "Verdana14"), Turbine.UI.Color(1, 0.96, 0.97, 1))
+    c.title:SetMultiline(true)
+    c.sub = label(V12, Turbine.UI.Color(1, 0.55, 0.67, 0.82))
+    c.sub:SetMultiline(true)
+    c.pills = {}
+    for i = 1, 3 do
+        c.pills[i] = { l = img("card_blue_l.tga", 9, 18), r = img("card_blue_r.tga", 9, 18), m = box(),
+            t = label(Font("Verdana10", "Verdana12"), Turbine.UI.Color(1, 1, 1, 1), Turbine.UI.ContentAlignment.MiddleCenter) }
+    end
+    c.lines = {}
+    for i = 1, 4 do
+        c.lines[i] = label(V12, Turbine.UI.Color(1, 0.78, 0.81, 0.85))
+        c.lines[i]:SetMultiline(true)
+    end
+    self.card = c
+end
+
+-- datos de la tarjeta de un marcador
+local function CardSpec(m, es)
+    local d = m.card or {}
+    local pt = d.pt or {}
+    local p = PROF_BY[d.prof]
+    local spec = { pills = {}, lines = {} }
+    spec.icon = m.icon
+    spec.accent = PROF_ACCENT[d.prof] or ACCENT_DEF
+    spec.title = tostring(pt.node or m.node or "?")
+    local pname = p ~= nil and (es and p.es or p.en) or tostring(d.prof or "")
+    spec.sub = pname .. ((d.mapName ~= nil and d.mapName ~= "") and (DOT .. d.mapName) or "")
+    local tier = tonumber(pt.tier)
+    if tier ~= nil then
+        spec.pills[#spec.pills + 1] = { (es and "Nivel " or "Tier ") .. tier, "blue" }
+    else
+        spec.pills[#spec.pills + 1] = { es and "Nivel ?" or "Tier ?", "blue" }
+    end
+    local times = tonumber(pt.timesSeen) or 1
+    if times > 1 then
+        spec.pills[#spec.pills + 1] = { es and ("Visto " .. times .. " veces") or ("Seen " .. times .. " times"), "green" }
+    else
+        spec.pills[#spec.pills + 1] = { es and "Visto 1 vez" or "Seen once", "green" }
+    end
+    if pt.confidence == "media" or pt.confidence == "baja" then
+        spec.pills[#spec.pills + 1] = { es and "Sin confirmar" or "Unconfirmed", "amber" }
+    end
+    local rank = type(pt.zone) == "string" and pt.zone or ""
+    if rank ~= "" and rank ~= "sin catalogar" then
+        spec.lines[#spec.lines + 1] = { (es and "Rango: " or "Rank: ") .. (es and (RANK_ES[rank] or rank) or rank), { 200, 206, 218 } }
+    end
+    spec.lines[#spec.lines + 1] = { (es and "Coordenadas: " or "Coordinates: ") .. Coord(m.ns, m.ew), { 200, 206, 218 } }
+    spec.lines[#spec.lines + 1] = { es and "Clic: marcar en el Mapa del Mundo" or "Click: mark it on the World Map", { 140, 240, 170 } }
+    return spec
+end
+
+function Win:_showCard(m)
+    if m == nil or m.card == nil then
+        return false
+    end
+    if self.card == nil then
+        self:_buildCard()
+    end
+    local c = self.card
+    local es = IsES()
+    local spec = CardSpec(m, es)
+    local W = CARD_W
+    local inner = W - CARD_PAD - 16
+    -- icono en su recuadro
+    c.iconBg:SetPosition(14, 12)
+    c.iconBg:SetSize(34, 34)
+    c.icon:SetBackground(RES .. "fl_" .. spec.icon .. "_pin.tga")
+    c.icon:SetPosition(19, 17)
+    local textX = 56
+    local textW = W - textX - 12
+    local tl = math.min(3, TextLines(spec.title, textW, 8.4))
+    c.title:SetText(spec.title)
+    c.title:SetPosition(textX, 12)
+    c.title:SetSize(textW, tl * 20)
+    local sl = math.min(2, TextLines(spec.sub, textW, 6.9))
+    c.sub:SetText(spec.sub)
+    c.sub:SetPosition(textX, 14 + tl * 20)
+    c.sub:SetSize(textW, sl * 16)
+    local y = math.max(56, 14 + tl * 20 + sl * 16 + 8)
+    -- pastillas
+    local px = CARD_PAD
+    local npill = 0
+    for i, pl in ipairs(c.pills) do
+        local d = spec.pills[i]
+        local st = d ~= nil and PILL[d[2]] or nil
+        local w = d ~= nil and (TextW(d[1], 6.2) + 8) or 0
+        local on = st ~= nil and (px + w + 18 <= CARD_PAD + inner)
+        pl.l:SetVisible(on); pl.r:SetVisible(on); pl.m:SetVisible(on); pl.t:SetVisible(on)
+        if on then
+            npill = npill + 1
+            pl.l:SetBackground(RES .. "card_" .. st[1] .. "_l.tga")
+            pl.r:SetBackground(RES .. "card_" .. st[1] .. "_r.tga")
+            pl.m:SetBackColor(RGB(st[3]))
+            pl.l:SetPosition(px, y)
+            pl.m:SetPosition(px + 9, y)
+            pl.m:SetSize(w, 18)
+            pl.r:SetPosition(px + 9 + w, y)
+            pl.t:SetText(d[1])
+            pl.t:SetForeColor(RGB(st[2]))
+            pl.t:SetPosition(px + 9, y)
+            pl.t:SetSize(w, 18)
+            px = px + w + 18 + 6
+        end
+    end
+    if npill > 0 then
+        y = y + 26
+    end
+    -- lineas
+    for i, lbl in ipairs(c.lines) do
+        local l = spec.lines[i]
+        if l == nil then
+            lbl:SetVisible(false)
+        else
+            if i == #spec.lines then
+                y = y + 4
+            end
+            local h = TextLines(l[1], inner, 6.9) * CARD_LINE_H
+            lbl:SetText(l[1])
+            lbl:SetForeColor(RGB(l[2]))
+            lbl:SetPosition(CARD_PAD, y)
+            lbl:SetSize(inner, h)
+            lbl:SetVisible(true)
+            y = y + h
+        end
+    end
+    local H = math.max(y + 10, 2 * CARD_R + 40)
+    c.win:SetSize(W, H)
+    c.tl:SetPosition(0, 0)
+    c.tr:SetPosition(W - CARD_R, 0)
+    c.bl:SetPosition(0, H - CARD_R)
+    c.br:SetPosition(W - CARD_R, H - CARD_R)
+    c.top:SetPosition(CARD_R, 0); c.top:SetSize(W - 2 * CARD_R, CARD_R)
+    c.mid:SetPosition(0, CARD_R); c.mid:SetSize(W, H - 2 * CARD_R)
+    c.bot:SetPosition(CARD_R, H - CARD_R); c.bot:SetSize(W - 2 * CARD_R, CARD_R)
+    c.lineT:SetPosition(CARD_R, 0); c.lineT:SetSize(W - 2 * CARD_R, 1)
+    c.lineB:SetPosition(CARD_R, H - 1); c.lineB:SetSize(W - 2 * CARD_R, 1)
+    c.lineL:SetPosition(0, CARD_R); c.lineL:SetSize(1, H - 2 * CARD_R)
+    c.lineR:SetPosition(W - 1, CARD_R); c.lineR:SetSize(1, H - 2 * CARD_R)
+    c.accent:SetBackColor(RGB(spec.accent))
+    c.accent:SetPosition(1, CARD_R)
+    c.accent:SetSize(4, H - 2 * CARD_R)
+    -- al lado del punto; si no entra, del otro lado / arriba
+    local sx, sy = m.ctl:PointToScreen(0, 0)
+    local x = sx + MARK + 8
+    local yy = sy - 6
+    local sw, sh = Turbine.UI.Display.GetWidth(), Turbine.UI.Display.GetHeight()
+    if x + W > sw then x = sx - W - 8 end
+    if yy + H > sh then yy = sh - H - 2 end
+    if x < 0 then x = 0 end
+    if yy < 0 then yy = 0 end
+    c.win:SetPosition(x, yy)
+    pcall(function() self.tipWin:SetVisible(false) end)
+    c.win:SetVisible(true)
+    return true
+end
+
 
 -- keepPan = true: no mueve la vista (punto nuevo mientras se mira)
 function Win:Refresh(keepPan)
@@ -673,6 +942,7 @@ function Win:Refresh(keepPan)
             lines[#lines + 1] = Coord(ns, ew)
             lines[#lines + 1] = es and "(clic: marcar en el Mapa del Mundo)" or "(click: mark on the World Map)"
             m.text = table.concat(lines, "\n")
+            m.card = { prof = e.prof, pt = pt, mapName = info.name }
             m.ctl:SetBackground(RES .. "fl_" .. m.icon .. "_pin.tga")
             -- el icono entero siempre dentro del mapa (punto pegado al borde)
             local mx = math.floor(x - MARK / 2 + 0.5)

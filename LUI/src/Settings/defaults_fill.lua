@@ -11,7 +11,6 @@ local State = LUI.Settings.State
 local Defaults = LUI.Settings.Defaults
 local DefaultLayouts = Defaults.DefaultLayouts
 local LUI_ENUMS = LUI.Settings.Enums
-local Locale = LUI.Locale
 
 local RAID_GROUP_KEYS = { "a", "b", "c", "d" }
 
@@ -388,20 +387,6 @@ function Defaults.ensure_loaded_settings()
     local ui = _ensure_table(State.loaded_settings, "ui")
     local windows = _ensure_table(ui, "windows")
     _ensure_window_tiles(windows)
-
-    -- legacy carrier: bestiary_capture lived under global up to v2.1.0.
-    -- Old saves move their value into the encyclopedia section here; the
-    -- legacy key is no longer in the schema, so it is never re-filled and
-    -- disappears from disk on the next save.
-    local global = _ensure_table(State.loaded_settings, "global")
-    local encyclopedia = _ensure_table(State.loaded_settings, "encyclopedia")
-    if global.bestiary_capture ~= nil then
-        encyclopedia.bestiary_capture = global.bestiary_capture == true
-        global.bestiary_capture = nil
-    end
-    if Locale.is_english_language() ~= true then
-        encyclopedia.bestiary_capture = false
-    end
 
     return _deep_equal(original, State.loaded_settings) ~= true
 end

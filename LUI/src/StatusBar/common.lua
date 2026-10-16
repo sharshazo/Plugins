@@ -78,8 +78,6 @@ S.STATUS_BAR_LAYOUT_TOKENS = {
     config = "config",
     craft = "craft",
     ["craft.plan"] = "craft_plan",
-    travel = "travel",
-    assets = "assets",
     encyclopedia = "encyclopedia",
     raid = "raid",
     location = "location",
@@ -102,8 +100,6 @@ S.STATUS_BAR_WIDGET_LAYOUT_TOKENS = {
     config = "%config%",
     craft = "%craft%",
     craft_plan = "%craft.plan%",
-    travel = "%travel%",
-    assets = "%assets%",
     encyclopedia = "%encyclopedia%",
     raid = "%raid%",
     location = "%location%",
@@ -126,8 +122,6 @@ S.STATUS_BAR_EDITABLE_WIDGET_KEYS = {
     "config",
     "craft",
     "craft_plan",
-    "travel",
-    "assets",
     "encyclopedia",
     "raid",
     "location",
@@ -1007,10 +1001,6 @@ function S.get_status_bar_widget_display_name(widget_key)
         return Shortcuts.get_label("craft")
     elseif widget_key == "craft_plan" then
         return TR["Crafting Plan"]
-    elseif widget_key == "travel" then
-        return Shortcuts.get_label("travel")
-    elseif widget_key == "assets" then
-        return Shortcuts.get_label("assets")
     elseif widget_key == "encyclopedia" then
         return Shortcuts.get_label("encyclopedia")
     elseif widget_key == "raid" then

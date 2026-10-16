@@ -2,10 +2,9 @@
 -- License, v. 2.0. If a copy of the MPL was not distributed with this
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 --
--- Shared visual building blocks for the bestiary and resource cards: the
--- common style constants, panel/text constructors and the clickable chip.
--- Both cards must stay visually locked together; card-specific dimensions
--- stay in their own files.
+-- Shared visual building blocks for the resource card: the common style
+-- constants, panel/text constructors and the clickable chip. Card-specific
+-- dimensions stay in the card's own file.
 
 local FONT_TO_LOTRO = _G.LUI.Utils.FONT_TO_LOTRO
 local State = _G.LUI.Settings.State
@@ -130,47 +129,6 @@ end
 
 function CardWidgets.estimate_text_width(text, base_char_w)
     return math.floor((string.len(text or "") * base_char_w * State.settings.global.scale) + 0.5)
-end
-
--- shared number/percent rendering for bestiary rows, cards and chips
--- (thousands grouped with spaces; percents trimmed to their precision)
-function CardWidgets.format_number(value)
-    local n = math.floor(value + 0.5)
-    local text = tostring(math.abs(n))
-    local out = {}
-    local count = 0
-    for i = #text, 1, -1 do
-        count = count + 1
-        out[#out + 1] = string.sub(text, i, i)
-        if count == 3 and i > 1 then
-            out[#out + 1] = " "
-            count = 0
-        end
-    end
-
-    local reversed = {}
-    for i = #out, 1, -1 do
-        reversed[#reversed + 1] = out[i]
-    end
-
-    local joined = table.concat(reversed)
-    if n < 0 then
-        return "-" .. joined
-    end
-    return joined
-end
-
-function CardWidgets.format_percent(value)
-    local text
-    if value >= 1 then
-        text = string.format("%.1f", value)
-    else
-        text = string.format("%.2f", value)
-    end
-
-    text = text:gsub("(%..-)0+$", "%1")
-    text = text:gsub("%.$", "")
-    return text .. "%"
 end
 
 function CardWidgets.estimate_chip_width(text)
@@ -303,10 +261,8 @@ function DropChip:bind(text, width, height)
 end
 
 -- ------------------------------------------------ shared card behaviors ----
--- The quest and resource cards share their chip-panel math, chip binding
--- and window position persistence; both must resolve them identically, so
--- the single implementation lives here (the bestiary card keeps its own
--- variant: it also persists size and clamps flush to the screen edges).
+-- Chip-panel math, chip binding and window position persistence for the
+-- resource card.
 
 -- panel height wrapping its chip layout; nil layout (hidden) when empty
 function CardWidgets.measure_chip_panel(texts, content_w)

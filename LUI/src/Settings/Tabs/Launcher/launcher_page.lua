@@ -26,9 +26,7 @@ local DIRECTION_VALUES = { "up", "down", "left", "right" }
 local BUTTONS = {
     { key = "config", label = TR["Config"] },
     { key = "inventory", label = TR["Inventory"] },
-    { key = "assets", label = TR["Assets"] },
     { key = "craft", label = TR["Crafting"] },
-    { key = "travel", label = TR["Travel"] },
     { key = "encyclopedia", label = TR["Encyclopedia"] },
     { key = "raid", label = TR["Raid Manager"] },
 }

@@ -3,7 +3,6 @@
 -- file, You can obtain one at https://mozilla.org/MPL/2.0/.
 
 local TR = _G.LUI.Locale.TR
-local State = _G.LUI.Settings.State
 local UI = _G.LUI.UI
 local Windows = _G.LUI.Runtime.Windows
 local Crafting = _G.LUI.Features.Crafting
@@ -16,17 +15,13 @@ local Shortcuts = UI.Shortcuts
 Shortcuts.CONFIG_ICON = UI.AssetIds.feather
 Shortcuts.INVENTORY_ICON = UI.AssetIds.backpack_alt
 Shortcuts.CRAFT_ICON = UI.AssetIds.anvil_silver_glow
-Shortcuts.TRAVEL_ICON = UI.AssetIds.compass
-Shortcuts.ASSETS_ICON = UI.AssetIds.chest
 Shortcuts.ENCYCLOPEDIA_ICON = UI.AssetIds.book_orange_cover
 Shortcuts.RAID_ICON = UI.AssetIds.party_leader_banner
 
 local VALID_SHORTCUTS = {
     config = true,
     inventory = true,
-    assets = true,
     craft = true,
-    travel = true,
     encyclopedia = true,
     raid = true,
 }
@@ -46,10 +41,6 @@ function Shortcuts.get_icon(shortcut_key)
         return Shortcuts.INVENTORY_ICON
     elseif shortcut_key == "craft" then
         return Shortcuts.CRAFT_ICON
-    elseif shortcut_key == "travel" then
-        return Shortcuts.TRAVEL_ICON
-    elseif shortcut_key == "assets" then
-        return Shortcuts.ASSETS_ICON
     elseif shortcut_key == "encyclopedia" then
         return Shortcuts.ENCYCLOPEDIA_ICON
     elseif shortcut_key == "raid" then
@@ -65,10 +56,6 @@ function Shortcuts.get_label(shortcut_key)
         return TR["Inventory"]
     elseif shortcut_key == "craft" then
         return TR["Craft"]
-    elseif shortcut_key == "travel" then
-        return TR["Travel"]
-    elseif shortcut_key == "assets" then
-        return TR["Assets"]
     elseif shortcut_key == "encyclopedia" then
         return TR["Encyclopedia"]
     elseif shortcut_key == "raid" then
@@ -86,10 +73,6 @@ function Shortcuts.get_state(shortcut_key)
         -- the window is created on demand from the imported constructor,
         -- so the toggle can always open it while crafting is enabled
         return Crafting.is_enabled() == true, _window_is_visible(Windows.crafting)
-    elseif shortcut_key == "travel" then
-        return State.settings.travel.enabled == true, _window_is_visible(Windows.travel)
-    elseif shortcut_key == "assets" then
-        return Windows.assets ~= nil, _window_is_visible(Windows.assets)
     elseif shortcut_key == "encyclopedia" then
         -- created on demand from the imported constructor; always openable
         return true, _window_is_visible(Windows.encyclopedia)
@@ -107,10 +90,6 @@ function Shortcuts.activate(shortcut_key)
         Shortcuts.toggle_inventory()
     elseif shortcut_key == "craft" then
         Shortcuts.toggle_crafting()
-    elseif shortcut_key == "travel" then
-        Shortcuts.toggle_travel()
-    elseif shortcut_key == "assets" then
-        Shortcuts.toggle_assets()
     elseif shortcut_key == "encyclopedia" then
         Shortcuts.toggle_encyclopedia()
     elseif shortcut_key == "raid" then

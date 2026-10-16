@@ -256,13 +256,28 @@ function PointerFx:_track_shake(now, x, dx)
             s.t[#s.t + 1] = now
         end
         s.dir = dir
-        s.path[#s.path + 1] = { now, math.abs(dx) }
+        -- (2026-10-16, rendimiento) los tramos se reciclan: sin una tabla
+        -- nueva por cada movimiento del raton
+        local pool = s.pool
+        if pool == nil then
+            pool = {}
+            s.pool = pool
+        end
+        local step = table.remove(pool)
+        if step == nil then
+            step = {}
+        end
+        step[1], step[2] = now, math.abs(dx)
+        s.path[#s.path + 1] = step
     end
     while #s.t > 0 and now - s.t[1] > SHAKE_WINDOW do
         table.remove(s.t, 1)
     end
     while #s.path > 0 and now - s.path[1][1] > SHAKE_WINDOW do
-        table.remove(s.path, 1)
+        local old = table.remove(s.path, 1)
+        if s.pool ~= nil and #s.pool < 64 then
+            s.pool[#s.pool + 1] = old
+        end
     end
     if #s.t >= SHAKE_TURNS and now - s.burst_at > BURST_COOLDOWN then
         local total = 0
@@ -324,7 +339,17 @@ function PointerFx:tick()
     if #self.trail > 0 then
         if now - self.last_sample >= TRAIL_DT then
             self.last_sample = now
-            table.insert(self.hist, 1, { self.mx, self.my })
+            -- la muestra mas vieja se reutiliza para la nueva (sin una
+            -- tabla nueva 50 veces por segundo)
+            local sample = nil
+            if #self.hist >= TRAIL_N * 2 + 1 then
+                sample = table.remove(self.hist)
+            end
+            if sample == nil then
+                sample = {}
+            end
+            sample[1], sample[2] = self.mx, self.my
+            table.insert(self.hist, 1, sample)
             while #self.hist > TRAIL_N * 2 + 1 do
                 table.remove(self.hist)
             end

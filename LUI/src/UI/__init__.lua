@@ -7,8 +7,6 @@ local Features = _G.LUI.Features
 local Vitals = Features.Vitals
 local Inventory = Features.Inventory
 local Crafting = Features.Crafting
-local Assets = Features.Assets
-local Travel = Features.Travel
 local StatusBar = Features.StatusBar
 local Launcher = Features.Launcher
 import "LUI.src.UI.native_scaling"
@@ -21,8 +19,6 @@ import "LUI.src.UI.item_actions"
 import "LUI.src.Settings"
 import "LUI.src.Inventory"
 import "LUI.src.Crafting"
-import "LUI.src.Assets"
-import "LUI.src.Travel"
 import "LUI.src.StatusBar"
 import "LUI.src.Launcher"
 
@@ -35,7 +31,5 @@ UI.FellowshipVitals = Vitals.FellowshipVitals
 UI.RaidVitals = Vitals.RaidVitals
 UI.InventoryWindow = Inventory.InventoryWindow
 UI.CraftingWindow = Crafting.CraftingWindow
-UI.AssetsWindow = Assets.AssetsWindow
-UI.TravelWindow = Travel.TravelWindow
 UI.StatusBarWindow = StatusBar.StatusBarWindow
 UI.LauncherMenu = Launcher.LauncherMenu

@@ -125,6 +125,10 @@ function Builder.new_group_unit_page(window, root, options, deps)
             end
         end)
     frame:add_row_break()
+    deps.add_checkbox_field(frame, options.prefix .. "_cure_states", TR["Color curable states (poison, disease, wound, fear)"],
+        function() return get().select.cure ~= false end,
+        function(value) get().select.cure = value == true end, true)
+    frame:add_row_break()
     deps.add_checkbox_field(frame, options.prefix .. "_background_effect_tracking",
         TR["Background effect tracking"],
         function() return get().background_effect_tracking end,
@@ -183,6 +187,16 @@ function Builder.new_group_unit_page(window, root, options, deps)
 
     local power = deps.ConfigContent(window, 4, page.refresh_preview)
     deps.build_standard_power_form(power, options.prefix, get, false)
+    -- (2026-10-16, pedido del usuario) quien muestra la barra de poder
+    power:add_row_break()
+    -- add_dropdown directly: the fellowship page deps carry no
+    -- add_dropdown_field helper (only the raid page does)
+    power:add_dropdown(options.prefix .. "_power_members", TR["Power bar on members"],
+        { TR["Healers only"], TR["Everyone"], TR["No one"] }, { "healers", "all", "none" },
+        function(value) get().power.members = value end,
+        function() return get().power.members or "healers" end)
+    power:add_row_break()
+    power:add_info(TR["Healers: Minstrel, Rune-keeper and Beorning. The others show only the morale bar, which fills the space of the power bar."], 48)
     page:add_tab(TR["Power / Wrath"], "power", power)
 
     local info = deps.ConfigContent(window, 4, page.refresh_preview)

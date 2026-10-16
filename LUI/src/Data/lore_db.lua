@@ -32,13 +32,13 @@ function Lore.language()
         -- same client-language detection the rest of LUI uses
         local code = _G.LUI.Locale.language_code()
         -- Spanish only translates LUI's own interface (menus/options). The
-        -- data library (items, recipes, bestiary, quests...) stays in
+        -- data library (items, recipes...) stays in
         -- English on purpose -- player's request: "la biblioteca de
         -- busqueda debe ser en ingles; buscamos en español y salen los
         -- nombres en ingles". Items.load keeps the Spanish search pack as a
         -- second probe for exactly that (see the Items.S_EXTRA note below).
-        -- Also required for safety: several domains ship no _es files
-        -- (Quests: only de/en/fr), so importing them in "es" would fail.
+        -- Also required for safety: several domains ship no _es files,
+        -- so importing them in "es" would fail.
         if code == "es" then
             code = "en"
         end
@@ -131,7 +131,9 @@ function Lore.import_plan()
 end
 
 function Lore.import_step(package_name)
-    import(package_name)
+    -- protected: the optional Spanish packs may be absent; a missing
+    -- required file still errors in the load_items finalizer
+    pcall(import, package_name)
 end
 
 -- the Items files are the heavy ones (records + labels + name index +
@@ -143,7 +145,7 @@ function Lore.items_import_plan()
         return {}
     end
     local lang = Lore.language()
-    return {
+    local plan = {
         "LUI.src.Data.Items.manifest",
         "LUI.src.Data.Items.records",
         "LUI.src.Data.Items.labels_" .. lang,
@@ -152,6 +154,13 @@ function Lore.items_import_plan()
         "LUI.src.Data.Items.buckets_" .. lang,
         "LUI.src.Data.Items.search_" .. lang,
     }
+    -- the Spanish search/label packs load_items adds (~10 MB) are staged
+    -- too, so the finalizer never imports them all in one frame
+    if lang ~= "es" then
+        plan[#plan + 1] = "LUI.src.Data.Items.search_es"
+        plan[#plan + 1] = "LUI.src.Data.Items.labels_es"
+    end
+    return plan
 end
 
 -- ------------------------------------------------------------- Recipes ----
@@ -468,9 +477,7 @@ end
 -- confirms is rewritten - on DB-not-loaded or a full miss the inputs pass
 -- through unchanged (ordinals nil), so a not-yet-in-DB item named with a
 -- leading count ("100 Virtue XP" is one item, not a stack) is never
--- split. The single shared policy: the bestiary tracker persists these
--- names as cache keys and the drops window displays them, so both must
--- resolve identically.
+-- split. The drops window displays these names.
 function Items.canonicalize_drop(name, quantity)
     if Items.loaded ~= true then
         return name, quantity, nil
@@ -649,7 +656,7 @@ end
 
 -- type-ahead search over a domain's folded name blob(s) (domain carries
 -- FOLD, S, an optional S_EXTRA list of secondary-language blobs, count and
--- _search_cache; shared by Items and Quests): one C-speed scan per novel
+-- _search_cache; used by Items): one C-speed scan per novel
 -- query per blob, refinement for extensions, session cache for
 -- repeats/backspace. Returns a set { ordinal = true } plus its size; nil
 -- means "no filter" (empty query).
@@ -761,55 +768,6 @@ function Items.icon_layers(ordinal)
     return layers[1], layers[2], layers[3], layers[4]
 end
 
--- ----------------------------------------------------------- Traceries ----
--- LI tracery metadata keyed by items-DB ordinal: the LI item-level band a
--- tracery sockets into, its uniqueness channel and the player class it is
--- restricted to (0 = none). Sorted-ordinal blob, bsearch per probe.
-
-Lore.Traceries = Lore.Traceries or {}
-local Traceries = Lore.Traceries
-
-function Lore.load_traceries()
-    if Traceries.loaded == true then
-        return
-    end
-    local lang = Lore.language()
-    import("LUI.src.Data.Items.traceries")
-    local D = _G.LoreData["Items.traceries"]
-    Traceries.D = D
-    Traceries.CLASS_LABELS = D.CLASSES[lang]
-    Traceries.stride = (3 * D.il_width) + D.ch_width + 1
-    Traceries.loaded = true
-end
-
--- base iLvl, enhancement-cap iLvl, uniqueness channel, class index, max
--- usable character level (the min is the records' min_level field).
--- nil when the ordinal is not a tracery.
-function Traceries.info(ordinal)
-    local D = Traceries.D
-    local slot = _bsearch_id(D.T_ORD, D.ord_width, D.count, ordinal)
-    if slot == nil then
-        return nil
-    end
-    local p = (slot - 1) * Traceries.stride + 1
-    local R = D.T_REC
-    local ilw = D.il_width
-    local min_il = u(R, p, ilw)
-    local max_il = u(R, p + ilw, ilw)
-    local channel = u(R, p + (2 * ilw), D.ch_width)
-    local class_idx = u(R, p + (2 * ilw) + D.ch_width, 1)
-    local char_max = u(R, p + (2 * ilw) + D.ch_width + 1, ilw)
-    return min_il, max_il, channel, class_idx, char_max
-end
-
--- localized player class name for a class index; nil for 0 (unrestricted)
-function Traceries.class_label(class_idx)
-    if class_idx == 0 then
-        return nil
-    end
-    return Traceries.CLASS_LABELS[class_idx]
-end
-
 -- --------------------------------------------------------------- Nodes ----
 -- Harvest/resource nodes (deposits, branches, crop fields, artifacts):
 -- localized node-name lookup plus per-node yields with quantity ranges.
@@ -856,412 +814,6 @@ end
 -- 3-layer badge icon (game asset ids) for a profession tier
 function Nodes.badge_layers(key, tier)
     return Nodes.ICONS[key][tier]
-end
-
--- -------------------------------------------------------------- Quests ----
--- Quests + deeds extracted straight from the game client (data-extractor
--- --db quests): packed numeric records (levels, category, reward items,
--- chains, flags), per-language label/name/search blobs and localized
--- category tables. The heavy description/objective/dialog texts live in
--- texts_<lang>.lua (tens of MB) and are only imported on demand.
-
-Lore.Quests = Lore.Quests or {}
-local Quests = Lore.Quests
-
-function Lore.load_quests()
-    if Quests.loaded == true then
-        return
-    end
-    local lang = Lore.language()
-    import("LUI.src.Data.Quests.manifest")
-    import("LUI.src.Data.Quests.records")
-    import("LUI.src.Data.Quests.labels_" .. lang)
-    import("LUI.src.Data.Quests.names_" .. lang)
-    import("LUI.src.Data.Quests.search_" .. lang)
-    import("LUI.src.Data.Quests.categories")
-    -- non-en display order: record order is (level, folded en name);
-    -- other languages carry a baked ordinal permutation with their own
-    -- name tie-break
-    if lang ~= "en" then
-        import("LUI.src.Data.Quests.order_" .. lang)
-    end
-    -- the accent fold map is shared with the items domain
-    import("LUI.src.Data.Items.classes")
-    local Data = _G.LoreData
-    Quests.M = Data["Quests.manifest"]
-    Quests.R = Data["Quests.records"]
-    Quests.L = Data["Quests.labels_" .. lang]
-    Quests.NM = Data["Quests.names_" .. lang]
-    Quests.S = Data["Quests.search_" .. lang]
-    -- ultra-common 2-char needles, same contract as Items.STOP2
-    Quests.STOP2 = Quests.S.STOP2
-    Quests.ORD = lang ~= "en" and Data["Quests.order_" .. lang] or nil
-    Quests.QUEST_CATS = Data["Quests.categories"].QUEST_CATS[lang]
-    Quests.DEED_CATS = Data["Quests.categories"].DEED_CATS[lang]
-    -- category dropdown code order, label-sorted for this language at
-    -- pack time (no runtime sorting)
-    Quests.QUEST_CATS_ORDER = Data["Quests.categories"].QUEST_CATS_ORDER[lang]
-    Quests.DEED_CATS_ORDER = Data["Quests.categories"].DEED_CATS_ORDER[lang]
-    Quests.FOLD = Data["Items.classes"].FOLD
-    Quests.count = Quests.M.count
-    Quests._search_cache = {}
-    Quests._record_cache = {}
-    Quests.loaded = true
-end
-
--- staged import list for hitch-free loading (one import per tick)
-function Lore.quests_import_plan()
-    local lang = Lore.language()
-    local plan = {
-        "LUI.src.Data.Quests.manifest",
-        "LUI.src.Data.Quests.records",
-        "LUI.src.Data.Quests.labels_" .. lang,
-        "LUI.src.Data.Quests.names_" .. lang,
-        "LUI.src.Data.Quests.search_" .. lang,
-        "LUI.src.Data.Quests.categories",
-        "LUI.src.Data.Items.classes",
-    }
-    if lang ~= "en" then
-        plan[#plan + 1] = "LUI.src.Data.Quests.order_" .. lang
-    end
-    return plan
-end
-
-function Quests.find_ordinals(name)
-    return _find_ordinals(Quests.NM, name)
-end
-
-function Quests.id_of(ordinal)
-    local M = Quests.M
-    return M.base_id + u(Quests.R.IDS, (ordinal - 1) * M.id_width + 1, M.id_width)
-end
-
--- exact-id binary search over the id-sorted index (IDX ascending ids,
--- IDO the matching ordinal): records themselves are in display order
--- (level, then folded en name), so IDS is not searchable directly
-function Quests.ordinal_of(id)
-    local M = Quests.M
-    local target = id - M.base_id
-    local R = Quests.R
-    local w = M.id_width
-    local lo, hi = 1, Quests.count
-    while lo <= hi do
-        local mid = floor((lo + hi) / 2)
-        local v = u(R.IDX, (mid - 1) * w + 1, w)
-        if v == target then
-            return u(R.IDO, (mid - 1) * M.ord_width + 1, M.ord_width)
-        elseif v < target then
-            lo = mid + 1
-        else
-            hi = mid - 1
-        end
-    end
-    return nil
-end
-
-function Quests.label(ordinal)
-    local L = Quests.L
-    local w = L.loff_width
-    return sub(L.LBL, u(L.LOFF, (ordinal - 1) * w + 1, w), u(L.LOFF, ordinal * w + 1, w) - 1)
-end
-
--- full record decode, cached (the browser touches rows repeatedly)
-function Quests.decode(ordinal)
-    local cached = Quests._record_cache[ordinal]
-    if cached ~= nil then
-        return cached
-    end
-    local M = Quests.M
-    local R = Quests.R
-    local W = M.widths
-    local p = u(R.OFF, (ordinal - 1) * M.off_width + 1, M.off_width)
-    local DATA = R.DATA
-
-    local function take(w)
-        local v = u(DATA, p, w)
-        p = p + w
-        return v
-    end
-    local function ref()
-        local v = take(W.ref)
-        if v == 0 then
-            return nil
-        end
-        return M.ref_base + v
-    end
-
-    local r = {}
-    r.is_deed = take(W.deed) == 1
-    r.level = take(W.level)
-    r.min_level = take(W.level)
-    r.category = take(W.category)
-    r.exp_tier = take(W.tier)
-    r.gold_tier = take(W.tier)
-    r.virtue_xp_tier = take(W.tier)
-    r.flags = take(W.flags)
-    -- 0 = not repeatable, 1 = unlimited, n+1 = n times
-    r.max_times = take(W.times)
-    r.lock_type = take(W.lock)
-    r.next_quest = ref()
-    local n_prereqs = take(W.n)
-    local n_rewards = take(W.n)
-    local n_dialogs = take(W.n)
-    r.prereqs = {}
-    for k = 1, n_prereqs do
-        r.prereqs[k] = ref()
-    end
-    r.rewards = {}
-    for k = 1, n_rewards do
-        local item = ref()
-        r.rewards[k] = { item = item, quantity = take(W.qty) }
-    end
-    r.dialog_npcs = {}
-    for k = 1, n_dialogs do
-        r.dialog_npcs[k] = { objective = take(W.n), action = take(W.n), npc = ref() }
-    end
-    r.objectives = {}
-    for k = 1, take(W.n) do
-        local conds = {}
-        for c = 1, take(W.n) do
-            conds[c] = { event = take(W.event), count = take(W.count) }
-        end
-        r.objectives[k] = conds
-    end
-
-    Quests._record_cache[ordinal] = r
-    return r
-end
-
--- cheap fixed-offset reads of the leading record fields (kind, level,
--- min level, category): filtering 20k records must not pay full decodes
-function Quests.brief(ordinal)
-    local M = Quests.M
-    local W = M.widths
-    local R = Quests.R
-    local p = u(R.OFF, (ordinal - 1) * M.off_width + 1, M.off_width)
-    local is_deed = u(R.DATA, p, W.deed) == 1
-    p = p + W.deed
-    local level = u(R.DATA, p, W.level)
-    p = p + W.level
-    local min_level = u(R.DATA, p, W.level)
-    p = p + W.level
-    local category = u(R.DATA, p, W.category)
-    return is_deed, level, min_level, category
-end
-
--- ordinals of one kind ("quest" or "deed"), in display order: level
--- ascending, then folded name. For en that is the record (= ordinal)
--- order; other languages iterate their baked ORD permutation, which
--- keeps the level order but tie-breaks on the local name. Both lists are
--- built in one pass over the kind byte of every record, once per session
-function Quests.kind_list(kind)
-    local lists = Quests._kind_lists
-    if lists == nil then
-        local M = Quests.M
-        local R = Quests.R
-        local ORD = Quests.ORD
-        local ow = ORD ~= nil and ORD.ord_width or 0
-        local w = M.widths.deed
-        local quests_list, nq = {}, 0
-        local deeds_list, nd = {}, 0
-        for k = 1, Quests.count do
-            local ordinal = k
-            if ORD ~= nil then
-                ordinal = u(ORD.ORD, (k - 1) * ow + 1, ow)
-            end
-            local p = u(R.OFF, (ordinal - 1) * M.off_width + 1, M.off_width)
-            if u(R.DATA, p, w) == 1 then
-                nd = nd + 1
-                deeds_list[nd] = ordinal
-            else
-                nq = nq + 1
-                quests_list[nq] = ordinal
-            end
-        end
-        lists = { quest = quests_list, deed = deeds_list }
-        Quests._kind_lists = lists
-    end
-    return lists[kind]
-end
-
--- quest flag bits (tools/data-extractor QUEST_FLAGS)
-Quests.FLAG_INSTANCE = 1
-Quests.FLAG_SHAREABLE = 2
-Quests.FLAG_FELLOWSHIP = 4
-Quests.FLAG_SMALL_FELLOWSHIP = 8
-Quests.FLAG_MONSTER_PLAY = 16
-Quests.FLAG_SESSION = 32
-Quests.FLAG_RAID = 64
-
--- dialog entry actions: 6 at objective 0 = quest giver (bestower),
--- 5 = end/turn-in dialog, others attach to their objective
-Quests.ACTION_TURN_IN = 5
-Quests.ACTION_BESTOW = 6
-
-function Quests.bestower_npc(record)
-    local dialogs = record.dialog_npcs
-    for k = 1, #dialogs do
-        local entry = dialogs[k]
-        if entry.action == Quests.ACTION_BESTOW and entry.objective == 0 then
-            return entry.npc
-        end
-    end
-    return nil
-end
-
--- the NPC the quest ends at: the role on the highest objective index.
--- The explicit action-5 end dialog always names the bestower in the game
--- data, so the last objective's NPC is the real turn-in target (delivery
--- quests end at a different NPC than they start from).
-function Quests.turn_in_npc(record)
-    local dialogs = record.dialog_npcs
-    local best, best_obj = nil, -1
-    for k = 1, #dialogs do
-        local entry = dialogs[k]
-        -- strict >: on a tied objective the first listed role is the
-        -- actual talk target, later ones are follow-up dialogs
-        if entry.npc ~= nil
-            and not (entry.action == Quests.ACTION_BESTOW and entry.objective == 0)
-            and entry.objective > best_obj then
-            best, best_obj = entry.npc, entry.objective
-        end
-    end
-    return best
-end
-
-function Quests.category_name(record)
-    local cats = record.is_deed and Quests.DEED_CATS or Quests.QUEST_CATS
-    return cats[record.category]
-end
-
-function Quests.fold_needle(text)
-    return _fold_needle(Quests.FOLD, text)
-end
-
-function Quests.search(query)
-    return _domain_search(Quests, query)
-end
-
-function Quests.search_within(query, candidates)
-    return _domain_search_within(Quests, query, candidates)
-end
-
--- ---- texts (lazy) ----
--- per-record content: description / objectives / bestower dialogs.
--- Sections separated by manifest.section_sep, texts within a section by
--- text_sep, objective description vs its per-condition texts by sub_sep.
-
-local function _split(text, sep)
-    local parts, start = {}, 1
-    while true do
-        local at = find(text, sep, start, true)
-        if at == nil then
-            parts[#parts + 1] = sub(text, start)
-            return parts
-        end
-        parts[#parts + 1] = sub(text, start, at - 1)
-        start = at + 1
-    end
-end
-
-function Quests.load_texts()
-    if Quests.T ~= nil then
-        return
-    end
-    local lang = Lore.language()
-    import("LUI.src.Data.Quests.texts_" .. lang)
-    Quests.T = _G.LoreData["Quests.texts_" .. lang]
-end
-
-function Quests.texts(ordinal)
-    Quests.load_texts()
-    local T = Quests.T
-    local w = T.toff_width
-    local entry = sub(T.TXT, u(T.TOFF, (ordinal - 1) * w + 1, w), u(T.TOFF, ordinal * w + 1, w) - 1)
-    local M = Quests.M
-    local sections = _split(entry, M.section_sep)
-    local objectives = {}
-    if sections[2] ~= "" then
-        local objective_entries = _split(sections[2], M.text_sep)
-        for k = 1, #objective_entries do
-            local parts = _split(objective_entries[k], M.sub_sep)
-            local conds = {}
-            for c = 2, #parts do
-                conds[c - 1] = parts[c]
-            end
-            objectives[k] = { text = parts[1], conds = conds }
-        end
-    end
-    local dialogs = {}
-    if sections[3] ~= "" then
-        dialogs = _split(sections[3], M.text_sep)
-    end
-    return { description = sections[1], objectives = objectives, dialogs = dialogs }
-end
-
--- ---------------------------------------------------------------- Npcs ----
--- Localized names + titles for the NPCs referenced by quest dialogs
--- (small: only quest NPCs). Labels are "name \31 title" per record,
--- aligned with the sorted IDS blob.
-
-Lore.Npcs = Lore.Npcs or {}
-local Npcs = Lore.Npcs
-
-function Lore.load_npcs()
-    if Npcs.loaded == true then
-        return
-    end
-    local lang = Lore.language()
-    import("LUI.src.Data.Npcs.manifest")
-    import("LUI.src.Data.Npcs.records")
-    import("LUI.src.Data.Npcs.labels_" .. lang)
-    local Data = _G.LoreData
-    Npcs.M = Data["Npcs.manifest"]
-    Npcs.R = Data["Npcs.records"]
-    Npcs.L = Data["Npcs.labels_" .. lang]
-    Npcs.count = Npcs.M.count
-    Npcs.loaded = true
-end
-
--- exact-id binary search over the sorted IDS blob
-function Npcs.ordinal_of(id)
-    local M = Npcs.M
-    local target = id - M.base_id
-    local IDS, w = Npcs.R.IDS, M.id_width
-    local lo, hi = 1, Npcs.count
-    while lo <= hi do
-        local mid = floor((lo + hi) / 2)
-        local v = u(IDS, (mid - 1) * w + 1, w)
-        if v == target then
-            return mid
-        elseif v < target then
-            lo = mid + 1
-        else
-            hi = mid - 1
-        end
-    end
-    return nil
-end
-
--- name, title for an NPC id; nil when the id is not a quest NPC
-function Npcs.name(id)
-    Lore.load_npcs()
-    local ordinal = Npcs.ordinal_of(id)
-    if ordinal == nil then
-        return nil, nil
-    end
-    local L = Npcs.L
-    local w = L.loff_width
-    local label = sub(L.LBL, u(L.LOFF, (ordinal - 1) * w + 1, w), u(L.LOFF, ordinal * w + 1, w) - 1)
-    local at = find(label, Npcs.M.text_sep, 1, true)
-    if at == nil then
-        return label, nil
-    end
-    local title = sub(label, at + 1)
-    if title == "" then
-        title = nil
-    end
-    return sub(label, 1, at - 1), title
 end
 
 -- -------------------------------------------------------------- Skills ----

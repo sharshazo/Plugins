@@ -442,9 +442,6 @@ end
 local settings_schema = _schema_from_default(Defaults.Schema)
 settings_schema.fields.version = STRING
 settings_schema.fields.global.fields.style = _map_schema(STYLE_VALUE)
--- legacy carrier: bestiary_capture lived under global up to v2.1.0; kept
--- decodable so defaults_fill can move old saves' value into encyclopedia
-settings_schema.fields.global.fields.bestiary_capture = BOOL
 settings_schema.fields.launcher.fields.buttons = _array_schema(STRING)
 settings_schema.fields.self.fields.upkeep.fields.slots = _array_schema(STRING)
 settings_schema.fields.self.fields.upkeep.fields.slot_modes = _array_schema(NUMBER)
@@ -475,45 +472,5 @@ local account_schema = _table_schema({
     })),
 })
 
-local asset_record_schema = _table_schema({
-    name = STRING,
-    quantity = NUMBER,
-    icon_id = NUMBER,
-    background_image_id = NUMBER,
-    quality = NUMBER,
-    owner = STRING,
-    slot = NUMBER,
-    source_key = STRING,
-    source_name = STRING,
-})
-
-local asset_source_schema = _table_schema({
-    items = _array_schema(asset_record_schema),
-})
-
-local assets_cache_schema = _table_schema({
-    characters = _map_schema(_table_schema({
-        backpack = asset_source_schema,
-        bank = asset_source_schema,
-        vault = asset_source_schema,
-    })),
-    shared_storage = asset_source_schema,
-})
-
-local bestiary_level_schema = _table_schema({
-    m = NUMBER,
-    p = NUMBER,
-})
-
-local bestiary_entry_schema = _table_schema({
-    k = NUMBER,
-    lmin = NUMBER,
-    lmax = NUMBER,
-    levels = _array_schema(bestiary_level_schema),
-    d = _map_schema(NUMBER),
-})
-
 Types.ACCOUNT = account_schema
 Types.CHARACTER = character_schema
-Types.ASSETS_CACHE = assets_cache_schema
-Types.BESTIARY_CACHE = _map_schema(bestiary_entry_schema)

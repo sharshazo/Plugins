@@ -17,20 +17,15 @@ local DefaultLayouts = Defaults.DefaultLayouts
 local Persistence = Settings.Persistence
 local Runtime = LUI.Runtime
 local Windows = Runtime.Windows
-local Stores = Runtime.Stores
 local Flags = Runtime.Flags
 local Apply = Runtime.Apply
-local AssetCache = Runtime.Caches.Assets
-local BestiaryCache = Runtime.Caches.Bestiary
 local Shortcuts = UI.Shortcuts
 local Features = LUI.Features
-local Assets = Features.Assets
 local Encyclopedia = Features.Encyclopedia
 local Cooldowns = Features.Cooldowns
 local Crafting = Features.Crafting
 local Drops = Features.Drops
 local ExpiringEffects = Features.ExpiringEffects
-local Travel = Features.Travel
 local Upkeep = Features.Upkeep
 local StatusBar = Features.StatusBar
 local Vitals = Features.Vitals
@@ -51,10 +46,8 @@ import "LUI.src.ExpiringEffects"
 import "LUI.src.Cooldowns"
 import "LUI.src.Upkeep"
 import "LUI.src.Drops"
-import "LUI.src.Assets"
 import "LUI.src.Encyclopedia"
 import "LUI.src.Crafting"
-import "LUI.src.Travel"
 import "LUI.src.StatusBar.api_chat_bridge"
 import "LUI.src.QuestBanner.quest_banner"
 -- (2026-10-02) efecto del puntero (aura animada pegada al raton)
@@ -163,18 +156,6 @@ local function _release_persistent_state()
     State.loaded_settings = nil
     State.settings = nil
 
-    AssetCache.data = nil
-    AssetCache.loaded = nil
-    AssetCache.loading = nil
-    AssetCache.dirty = nil
-    Stores.travel = nil
-
-    BestiaryCache.data = nil
-    BestiaryCache.loaded = nil
-    BestiaryCache.loading = nil
-    BestiaryCache.dirty = nil
-    BestiaryCache.generation = nil
-
     State.current_profile_id = nil
     State.current_character_name = nil
     State.loaded_settings_was_new = nil
@@ -191,19 +172,6 @@ function Shortcuts.toggle_config()
     end
 
     Windows.config:open()
-end
-
-function Shortcuts.toggle_assets()
-    if Windows.assets == nil then
-        return
-    end
-
-    if Windows.assets:IsVisible() == true then
-        Windows.assets:SetVisible(false)
-        return
-    end
-
-    Windows.assets:open()
 end
 
 function Shortcuts.toggle_inventory()
@@ -226,20 +194,6 @@ function Shortcuts.toggle_encyclopedia()
     end
 
     window:open()
-end
-
-function Shortcuts.open_bestiary_item_search(item_name)
-    local window = _ensure_encyclopedia_window()
-    window:open_item_search(item_name)
-
-    return true
-end
-
-function Shortcuts.open_bestiary_query_search(query)
-    local window = _ensure_encyclopedia_window()
-    window:open_query_search(query)
-
-    return true
 end
 
 function Shortcuts.open_encyclopedia_item_search(item_name)
@@ -270,29 +224,6 @@ function Shortcuts.toggle_crafting()
     end
 
     window:clear_material_filter()
-    window:open()
-end
-
-function Shortcuts.toggle_travel()
-    if Travel.is_enabled() ~= true then
-        return
-    end
-
-    local window = Windows.travel
-    if window == nil then
-        window = Travel.TravelWindow()
-        Windows.travel = window
-    end
-    if window == nil then
-        return
-    end
-
-    if window:IsVisible() == true then
-        window:SetVisible(false)
-        window:SetWantsUpdates(false)
-        return
-    end
-
     window:open()
 end
 
@@ -342,34 +273,6 @@ function Apply.inventory_settings()
         set_backpacks_enabled(false)
     else
         set_backpacks_enabled(true)
-    end
-end
-
-function Apply.assets_settings()
-    local enabled = State.settings.assets.enabled == true
-
-    if enabled then
-        if Stores.assets == nil then
-            Stores.assets = Assets.AssetsStore()
-        else
-            Stores.assets:refresh_bindings()
-        end
-
-        if Windows.assets == nil then
-            Windows.assets = UI.AssetsWindow()
-        else
-            Windows.assets:apply_settings()
-        end
-    else
-        if Windows.assets ~= nil then
-            Windows.assets:SetVisible(false)
-        end
-        Windows.assets = nil
-
-        if Stores.assets ~= nil then
-            Stores.assets:destroy()
-        end
-        Stores.assets = nil
     end
 end
 
@@ -460,24 +363,6 @@ function Apply.crafting_settings()
     end
 end
 
-function Apply.travel_settings()
-    local enabled = State.settings.travel.enabled == true
-
-    if enabled ~= true then
-        if Windows.travel ~= nil then
-            Windows.travel:SetVisible(false)
-            Windows.travel.store = nil
-            Windows.travel = nil
-        end
-        Travel.destroy_shared_store()
-        return
-    end
-
-    if Windows.travel ~= nil then
-        Windows.travel:apply_settings()
-    end
-end
-
 function Apply.launcher_settings()
     local enabled = State.settings.launcher.enabled == true
 
@@ -541,9 +426,7 @@ pcall(function()
 end)
 Flags.crafting_display_mode_active = State.settings.crafting.display_mode
 
-Windows.bestiary_card = Encyclopedia.BestiaryCard()
 Windows.resource_card = Encyclopedia.ResourceCard()
-Windows.quest_card = Encyclopedia.QuestCard()
 
 -- Initialize target vitals first: self vitals depend on them for current target state.
 Windows.target_vital = UI.TargetVitals(nil)
@@ -556,31 +439,24 @@ Windows.raid_vitals = UI.RaidVitals()
 Windows.expiring_self_effects = ExpiringEffects.SelfExpiringEffectsWindow()
 Windows.expiring_target_effects = ExpiringEffects.TargetExpiringEffectsWindow()
 Windows.inventory = nil
-Stores.assets = nil
-Windows.assets = nil
 Windows.status_bar = nil
 Windows.cooldowns = nil
 Windows.upkeep = nil
 Windows.drops = nil
 Windows.encyclopedia = nil
 Windows.crafting = nil
-Windows.travel = nil
 Windows.launcher = nil
 Windows.raid_config = nil
-Windows.bestiary_tracker = Encyclopedia.Collector()
 
 Vitals.GroupRosterWatcher.install()
 Vitals.RaidShareListener.install()
 
 Apply.inventory_settings()
-Apply.assets_settings()
 Apply.status_bar_settings()
 Apply.cooldowns_settings()
 Apply.upkeep_settings()
 Apply.drops_settings()
 Apply.crafting_settings()
-Apply.travel_settings()
-Windows.bestiary_tracker:apply_settings()
 
 Apply.lotro_vitals_handoff()
 
@@ -649,13 +525,6 @@ Plugins["LUI"].Unload = function()
     end
     Crafting.destroy_shared_store()
 
-    if Windows.travel ~= nil then
-        Windows.travel:SetVisible(false)
-        Windows.travel.store = nil
-        Windows.travel = nil
-    end
-    Travel.destroy_shared_store()
-
     Flags.crafting_display_mode_active = nil
     Persistence.save_settings()
 
@@ -677,22 +546,10 @@ Plugins["LUI"].Unload = function()
         Windows.launcher = nil
     end
 
-    if Windows.assets ~= nil then
-        Windows.assets:SetVisible(false)
-        Windows.assets._crafting_store = nil
-        Windows.assets._last_crafting_store_version = nil
-        Windows.assets = nil
-    end
-
     if Windows.encyclopedia ~= nil then
         Windows.encyclopedia:SetWantsUpdates(false)
         Windows.encyclopedia:SetVisible(false)
         Windows.encyclopedia = nil
-    end
-
-    if Windows.bestiary_card ~= nil then
-        Windows.bestiary_card:SetVisible(false)
-        Windows.bestiary_card = nil
     end
 
     if Windows.resource_card ~= nil then
@@ -700,20 +557,9 @@ Plugins["LUI"].Unload = function()
         Windows.resource_card = nil
     end
 
-    if Windows.quest_card ~= nil then
-        Windows.quest_card:SetVisible(false)
-        Windows.quest_card = nil
-    end
-
     if Windows.companion_vital ~= nil then
         Windows.companion_vital:destroy()
         Windows.companion_vital = nil
-    end
-
-    if Windows.bestiary_tracker ~= nil then
-        Windows.bestiary_tracker:save()
-        Windows.bestiary_tracker:destroy()
-        Windows.bestiary_tracker = nil
     end
 
     if Drops.History ~= nil then
@@ -725,11 +571,5 @@ Plugins["LUI"].Unload = function()
         Windows.drops = nil
     end
 
-    if Stores.assets ~= nil then
-        Stores.assets:destroy()
-        Stores.assets = nil
-    end
-
-    Persistence.save_assets_cache()
     _release_persistent_state()
 end

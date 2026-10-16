@@ -13,9 +13,6 @@ import "LUI.src.Settings.Tabs.Upkeep.upkeep_page"
 import "LUI.src.Settings.Tabs.Drops.drops_page"
 import "LUI.src.Settings.Tabs.Inventory.inventory_page"
 import "LUI.src.Settings.Tabs.Crafting.crafting_page"
-import "LUI.src.Settings.Tabs.Encyclopedia.encyclopedia_page"
-import "LUI.src.Settings.Tabs.Travel.travel_page"
-import "LUI.src.Settings.Tabs.Assets.assets_page"
 import "LUI.src.Settings.Tabs.Launcher.launcher_page"
 import "LUI.src.Settings.Tabs.StatusBar.status_bar_page"
 import "LUI.src.Settings.Tabs.ProfileManager.profile_manager_page"
@@ -29,9 +26,6 @@ local UpkeepPage = Pages.UpkeepPage
 local DropsPage = Pages.DropsPage
 local InventoryPage = Pages.InventoryPage
 local CraftingPage = Pages.CraftingPage
-local EncyclopediaPage = Pages.EncyclopediaPage
-local TravelPage = Pages.TravelPage
-local AssetsPage = Pages.AssetsPage
 local LauncherPage = Pages.LauncherPage
 local StatusBarPage = Pages.StatusBarPage
 local ProfileManagerPage = Pages.ProfileManagerPage
@@ -162,18 +156,6 @@ function ConfigWindow:build_tabs()
     local crafting_page = CraftingPage(self)
     crafting_page._tab_key = "crafting"
     self.main_tab_bar:add_tab(TR["Crafting"], crafting_page)
-
-    local encyclopedia_page = EncyclopediaPage(self)
-    encyclopedia_page._tab_key = "encyclopedia"
-    self.main_tab_bar:add_tab(TR["Encyclopedia"], encyclopedia_page)
-
-    local travel_page = TravelPage(self)
-    travel_page._tab_key = "travel"
-    self.main_tab_bar:add_tab(TR["Travel"], travel_page)
-
-    local assets_page = AssetsPage(self)
-    assets_page._tab_key = "assets"
-    self.main_tab_bar:add_tab(TR["Assets"], assets_page)
 
     local launcher_page = LauncherPage(self)
     launcher_page._tab_key = "launcher"

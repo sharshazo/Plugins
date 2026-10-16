@@ -103,6 +103,29 @@ local function _with_alpha(color, a)
     return Turbine.UI.Color(a, color.R, color.G, color.B)
 end
 
+-- (2026-10-16, rendimiento) colores animados creados una sola vez por
+-- nivel (pasos de 1/20) y reutilizados: nada de objetos nuevos por cuadro
+local _veil_colors = {}
+local _tint_colors = {}
+
+local function _veil_color(a)
+    local c = _veil_colors[a]
+    if c == nil then
+        c = Turbine.UI.Color(a, 0.02, 0.02, 0.03)
+        _veil_colors[a] = c
+    end
+    return c
+end
+
+local function _tint_color(a)
+    local c = _tint_colors[a]
+    if c == nil then
+        c = Turbine.UI.Color(a, 1, 0.85, 0.35)
+        _tint_colors[a] = c
+    end
+    return c
+end
+
 ---------------------------------------------------------------------
 -- Ventanita compania (una por ventana de reutilizaciones)
 ---------------------------------------------------------------------
@@ -269,6 +292,7 @@ local function _after_apply(self, s)
     f.veil_a = -1
     f.time_color = nil
     f.time_text = nil
+    f.time_key = nil
     f.sweep_frame = -1
     f.tint_a = -1
     f.name_key = nil
@@ -555,7 +579,7 @@ local function _after_update(self, s, remaining, base)
         if veil ~= f.veil_a then
             f.veil_a = veil
             if veil > 0 then
-                g.veil:SetBackColor(Turbine.UI.Color(veil, 0.02, 0.02, 0.03))
+                g.veil:SetBackColor(_veil_color(veil))
                 g.veil:SetVisible(true)
             else
                 g.veil:SetVisible(false)
@@ -567,10 +591,15 @@ local function _after_update(self, s, remaining, base)
     local show_num = _show_number(s, remaining)
     if style == "icons" then
         if g ~= nil then
-            local text = show_num and _format_number(s, remaining) or ""
-            if text ~= f.time_text then
-                f.time_text = text
-                g.time:SetText(text)
+            -- el texto solo se arma cuando cambia la decima de segundo
+            local tkey = show_num and math.floor(remaining * 10) or -1
+            if tkey ~= f.time_key then
+                f.time_key = tkey
+                local text = show_num and _format_number(s, remaining) or ""
+                if text ~= f.time_text then
+                    f.time_text = text
+                    g.time:SetText(text)
+                end
             end
             if remaining < 3 then
                 _set_time_color(f, g.time, GREEN)
@@ -629,7 +658,7 @@ local function _after_update(self, s, remaining, base)
         if tint ~= f.tint_a then
             f.tint_a = tint
             if tint > 0 then
-                g.tint:SetBackColor(Turbine.UI.Color(tint, 1, 0.85, 0.35))
+                g.tint:SetBackColor(_tint_color(tint))
                 g.tint:SetVisible(true)
             else
                 g.tint:SetVisible(false)
