@@ -1,5 +1,16 @@
 # Addons de LOTRO en español
 
+## Guía de funciones actualizada — 17 de octubre de 2026
+
+**[Ver la guía completa de todos los addons](GUIA_COMPLETA.md)**: interfaz, misiones, mapas, mecánicas de jefe, alertas propias, recolección, hazañas, JcJ, comandos, conexiones e instalación limpia.
+
+- **QuestSync:** Buscar grupo usa el canal **LFF**, con lugar, tipo y tamaño de grupo; se envía al pulsar el botón.
+- **Mapa del Mundo 3.20.0:** mecánicas por rol, cuatro modelos de aviso, alertas propias y recolección integrada.
+- **LUI:** versión limpia, con interfaz, objetos, artesanía y efectos; Viaje y Bienes se retiraron.
+- Descargas individuales y colección completa en **RAR y ZIP**, siempre con Turbine.
+
+Para actualizar, reemplaza la carpeta anterior de cada addon con el juego cerrado; combinar archivos puede conservar componentes retirados. Conserva PluginData y los demás addons.
+
 [![LOTRO](https://img.shields.io/badge/LOTRO-Lord%20of%20the%20Rings%20Online-8b6d2f)](https://github.com/topics/lotro) [![Plugins](https://img.shields.io/badge/LOTRO-plugins-2f5d8b)](https://github.com/topics/lotro-plugins) [![Idioma](https://img.shields.io/badge/idioma-espa%C3%B1ol-c0392b)](#)
 
 Colección de addons para **The Lord of the Rings Online** en español, pensados para funcionar juntos: un mapa del mundo interactivo, una interfaz con efectos animados, un asistente de misiones traducido, un seguimiento de hazañas y un addon de JcJ (PvMP). Cada carpeta ya tiene el **nombre exacto** que el juego necesita.
@@ -81,7 +92,7 @@ Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landa
 | ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.zip](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.zip) · [⬇️ PvMP_Plus.rar](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.rar) |
 | 📦 Todos juntos | [⬇️ Todos_los_addons.zip](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.zip) · [⬇️ Todos_los_addons.rar](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.rar) |
 
-Abre el ZIP y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Si Windows pregunta, acepta **combinar** y **reemplazar**. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
+Abre el ZIP y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Para actualizar sin conservar archivos retirados, reemplaza primero la carpeta anterior del addon con el juego cerrado; conserva PluginData y otros addons. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
 
 Todas las versiones: [página de Releases](https://github.com/sharshazo/Plugins/releases).
 
@@ -98,7 +109,7 @@ Todas las versiones: [página de Releases](https://github.com/sharshazo/Plugins/
    ```
 
    (con OneDrive: `OneDrive\Documentos\The Lord of the Rings Online\Plugins\`).
-   Si Windows pregunta, acepta **combinar** carpetas y **reemplazar** archivos.
+   Para actualizar, reemplaza las carpetas anteriores de estos addons con el juego cerrado; conserva PluginData y los demás addons.
 
    **No copies la carpeta `Plugins-main` entera**, solo las 6 de dentro. Debe quedar, por ejemplo:
 

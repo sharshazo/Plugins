@@ -187,11 +187,9 @@ end
 -- Shortcut de tipo Alias con el comando de chat completo. El mensaje sale
 -- SOLO cuando el jugador hace click en el boton -- nunca automatico.
 --
--- Canal: /world (chat de mundo, lo que pidio el usuario). Existe como canal
--- global oficial desde la Update 19.3 junto con /trade y /lff -- las notas
--- oficiales piden usar /lff para buscar grupo; si se prefiere ese canal,
--- cambiar SOLO esta linea a "/lff".
-GroupQuest.LFF_CHANNEL = "/world"
+-- Canal: /lff (canal global oficial "Buscando comunidad", pedido del usuario
+-- 2026-10-17: "debe mandarlo en el canal LFF"). Antes era /world.
+GroupQuest.LFF_CHANNEL = "/lff"
 
 local SIZE_EN = { S = "Small Fellowship, 3", F = "Fellowship, 6", R = "Raid, 12+" }
 local KIND_EN = { raid = "Raid", inst = "Dungeon", pe = "Instance", skirm = "Skirmish",
@@ -219,9 +217,9 @@ function GroupQuest.FoldAscii(s)
 end
 
 -- Comando de chat completo, en ingles, corto y simple. Ejemplos:
---   /world LFF Skumfil (Fellowship, 6) - send me a tell
---   /world LFF Helegrod (Raid, 12+) - send me a tell
---   /world LFF Gramsfoot, The Ettenmoors (Raid, 12+) - send me a tell
+--   /lff LFF Dungeon: Skumfil (Fellowship, 6) - send me a tell
+--   /lff LFF Helegrod (Raid, 12+) - send me a tell
+--   /lff LFF Gramsfoot, The Ettenmoors (Raid, 12+) - send me a tell
 -- (2026-10-16, pedido del usuario: ya no lleva el nombre de la mision,
 -- solo el lugar y que le hablen por privado)
 -- Devuelve nil si la mision no es de grupo.
@@ -231,7 +229,13 @@ function GroupQuest.LffCommand(quest)
     local kindKey = entry.k
     if kindKey == "inst" and entry.s == "R" then kindKey = "raid" end
     local place = entry.p
-    if not place or place == "" then place = KIND_EN[kindKey] or "group" end
+    if not place or place == "" then
+        place = KIND_EN[kindKey] or "group"
+    elseif kindKey ~= "open" and kindKey ~= "raid" and KIND_EN[kindKey] then
+        -- 2026-10-17: que diga si es mazmorra, escaramuza... (la incursion
+        -- ya lo dice el tamaño: "Raid, 12+")
+        place = KIND_EN[kindKey] .. ": " .. place
+    end
     local msg = "LFF " .. place .. " (" .. (SIZE_EN[entry.s] or "group") .. ")"
     msg = msg .. " - send me a tell"
     msg = GroupQuest.FoldAscii(msg)

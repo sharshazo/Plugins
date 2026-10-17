@@ -170,4 +170,11 @@ _G.GroupPlaceES = {
     ["Warg-pens of Dol Guldur"] = "Cercados de Huargos de Dol Guldur",
     ["Webs of the Scuttledells"] = "Telarañas de las Hondonadas Enmarañadas",
     ["Woe of the Willow"] = "El infortunio del sauce",
+    ["Boss from the Vaults: Naruhel the Red-maid"] = "Jefa de las Bóvedas: Naruhel la Doncella Roja",
+    ["Stoneheight"] = "Altapiedra",
+    ["The Dome of Stars"] = "La Cúpula de las Estrellas",
+    ["The Ruined City"] = "La Ciudad Arruinada",
+    ["The Temple of Utug-bûr 1 - Dhórgruth"] = "El Templo de Utug-bûr 1 - Dhórgruth",
+    ["The Temple of Utug-bûr 2 - Thûr Hin"] = "El Templo de Utug-bûr 2 - Thûr Hin",
+    ["The Temple of Utug-bûr 3 - Inner Sanctum"] = "El Templo de Utug-bûr 3 - Santuario Interior",
 }

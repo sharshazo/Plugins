@@ -35,23 +35,28 @@
 -- p = lugar (puede ser "" si no hay uno real conocido).
 -- Clave = QuestDB.quests[ndx].id (id real del juego, no el ndx -- asi no
 -- se desalinea si algun dia se regeneran los bloques de QuestDatabase).
+-- Corregido 2026-10-17 (pedido del usuario: el buscador de grupo nombraba
+-- mal algunas mazmorras/incursiones): 132 lugares revisados con datos reales
+-- -- nombre de instancia que trae la propia mision, o la mazmorra donde estan
+-- sus enemigos/PNJ (lotro-maps-db, parentZoneId) -- y zonas abiertas con su
+-- region real (geoAreas.xml). Nada inventado.
 _G.GroupQuestDB = {
-    ["70017529"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 39
+    ["70017529"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 39
     ["70002DF2"] = { s = "F", k = "open", p = "Giant Valley, The Trollshaws" }, -- 42
     ["700076AA"] = { s = "S", k = "open", p = "Northern Bree-fields, Bree-land" }, -- 55
     ["700442D7"] = { s = "F", k = "epic", p = "War for Gondor" }, -- 86
     ["70028B83"] = { s = "R", k = "open", p = "Thrór's Coomb, Enedwaith" }, -- 113
     ["70017598"] = { s = "F", k = "inst", p = "The Sixteenth Hall" }, -- 146
-    ["70041173"] = { s = "F", k = "open", p = "Western Gondor: Tarlang's Crown" }, -- 170
+    ["70041173"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 170
     ["70001203"] = { s = "S", k = "open", p = "Eastern Malenhad, Angmar" }, -- 224
     ["70041176"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 227
-    ["70017524"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 262
+    ["70017524"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 262
     ["7001758C"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 263
-    ["7007161D"] = { s = "S", k = "open", p = "The Dry-whelm, Idagâl, the Dry-whelm" }, -- 280
-    ["70017509"] = { s = "R", k = "open", p = "The Water-works, Bree-land" }, -- 282
+    ["7007161D"] = { s = "S", k = "open", p = "Idagâl, the Dry-whelm" }, -- 280
+    ["70017509"] = { s = "R", k = "open", p = "The Water-works, Moria" }, -- 282
     ["700381C5"] = { s = "R", k = "epic", p = "Defence of Rohan" }, -- 287
     ["70015AD6"] = { s = "S", k = "open", p = "Nan Sirannon, Eregion" }, -- 289
-    ["70015E1F"] = { s = "S", k = "open", p = "Glâd Ereg, Bree-land" }, -- 311
+    ["70015E1F"] = { s = "S", k = "open", p = "Glâd Ereg, Eregion" }, -- 311
     ["70000DE9"] = { s = "S", k = "open", p = "Rushock Bog, The Shire" }, -- 346
     ["7000C389"] = { s = "S", k = "open", p = "Northern High Pass, The Misty Mountains" }, -- 374
     ["70041171"] = { s = "F", k = "open", p = "Dol Amroth, Western Gondor" }, -- 376
@@ -60,7 +65,7 @@ _G.GroupQuestDB = {
     ["70058BBC"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 521
     ["700173CF"] = { s = "S", k = "inst", p = "Library at Tham Mírdain" }, -- 527
     ["7003EAF9"] = { s = "F", k = "open", p = "North Trollshaws, The Trollshaws" }, -- 650
-    ["70018199"] = { s = "F", k = "open", p = "Nud-melek, Moria" }, -- 742
+    ["70018199"] = { s = "F", k = "inst", p = "The Sixteenth Hall" }, -- 742
     ["70001104"] = { s = "F", k = "open", p = "South Trollshaws, The Trollshaws" }, -- 761
     ["7002C60A"] = { s = "S", k = "open", p = "Limlight Gorge, Great River" }, -- 870
     ["7002BD50"] = { s = "R", k = "open", p = "Nan Curunír, Dunland" }, -- 887
@@ -101,7 +106,7 @@ _G.GroupQuestDB = {
     ["700442CD"] = { s = "S", k = "epic", p = "War for Gondor" }, -- 1482
     ["7003E367"] = { s = "F", k = "open", p = "North Trollshaws, The Trollshaws" }, -- 1498
     ["7000A8F5"] = { s = "F", k = "inst", p = "Annúminas: Ost Elendil" }, -- 1533
-    ["7000E3D9"] = { s = "S", k = "open", p = "Esteldín, Angmar" }, -- 1538
+    ["7000E3D9"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 1538
     ["7000D6B4"] = { s = "F", k = "open", p = "Imlad Balchorth, Angmar" }, -- 1542
     ["7001D1C7"] = { s = "R", k = "inst", p = "Barad Guldur" }, -- 1557
     ["7001D1CF"] = { s = "R", k = "inst", p = "Barad Guldur" }, -- 1558
@@ -118,7 +123,7 @@ _G.GroupQuestDB = {
     ["70029FC9"] = { s = "R", k = "skirm", p = "Battle of the Way of Smiths" }, -- 1612
     ["700173AD"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 1635
     ["700442CB"] = { s = "S", k = "epic", p = "War for Gondor" }, -- 1644
-    ["7005307C"] = { s = "S", k = "open", p = "Vales of Anduin: Gladdenmere" }, -- 1645
+    ["7005307C"] = { s = "S", k = "open", p = "Gladdenmere, The Vales of Anduin" }, -- 1645
     ["70001813"] = { s = "F", k = "open", p = "Nan Amlug West, The North Downs" }, -- 1725
     ["700173AA"] = { s = "S", k = "open", p = "Emyn Naer, Eregion" }, -- 1730
     ["700173CE"] = { s = "S", k = "open", p = "Emyn Naer, Eregion" }, -- 1758
@@ -145,11 +150,11 @@ _G.GroupQuestDB = {
     ["7000D558"] = { s = "F", k = "open", p = "Carn Dûm, Angmar" }, -- 1954
     ["7000D4C3"] = { s = "F", k = "open", p = "Carn Dûm, Angmar" }, -- 1957
     ["7000E064"] = { s = "S", k = "open", p = "Talvi-mûri, Forochel" }, -- 1977
-    ["7000E069"] = { s = "F", k = "open", p = "Talvi-mûri, Forochel" }, -- 1985
+    ["7000E069"] = { s = "F", k = "inst", p = "Sâri-surma" }, -- 1985
     ["7001016C"] = { s = "F", k = "open", p = "Jä-rannit, Forochel" }, -- 1988
     ["7001016F"] = { s = "F", k = "open", p = "Rivendell Valley, The Trollshaws" }, -- 1991
     ["70010172"] = { s = "F", k = "open", p = "Himbar, Angmar" }, -- 1994
-    ["700169E6"] = { s = "F", k = "open", p = "Himbar, The Trollshaws" }, -- 2014
+    ["700169E6"] = { s = "F", k = "open", p = "Himbar, Angmar" }, -- 2014
     ["70000686"] = { s = "F", k = "open", p = "Nain Enidh, The Lone-lands" }, -- 2030
     ["70000703"] = { s = "F", k = "open", p = "The Weather Hills, The Lone-lands" }, -- 2045
     ["70001802"] = { s = "F", k = "open", p = "Nan Amlug West, The North Downs" }, -- 2076
@@ -163,10 +168,10 @@ _G.GroupQuestDB = {
     ["7000019C"] = { s = "F", k = "pe", p = "The Gates of Carn Dûm" }, -- 2236
     ["7000018E"] = { s = "F", k = "open", p = "Himbar, Angmar" }, -- 2245
     ["7000019E"] = { s = "S", k = "open", p = "Himbar, Angmar" }, -- 2256
-    ["70059A0B"] = { s = "F", k = "open", p = "Agamaur, The Lone-lands" }, -- 2298
-    ["70059A71"] = { s = "F", k = "open", p = "Agamaur, The Lone-lands" }, -- 2299
-    ["70059A72"] = { s = "F", k = "open", p = "Agamaur, The Lone-lands" }, -- 2300
-    ["7005A464"] = { s = "F", k = "open", p = "Spring Festival" }, -- 2301
+    ["70059A0B"] = { s = "F", k = "inst", p = "Boss from the Vaults: Naruhel the Red-maid" }, -- 2298
+    ["70059A71"] = { s = "F", k = "inst", p = "Boss from the Vaults: Naruhel the Red-maid" }, -- 2299
+    ["70059A72"] = { s = "F", k = "inst", p = "Boss from the Vaults: Naruhel the Red-maid" }, -- 2300
+    ["7005A464"] = { s = "F", k = "inst", p = "Boss from the Vaults: Naruhel the Red-maid" }, -- 2301
     ["70051EF6"] = { s = "F", k = "inst", p = "Boss from the Vaults: Storvâgûn" }, -- 2302
     ["7004DE61"] = { s = "F", k = "inst", p = "Boss from the Vaults: Thrâng" }, -- 2303
     ["70009A0E"] = { s = "S", k = "open", p = "Tyrn Fornech, Evendim" }, -- 2314
@@ -183,9 +188,9 @@ _G.GroupQuestDB = {
     ["70068F39"] = { s = "S", k = "open", p = "Zamarzîr, The Shield Isles" }, -- 2388
     ["7006AA3D"] = { s = "S", k = "open", p = "Dil-irmíz, The Berths, Umbar-môkh" }, -- 2389
     ["7006AA3C"] = { s = "S", k = "open", p = "Dil-irmíz, The Berths, Umbar-môkh" }, -- 2390
-    ["70044C15"] = { s = "F", k = "open", p = "Ashes and Stars" }, -- 2412
+    ["70044C15"] = { s = "F", k = "inst", p = "The Dome of Stars" }, -- 2412
     ["70044F24"] = { s = "S", k = "inst", p = "The Quays of the Harlond" }, -- 2414
-    ["70044C17"] = { s = "S", k = "open", p = "Ashes and Stars" }, -- 2415
+    ["70044C17"] = { s = "S", k = "inst", p = "The Ruined City" }, -- 2415
     ["70044F8C"] = { s = "F", k = "inst", p = "The Silent Street" }, -- 2416
     ["70044C16"] = { s = "S", k = "inst", p = "Sunken Labyrinth" }, -- 2417
     ["7003694E"] = { s = "R", k = "epic", p = "Defence of Rohan" }, -- 2452
@@ -220,13 +225,13 @@ _G.GroupQuestDB = {
     ["7001EEF8"] = { s = "S", k = "inst", p = "Sword-hall of Dol Guldur" }, -- 2714
     ["7001E685"] = { s = "S", k = "inst", p = "The Water Wheels: Nalâ-dûm" }, -- 2715
     ["700459BE"] = { s = "R", k = "open", p = "The Battle of Pelennor" }, -- 2716
-    ["7002ADBF"] = { s = "R", k = "inst", p = "Isengard" }, -- 2718
+    ["7002ADBF"] = { s = "R", k = "inst", p = "The Tower of Orthanc" }, -- 2718
     ["7002497E"] = { s = "R", k = "open", p = "In Their Absence" }, -- 2719
-    ["7002B09B"] = { s = "R", k = "inst", p = "Isengard" }, -- 2720
+    ["7002B09B"] = { s = "R", k = "inst", p = "The Tower of Orthanc" }, -- 2720
     ["7002A828"] = { s = "S", k = "inst", p = "Dargnákh Unleashed" }, -- 2721
-    ["70028B8E"] = { s = "R", k = "open", p = "In Their Absence" }, -- 2722
+    ["70028B8E"] = { s = "R", k = "inst", p = "Draigoch's Lair" }, -- 2722
     ["7001E5E2"] = { s = "F", k = "inst", p = "Garth Agarwen" }, -- 2723
-    ["7001E684"] = { s = "S", k = "inst", p = "Moria" }, -- 2724
+    ["7001E684"] = { s = "S", k = "inst", p = "The Mirror-halls of Lumul-nar" }, -- 2724
     ["7002497C"] = { s = "R", k = "open", p = "In Their Absence" }, -- 2725
     ["70045222"] = { s = "S", k = "open", p = "The Battle of Pelennor" }, -- 2726
     ["700459BC"] = { s = "R", k = "open", p = "The Battle of Pelennor" }, -- 2728
@@ -235,17 +240,17 @@ _G.GroupQuestDB = {
     ["700595ED"] = { s = "F", k = "open", p = "Lossarnach" }, -- 2731
     ["700595F0"] = { s = "S", k = "open", p = "Lossarnach" }, -- 2732
     ["70022B2F"] = { s = "F", k = "inst", p = "Great Barrow" }, -- 2733
-    ["7001E687"] = { s = "F", k = "inst", p = "Moria" }, -- 2734
+    ["7001E687"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 2734
     ["7001CD58"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 2735
     ["70022578"] = { s = "R", k = "inst", p = "Helegrod" }, -- 2736
-    ["7001E686"] = { s = "F", k = "inst", p = "Moria" }, -- 2737
+    ["7001E686"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 2737
     ["7004356B"] = { s = "S", k = "open", p = "" }, -- 2738
-    ["7001E68B"] = { s = "F", k = "inst", p = "Moria" }, -- 2739
-    ["7001E689"] = { s = "F", k = "inst", p = "Moria" }, -- 2740
+    ["7001E68B"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 2739
+    ["7001E689"] = { s = "F", k = "inst", p = "The Grand Stair" }, -- 2740
     ["7002D568"] = { s = "F", k = "inst", p = "Fornost" }, -- 2741
     ["7001D019"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 2742
     ["7004C02A"] = { s = "F", k = "inst", p = "The Court of Seregost" }, -- 2743
-    ["7001E688"] = { s = "F", k = "inst", p = "Moria" }, -- 2744
+    ["7001E688"] = { s = "F", k = "inst", p = "The Forges of Khazad-dûm" }, -- 2744
     ["70044F25"] = { s = "S", k = "open", p = "The Battle of Pelennor" }, -- 2745
     ["70024975"] = { s = "R", k = "open", p = "In Their Absence" }, -- 2746
     ["7002D5D4"] = { s = "F", k = "inst", p = "Fornost" }, -- 2747
@@ -255,7 +260,7 @@ _G.GroupQuestDB = {
     ["7002247C"] = { s = "F", k = "inst", p = "Annúminas" }, -- 2751
     ["70043535"] = { s = "F", k = "open", p = "Osgiliath, Eastern Gondor" }, -- 2752
     ["7002D478"] = { s = "F", k = "inst", p = "Fornost" }, -- 2753
-    ["7002BBD3"] = { s = "R", k = "inst", p = "Isengard" }, -- 2754
+    ["7002BBD3"] = { s = "R", k = "inst", p = "The Tower of Orthanc" }, -- 2754
     ["7003354A"] = { s = "S", k = "open", p = "The Road to Erebor" }, -- 2757
     ["70044F8B"] = { s = "F", k = "open", p = "Minas Tirith, Anórien" }, -- 2758
     ["7002CDB9"] = { s = "F", k = "inst", p = "Roots of Fangorn" }, -- 2759
@@ -269,7 +274,7 @@ _G.GroupQuestDB = {
     ["70025608"] = { s = "F", k = "inst", p = "Sâri-surma" }, -- 2767
     ["7004BCEA"] = { s = "F", k = "inst", p = "The Dungeons of Naerband" }, -- 2768
     ["70022B32"] = { s = "F", k = "inst", p = "Great Barrow: Thadúr" }, -- 2769
-    ["7001E683"] = { s = "F", k = "inst", p = "Moria" }, -- 2770
+    ["7001E683"] = { s = "F", k = "inst", p = "Halls of Crafting" }, -- 2770
     ["70033C7F"] = { s = "F", k = "inst", p = "The Bells of Dale" }, -- 2771
     ["7002D418"] = { s = "F", k = "inst", p = "Fornost" }, -- 2772
     ["70051B72"] = { s = "F", k = "open", p = "Frostbluff, Festival Grounds" }, -- 2773
@@ -277,7 +282,7 @@ _G.GroupQuestDB = {
     ["7001E681"] = { s = "F", k = "inst", p = "Sammath Gûl" }, -- 2775
     ["70051398"] = { s = "S", k = "pe", p = "The Howling Pit" }, -- 2776
     ["7001ECE1"] = { s = "R", k = "inst", p = "Barad Guldur" }, -- 2777
-    ["7001E68A"] = { s = "F", k = "inst", p = "Moria" }, -- 2778
+    ["7001E68A"] = { s = "F", k = "inst", p = "The Sixteenth Hall" }, -- 2778
     ["7002371A"] = { s = "F", k = "inst", p = "Lost Temple" }, -- 2779
     ["7004BD2D"] = { s = "R", k = "inst", p = "The Abyss of Mordath" }, -- 2780
     ["7002712C"] = { s = "S", k = "open", p = "Lone-lands" }, -- 2781
@@ -286,10 +291,10 @@ _G.GroupQuestDB = {
     ["700459C1"] = { s = "R", k = "open", p = "The Battle of Pelennor" }, -- 2784
     ["7002B6DB"] = { s = "F", k = "inst", p = "The Foundry" }, -- 2785
     ["7001ECE2"] = { s = "R", k = "inst", p = "Barad Guldur" }, -- 2786
-    ["70025384"] = { s = "S", k = "open", p = "In Their Absence" }, -- 2787
+    ["70025384"] = { s = "S", k = "inst", p = "Stoneheight" }, -- 2787
     ["700255E0"] = { s = "S", k = "open", p = "Northcotton Farm, The Shire" }, -- 2788
     ["70037E08"] = { s = "S", k = "open", p = "Westfold" }, -- 2789
-    ["7001E682"] = { s = "F", k = "inst", p = "Dol Guldur" }, -- 2790
+    ["7001E682"] = { s = "F", k = "inst", p = "Dungeons of Dol Guldur" }, -- 2790
     ["7004E1AF"] = { s = "F", k = "open", p = "Green Hill Country, The Shire" }, -- 2791
     ["7004E1AC"] = { s = "R", k = "open", p = "Green Hill Country, The Shire" }, -- 2792
     ["7004E1AE"] = { s = "S", k = "open", p = "Green Hill Country, The Shire" }, -- 2793
@@ -349,10 +354,10 @@ _G.GroupQuestDB = {
     ["7002BDB5"] = { s = "R", k = "inst", p = "Dargnákh Unleashed" }, -- 3945
     ["7002BD17"] = { s = "S", k = "open", p = "Nan Curunír, Dunland" }, -- 3946
     ["7001EDFF"] = { s = "F", k = "inst", p = "Sammath Gûl" }, -- 3950
-    ["700173B4"] = { s = "F", k = "open", p = "Silvertine Lodes, Moria" }, -- 3951
-    ["70017516"] = { s = "F", k = "open", p = "The Twenty-first Hall, Moria" }, -- 3952
-    ["7001750E"] = { s = "F", k = "open", p = "The Twenty-first Hall, Moria" }, -- 3953
-    ["7001751C"] = { s = "F", k = "open", p = "The Twenty-first Hall, Moria" }, -- 3954
+    ["700173B4"] = { s = "F", k = "inst", p = "The Forgotten Treasury" }, -- 3951
+    ["70017516"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 3952
+    ["7001750E"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 3953
+    ["7001751C"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 3954
     ["7000222D"] = { s = "S", k = "open", p = "Aughaire, Angmar" }, -- 3957
     ["7000222F"] = { s = "S", k = "open", p = "Aughaire, Angmar" }, -- 3966
     ["7002247B"] = { s = "F", k = "inst", p = "Annúminas" }, -- 3970
@@ -360,7 +365,7 @@ _G.GroupQuestDB = {
     ["70058B89"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 4059
     ["70002231"] = { s = "F", k = "open", p = "Aughaire, Angmar" }, -- 4069
     ["7001BECC"] = { s = "F", k = "open", p = "Vale of Thrain, Ered Luin" }, -- 4077
-    ["700173BA"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 4079
+    ["700173BA"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 4079
     ["70029FC4"] = { s = "R", k = "skirm", p = "Defence of The Prancing Pony" }, -- 4087
     ["70009E79"] = { s = "F", k = "open", p = "Tírith Rhaw, The Ettenmoors" }, -- 4088
     ["70009E77"] = { s = "F", k = "open", p = "Tol Ascarnen, The Ettenmoors" }, -- 4089
@@ -385,7 +390,7 @@ _G.GroupQuestDB = {
     ["700442DA"] = { s = "F", k = "epic", p = "War for Gondor" }, -- 4429
     ["7004BCE9"] = { s = "F", k = "inst", p = "The Dungeons of Naerband" }, -- 4447
     ["7004BCEB"] = { s = "F", k = "inst", p = "The Dungeons of Naerband" }, -- 4448
-    ["7005A2E3"] = { s = "R", k = "open", p = "Azanulbizar, T.A. 2799, Tales of Yore: Azanulbizar" }, -- 4464
+    ["7005A2E3"] = { s = "R", k = "open", p = "Azanulbizar" }, -- 4464
     ["70008762"] = { s = "F", k = "open", p = "Steps of Gram, The Ettenmoors" }, -- 4478
     ["700192D2"] = { s = "R", k = "inst", p = "Dâr Narbugud" }, -- 4505
     ["700192CE"] = { s = "R", k = "inst", p = "Dâr Narbugud" }, -- 4506
@@ -398,7 +403,7 @@ _G.GroupQuestDB = {
     ["70053AB0"] = { s = "S", k = "inst", p = "Eithel Gwaur, the Filth-well" }, -- 4615
     ["70053ABB"] = { s = "S", k = "inst", p = "Eithel Gwaur, the Filth-well" }, -- 4616
     ["7000D6B7"] = { s = "S", k = "open", p = "Imlad Balchorth, Angmar" }, -- 4634
-    ["7005AFFF"] = { s = "S", k = "open", p = "Azanulbizar, T.A. 2799, Tales of Yore: Azanulbizar" }, -- 4642
+    ["7005AFFF"] = { s = "S", k = "open", p = "Azanulbizar" }, -- 4642
     ["70051605"] = { s = "F", k = "open", p = "Himbar, Angmar" }, -- 4702
     ["70051608"] = { s = "F", k = "open", p = "Himbar, Angmar" }, -- 4703
     ["70051602"] = { s = "F", k = "open", p = "Himbar, Angmar" }, -- 4705
@@ -409,8 +414,8 @@ _G.GroupQuestDB = {
     ["700001AA"] = { s = "S", k = "open", p = "Nan Gurth, Angmar" }, -- 4730
     ["700001A6"] = { s = "F", k = "inst", p = "Urugarth" }, -- 4731
     ["7000807F"] = { s = "S", k = "open", p = "Fields of Fornost, The North Downs" }, -- 4732
-    ["70058BB6"] = { s = "S", k = "open", p = "Elderslade: The War of Three Peaks" }, -- 4745
-    ["70058B85"] = { s = "S", k = "open", p = "Elderslade: The War of Three Peaks" }, -- 4746
+    ["70058BB6"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 4745
+    ["70058B85"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 4746
     ["700173CD"] = { s = "F", k = "open", p = "The Twenty-first Hall, Moria" }, -- 4751
     ["70043DFC"] = { s = "F", k = "inst", p = "Osgiliath: Court of Isildur" }, -- 4761
     ["70043DED"] = { s = "F", k = "inst", p = "Osgiliath: Court of Anárion" }, -- 4762
@@ -442,10 +447,10 @@ _G.GroupQuestDB = {
     ["7004E5E1"] = { s = "F", k = "inst", p = "Fornost: Wraith of Shadow" }, -- 5116
     ["70050DF6"] = { s = "R", k = "inst", p = "Helegrod: Spider Wing" }, -- 5117
     ["7004E5DD"] = { s = "F", k = "inst", p = "Ost Dunhoth" }, -- 5118
-    ["7004E5DE"] = { s = "F", k = "open", p = "In Their Absence" }, -- 5119
+    ["7004E5DE"] = { s = "F", k = "inst", p = "Sâri-surma" }, -- 5119
     ["70050DF3"] = { s = "S", k = "inst", p = "School at Tham Mírdain" }, -- 5120
     ["7004E5DC"] = { s = "F", k = "inst", p = "The Bells of Dale" }, -- 5121
-    ["70050DF5"] = { s = "F", k = "open", p = "Ashes and Stars" }, -- 5122
+    ["70050DF5"] = { s = "F", k = "inst", p = "The Dome of Stars" }, -- 5122
     ["7004E5E2"] = { s = "F", k = "inst", p = "The Northcotton Farm" }, -- 5123
     ["70050DF2"] = { s = "S", k = "inst", p = "The Quays of the Harlond" }, -- 5124
     ["70050DF4"] = { s = "F", k = "inst", p = "The Silent Street" }, -- 5125
@@ -480,8 +485,8 @@ _G.GroupQuestDB = {
     ["70064361"] = { s = "F", k = "inst", p = "Great Barrow: Thadúr" }, -- 5154
     ["7004CF5E"] = { s = "F", k = "inst", p = "Great Barrow" }, -- 5155
     ["7004CF5D"] = { s = "F", k = "inst", p = "Great Barrow" }, -- 5156
-    ["70045683"] = { s = "S", k = "open", p = "Angmar" }, -- 5157
-    ["7004567F"] = { s = "S", k = "open", p = "Angmar" }, -- 5158
+    ["70045683"] = { s = "S", k = "inst", p = "Halls of Night" }, -- 5157
+    ["7004567F"] = { s = "S", k = "inst", p = "Halls of Night" }, -- 5158
     ["70046FCD"] = { s = "F", k = "inst", p = "Annúminas: Haudh Valandil" }, -- 5159
     ["70046FCF"] = { s = "F", k = "inst", p = "Annúminas: Haudh Valandil" }, -- 5160
     ["70046241"] = { s = "R", k = "inst", p = "Helegrod: Drake Wing" }, -- 5161
@@ -496,8 +501,8 @@ _G.GroupQuestDB = {
     ["70046FD1"] = { s = "S", k = "inst", p = "Iorbar's Peak" }, -- 5170
     ["7006434E"] = { s = "S", k = "inst", p = "Library at Tham Mírdain" }, -- 5171
     ["7006434F"] = { s = "S", k = "inst", p = "Library at Tham Mírdain" }, -- 5172
-    ["7004870C"] = { s = "F", k = "open", p = "In Their Absence" }, -- 5173
-    ["7004870D"] = { s = "F", k = "open", p = "In Their Absence" }, -- 5174
+    ["7004870C"] = { s = "F", k = "inst", p = "Lost Temple" }, -- 5173
+    ["7004870D"] = { s = "F", k = "inst", p = "Lost Temple" }, -- 5174
     ["70046FD0"] = { s = "S", k = "inst", p = "The Northcotton Farm" }, -- 5175
     ["70046FCE"] = { s = "S", k = "inst", p = "The Northcotton Farm" }, -- 5176
     ["70046FF7"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 5177
@@ -518,8 +523,8 @@ _G.GroupQuestDB = {
     ["70050DD8"] = { s = "S", k = "inst", p = "School at Tham Mírdain" }, -- 5192
     ["7004870F"] = { s = "S", k = "inst", p = "Seat of the Great Goblin" }, -- 5193
     ["7004870A"] = { s = "S", k = "inst", p = "Seat of the Great Goblin" }, -- 5194
-    ["700461CA"] = { s = "S", k = "open", p = "In Their Absence" }, -- 5195
-    ["7004623A"] = { s = "S", k = "open", p = "In Their Absence" }, -- 5196
+    ["700461CA"] = { s = "S", k = "inst", p = "Stoneheight" }, -- 5195
+    ["7004623A"] = { s = "S", k = "inst", p = "Stoneheight" }, -- 5196
     ["7004CF56"] = { s = "S", k = "inst", p = "Sunken Labyrinth" }, -- 5197
     ["7004CF55"] = { s = "S", k = "inst", p = "Sunken Labyrinth" }, -- 5198
     ["70048708"] = { s = "S", k = "inst", p = "Sword-hall of Dol Guldur" }, -- 5199
@@ -530,10 +535,10 @@ _G.GroupQuestDB = {
     ["7004CF61"] = { s = "R", k = "inst", p = "The Battle for Erebor" }, -- 5204
     ["70045682"] = { s = "F", k = "inst", p = "The Bells of Dale" }, -- 5205
     ["7004567D"] = { s = "F", k = "inst", p = "The Bells of Dale" }, -- 5206
-    ["7004CF5A"] = { s = "F", k = "open", p = "Ashes and Stars" }, -- 5207
-    ["7004CF59"] = { s = "F", k = "open", p = "Ashes and Stars" }, -- 5208
-    ["7004CF58"] = { s = "S", k = "open", p = "Eastern Gondor: Osgiliath" }, -- 5209
-    ["7004CF57"] = { s = "S", k = "open", p = "Eastern Gondor: Osgiliath" }, -- 5210
+    ["7004CF5A"] = { s = "F", k = "inst", p = "The Dome of Stars" }, -- 5207
+    ["7004CF59"] = { s = "F", k = "inst", p = "The Dome of Stars" }, -- 5208
+    ["7004CF58"] = { s = "S", k = "inst", p = "The Ruined City" }, -- 5209
+    ["7004CF57"] = { s = "S", k = "inst", p = "The Ruined City" }, -- 5210
     ["70050DDC"] = { s = "F", k = "inst", p = "The Silent Street" }, -- 5211
     ["70050DD9"] = { s = "F", k = "inst", p = "The Silent Street" }, -- 5212
     ["7006436D"] = { s = "S", k = "inst", p = "Warg-pens of Dol Guldur" }, -- 5213
@@ -553,7 +558,7 @@ _G.GroupQuestDB = {
     ["70007800"] = { s = "F", k = "open", p = "Staddle, Bree-land" }, -- 5352
     ["7000887E"] = { s = "F", k = "open", p = "Tol Ascarnen, The Ettenmoors" }, -- 5355
     ["70017B87"] = { s = "S", k = "open", p = "The Twenty-first Hall, Moria" }, -- 5356
-    ["7000E8B7"] = { s = "S", k = "open", p = "Esteldín, Evendim" }, -- 5373
+    ["7000E8B7"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 5373
     ["7003332A"] = { s = "R", k = "inst", p = "Flight to the Lonely Mountain" }, -- 5375
     ["7003332B"] = { s = "R", k = "inst", p = "Flight to the Lonely Mountain" }, -- 5376
     ["70008877"] = { s = "F", k = "open", p = "Tol Ascarnen, The Ettenmoors" }, -- 5391
@@ -608,7 +613,7 @@ _G.GroupQuestDB = {
     ["70055917"] = { s = "S", k = "inst", p = "Ghashan-kútot, the Halls of Black Lore" }, -- 5766
     ["70000FF0"] = { s = "F", k = "open", p = "Misty Mountains" }, -- 5774
     ["70007843"] = { s = "F", k = "open", p = "Bree, Bree-land" }, -- 5776
-    ["7005307E"] = { s = "S", k = "open", p = "Vales of Anduin: Gladdenmere" }, -- 5777
+    ["7005307E"] = { s = "S", k = "open", p = "Gladdenmere, The Vales of Anduin" }, -- 5777
     ["7004E74A"] = { s = "S", k = "inst", p = "Glimmerdeep" }, -- 5804
     ["7004E749"] = { s = "S", k = "inst", p = "Glimmerdeep" }, -- 5805
     ["7000A8D4"] = { s = "F", k = "inst", p = "Annúminas: Glinghant" }, -- 5811
@@ -642,7 +647,7 @@ _G.GroupQuestDB = {
     ["70019615"] = { s = "F", k = "inst", p = "Halls of Crafting" }, -- 6030
     ["700442D6"] = { s = "F", k = "epic", p = "War for Gondor" }, -- 6038
     ["70072F8F"] = { s = "S", k = "open", p = "Downs of Farad Shóta, Adagím, the Moulder-wood" }, -- 6079
-    ["70041174"] = { s = "F", k = "open", p = "Western Gondor: Tarlang's Crown" }, -- 6096
+    ["70041174"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 6096
     ["70007678"] = { s = "F", k = "inst", p = "Great Barrow" }, -- 6107
     ["70000195"] = { s = "F", k = "inst", p = "Carn Dûm" }, -- 6117
     ["7000885C"] = { s = "F", k = "open", p = "Hithlad, The Ettenmoors" }, -- 6123
@@ -655,7 +660,7 @@ _G.GroupQuestDB = {
     ["70058BB8"] = { s = "S", k = "open", p = "Elderslade: War of Three Peaks" }, -- 6163
     ["7001757A"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 6232
     ["7000222E"] = { s = "F", k = "open", p = "Aughaire, Angmar" }, -- 6240
-    ["7001752B"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 6276
+    ["7001752B"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 6276
     ["70050212"] = { s = "F", k = "inst", p = "Thikil-gundu" }, -- 6277
     ["7000AC52"] = { s = "F", k = "open", p = "Tol Ascarnen, The Ettenmoors" }, -- 6322
     ["7005AB00"] = { s = "S", k = "open", p = "Welkin-lofts, Gundabad" }, -- 6373
@@ -670,7 +675,7 @@ _G.GroupQuestDB = {
     ["7000A8D5"] = { s = "F", k = "inst", p = "Annúminas: Glinghant" }, -- 6561
     ["7001759B"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 6569
     ["7004117E"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 6589
-    ["70024530"] = { s = "S", k = "open", p = "Bree, Evendim" }, -- 6594
+    ["70024530"] = { s = "S", k = "open", p = "Bree, Bree-land" }, -- 6594
     ["700246F2"] = { s = "F", k = "inst", p = "Sâri-surma" }, -- 6595
     ["700246F3"] = { s = "F", k = "inst", p = "Sâri-surma" }, -- 6596
     ["700246F4"] = { s = "F", k = "inst", p = "Sâri-surma" }, -- 6597
@@ -678,10 +683,10 @@ _G.GroupQuestDB = {
     ["70024717"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 6599
     ["70024718"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 6600
     ["70024551"] = { s = "S", k = "open", p = "Northcotton Farm, The Shire" }, -- 6602
-    ["7002468E"] = { s = "S", k = "open", p = "Stoneheight, Bree-land" }, -- 6603
+    ["7002468E"] = { s = "S", k = "open", p = "Stoneheight, The North Downs" }, -- 6603
     ["70024691"] = { s = "S", k = "open", p = "Stoneheight, The North Downs" }, -- 6604
     ["70024693"] = { s = "S", k = "open", p = "Stoneheight, The North Downs" }, -- 6605
-    ["70024699"] = { s = "F", k = "open", p = "Stoneheight, The Trollshaws" }, -- 6606
+    ["70024699"] = { s = "F", k = "open", p = "Stoneheight, The North Downs" }, -- 6606
     ["7002469A"] = { s = "F", k = "inst", p = "Lost Temple" }, -- 6607
     ["7002469B"] = { s = "F", k = "inst", p = "Lost Temple" }, -- 6608
     ["70009E5A"] = { s = "S", k = "open", p = "Arador's End, The Ettenmoors" }, -- 6610
@@ -725,7 +730,7 @@ _G.GroupQuestDB = {
     ["700011AA"] = { s = "F", k = "pe", p = "The Gates of Carn Dûm" }, -- 7228
     ["70017B89"] = { s = "S", k = "pe", p = "Mamalsul" }, -- 7254
     ["7000114F"] = { s = "F", k = "pe", p = "The Last Refuge" }, -- 7263
-    ["700256E0"] = { s = "F", k = "open", p = "Bree-land" }, -- 7275
+    ["700256E0"] = { s = "F", k = "inst", p = "Lost Temple" }, -- 7275
     ["7000E374"] = { s = "F", k = "pe", p = "Halla-kolo" }, -- 7297
     ["7002CDBE"] = { s = "F", k = "inst", p = "Roots of Fangorn" }, -- 7327
     ["7001627B"] = { s = "S", k = "pe", p = "The Siege of Barad Morlas" }, -- 7340
@@ -743,7 +748,7 @@ _G.GroupQuestDB = {
     ["7006A1DC"] = { s = "R", k = "inst", p = "Depths of Mâkhda Khorbo" }, -- 7524
     ["7006A1DA"] = { s = "R", k = "inst", p = "Depths of Mâkhda Khorbo" }, -- 7525
     ["7006A1D9"] = { s = "R", k = "inst", p = "Depths of Mâkhda Khorbo" }, -- 7526
-    ["7002BD4E"] = { s = "S", k = "open", p = "Isengard, Dunland" }, -- 7527
+    ["7002BD4E"] = { s = "S", k = "inst", p = "Pits of Isengard" }, -- 7527
     ["70032E40"] = { s = "S", k = "inst", p = "Iorbar's Peak" }, -- 7666
     ["70032E3E"] = { s = "S", k = "inst", p = "Iorbar's Peak" }, -- 7667
     ["70032E3F"] = { s = "S", k = "inst", p = "Iorbar's Peak" }, -- 7668
@@ -753,8 +758,8 @@ _G.GroupQuestDB = {
     ["7000A8D6"] = { s = "F", k = "inst", p = "Annúminas: Glinghant" }, -- 7727
     ["70015E21"] = { s = "S", k = "open", p = "Glâd Ereg, Eregion" }, -- 7734
     ["7002C5AF"] = { s = "S", k = "open", p = "Limlight Gorge, Great River" }, -- 7737
-    ["70017522"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 7753
-    ["7000E8B9"] = { s = "S", k = "open", p = "Esteldín, The Misty Mountains" }, -- 7758
+    ["70017522"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 7753
+    ["7000E8B9"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 7758
     ["70050A0B"] = { s = "F", k = "open", p = "The Withered Heath, The Dwarf-holds" }, -- 7813
     ["70047B43"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 7835
     ["70047B42"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 7836
@@ -784,7 +789,7 @@ _G.GroupQuestDB = {
     ["700516A4"] = { s = "F", k = "inst", p = "Great Barrow: Sambrog" }, -- 7901
     ["700516A0"] = { s = "F", k = "inst", p = "Great Barrow: Thadúr" }, -- 7902
     ["7005169A"] = { s = "F", k = "inst", p = "Great Barrow" }, -- 7903
-    ["70051686"] = { s = "S", k = "open", p = "Angmar" }, -- 7904
+    ["70051686"] = { s = "S", k = "inst", p = "Halls of Night" }, -- 7904
     ["700516A1"] = { s = "R", k = "inst", p = "Helegrod: Dragon Wing" }, -- 7905
     ["70051698"] = { s = "R", k = "inst", p = "Helegrod: Drake Wing" }, -- 7906
     ["7005169F"] = { s = "R", k = "inst", p = "Helegrod: Giant Wing" }, -- 7907
@@ -799,13 +804,13 @@ _G.GroupQuestDB = {
     ["7005340C"] = { s = "S", k = "inst", p = "Pits of Isengard" }, -- 7916
     ["7005340D"] = { s = "R", k = "open", p = "Legendary Isengard" }, -- 7917
     ["70053419"] = { s = "F", k = "inst", p = "Roots of Fangorn" }, -- 7918
-    ["70053414"] = { s = "F", k = "open", p = "Legendary Isengard" }, -- 7920
+    ["70053414"] = { s = "F", k = "inst", p = "The Foundry" }, -- 7920
     ["70053416"] = { s = "R", k = "inst", p = "The Tower of Orthanc" }, -- 7921
     ["700533B6"] = { s = "R", k = "inst", p = "Barad Guldur" }, -- 7922
     ["70053418"] = { s = "R", k = "open", p = "Nan Laeglin, Enedwaith" }, -- 7923
     ["70053412"] = { s = "R", k = "open", p = "Legendary Mirkwood" }, -- 7924
     ["700533DB"] = { s = "R", k = "inst", p = "Dungeons of Dol Guldur" }, -- 7925
-    ["700533CC"] = { s = "R", k = "open", p = "Legendary Mirkwood" }, -- 7926
+    ["700533CC"] = { s = "R", k = "inst", p = "Lost Temple" }, -- 7926
     ["700533CB"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 7927
     ["700533CD"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 7928
     ["700533D2"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 7929
@@ -815,12 +820,12 @@ _G.GroupQuestDB = {
     ["700533D7"] = { s = "R", k = "skirm", p = "Protectors of Thangúlhad" }, -- 7933
     ["700533D9"] = { s = "R", k = "skirm", p = "Strike Against Dannenglor" }, -- 7934
     ["700533DA"] = { s = "R", k = "skirm", p = "The Battle in the Tower" }, -- 7935
-    ["700533E2"] = { s = "R", k = "open", p = "Legendary Mirkwood" }, -- 7936
+    ["700533E2"] = { s = "R", k = "inst", p = "Stoneheight" }, -- 7936
     ["700533E4"] = { s = "R", k = "inst", p = "Sword-hall of Dol Guldur" }, -- 7937
     ["700533D5"] = { s = "R", k = "inst", p = "Sâri-surma" }, -- 7938
     ["700533E1"] = { s = "R", k = "inst", p = "The Northcotton Farm" }, -- 7939
     ["700533D1"] = { s = "R", k = "inst", p = "Warg-pens of Dol Guldur" }, -- 7940
-    ["70052602"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 7941
+    ["70052602"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 7941
     ["700525FC"] = { s = "R", k = "inst", p = "Dâr Narbugud" }, -- 7942
     ["70052606"] = { s = "S", k = "inst", p = "Library at Tham Mírdain" }, -- 7943
     ["70052605"] = { s = "S", k = "inst", p = "School at Tham Mírdain" }, -- 7944
@@ -843,17 +848,17 @@ _G.GroupQuestDB = {
     ["700001AB"] = { s = "F", k = "inst", p = "Carn Dûm" }, -- 8054
     ["70017599"] = { s = "F", k = "inst", p = "The Forges of Khazad-dûm" }, -- 8056
     ["7002248A"] = { s = "F", k = "inst", p = "Annúminas" }, -- 8073
-    ["70047DB5"] = { s = "F", k = "open", p = "The Wastes: The Slag-hills" }, -- 8104
-    ["70047DBC"] = { s = "F", k = "open", p = "The Wastes: The Slag-hills" }, -- 8105
-    ["700490FF"] = { s = "F", k = "open", p = "The Wastes: The Slag-hills" }, -- 8106
-    ["70049100"] = { s = "F", k = "open", p = "The Wastes: The Slag-hills" }, -- 8107
+    ["70047DB5"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 8104
+    ["70047DBC"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 8105
+    ["700490FF"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 8106
+    ["70049100"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 8107
     ["7005CE67"] = { s = "F", k = "inst", p = "Adkhât-zahhar, the Houses of Rest" }, -- 8112
     ["700006C0"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 8120
     ["700001B0"] = { s = "F", k = "inst", p = "Carn Dûm" }, -- 8148
     ["7001900B"] = { s = "F", k = "open", p = "Caras Galadhon, Lothlórien" }, -- 8246
-    ["700196B5"] = { s = "S", k = "inst", p = "Moria" }, -- 8267
-    ["700196B3"] = { s = "S", k = "inst", p = "Moria" }, -- 8268
-    ["700196B4"] = { s = "S", k = "inst", p = "Moria" }, -- 8269
+    ["700196B5"] = { s = "S", k = "inst", p = "The Mirror-halls of Lumul-nar" }, -- 8267
+    ["700196B3"] = { s = "S", k = "inst", p = "The Mirror-halls of Lumul-nar" }, -- 8268
+    ["700196B4"] = { s = "S", k = "inst", p = "The Mirror-halls of Lumul-nar" }, -- 8269
     ["70050215"] = { s = "F", k = "inst", p = "Thikil-gundu" }, -- 8287
     ["70028B7E"] = { s = "R", k = "open", p = "Thrór's Coomb, Enedwaith" }, -- 8325
     ["700509C4"] = { s = "F", k = "inst", p = "Glimmerdeep" }, -- 8360
@@ -861,7 +866,7 @@ _G.GroupQuestDB = {
     ["700173C5"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 8364
     ["7000239A"] = { s = "F", k = "open", p = "Eastern Malenhad, Angmar" }, -- 8365
     ["7000173E"] = { s = "F", k = "open", p = "Dol Dínen, The North Downs" }, -- 8366
-    ["70017530"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 8367
+    ["70017530"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 8367
     ["700082D1"] = { s = "F", k = "open", p = "North Downs" }, -- 8375
     ["7006218A"] = { s = "F", k = "open", p = "Ettenmoors" }, -- 8406
     ["7006460F"] = { s = "F", k = "open", p = "Ettenmoors" }, -- 8407
@@ -869,7 +874,7 @@ _G.GroupQuestDB = {
     ["7004117A"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 8426
     ["700159DD"] = { s = "S", k = "open", p = "Nan Sirannon, Eregion" }, -- 8537
     ["70002CCF"] = { s = "S", k = "open", p = "Ram Dúath, Angmar" }, -- 9094
-    ["7003720F"] = { s = "R", k = "open", p = "Broadacres, Eastfold" }, -- 9115
+    ["7003720F"] = { s = "R", k = "open", p = "Broadacres, Entwash" }, -- 9115
     ["70002DF1"] = { s = "F", k = "open", p = "Giant Valley, The Trollshaws" }, -- 9152
     ["700001AF"] = { s = "F", k = "inst", p = "Urugarth" }, -- 9164
     ["7004117D"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 9168
@@ -877,9 +882,9 @@ _G.GroupQuestDB = {
     ["7000BFC6"] = { s = "R", k = "inst", p = "The Rift of Nûrz Ghâshu" }, -- 9182
     ["700173D0"] = { s = "S", k = "inst", p = "School at Tham Mírdain" }, -- 9184
     ["7000135C"] = { s = "S", k = "open", p = "Imlad Balchorth, Angmar" }, -- 9210
-    ["7001925D"] = { s = "S", k = "inst", p = "Moria" }, -- 9238
-    ["7001925E"] = { s = "S", k = "inst", p = "Moria" }, -- 9239
-    ["7001925C"] = { s = "S", k = "inst", p = "Moria" }, -- 9240
+    ["7001925D"] = { s = "S", k = "inst", p = "The Water Wheels: Nalâ-dûm" }, -- 9238
+    ["7001925E"] = { s = "S", k = "inst", p = "The Water Wheels: Nalâ-dûm" }, -- 9239
+    ["7001925C"] = { s = "S", k = "inst", p = "The Water Wheels: Nalâ-dûm" }, -- 9240
     ["70055926"] = { s = "S", k = "open", p = "Minas Morgul, Imlad Morgul" }, -- 9241
     ["7000A8FA"] = { s = "F", k = "inst", p = "Annúminas" }, -- 9280
     ["70017612"] = { s = "F", k = "open", p = "The Twenty-first Hall, Moria" }, -- 9295
@@ -891,7 +896,7 @@ _G.GroupQuestDB = {
     ["7001C69E"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 9366
     ["7001C69F"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 9370
     ["70007CC3"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 9374
-    ["700173BC"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 9397
+    ["700173BC"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 9397
     ["70000DAD"] = { s = "F", k = "open", p = "Green Hill Country, The Shire" }, -- 9423
     ["700447FA"] = { s = "F", k = "epic", p = "War for Gondor" }, -- 9435
     ["7001AB9E"] = { s = "S", k = "inst", p = "Sword-hall of Dol Guldur" }, -- 9458
@@ -905,7 +910,7 @@ _G.GroupQuestDB = {
     ["7001CD5C"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 9490
     ["7001D01D"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 9491
     ["7001E5E6"] = { s = "F", k = "inst", p = "Garth Agarwen" }, -- 9492
-    ["7000173F"] = { s = "F", k = "open", p = "Dol Dínen, Bree-land" }, -- 9515
+    ["7000173F"] = { s = "F", k = "open", p = "Dol Dínen, The North Downs" }, -- 9515
     ["70009E74"] = { s = "F", k = "open", p = "Glân Vraig, The Ettenmoors" }, -- 9552
     ["7004799D"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 9579
     ["70008B8C"] = { s = "R", k = "inst", p = "Helegrod" }, -- 9659
@@ -913,7 +918,7 @@ _G.GroupQuestDB = {
     ["7000AE1A"] = { s = "S", k = "open", p = "Tol Ascarnen, The Ettenmoors" }, -- 9668
     ["70017535"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 9681
     ["70015E2E"] = { s = "S", k = "open", p = "Glâd Ereg, Eregion" }, -- 9686
-    ["7000E8B5"] = { s = "S", k = "open", p = "Bree, The North Downs" }, -- 9706
+    ["7000E8B5"] = { s = "S", k = "open", p = "Bree, Bree-land" }, -- 9706
     ["7002CB80"] = { s = "F", k = "open", p = "Limlight Gorge, Great River" }, -- 9715
     ["7002CB7E"] = { s = "S", k = "open", p = "Limlight Gorge, Great River" }, -- 9716
     ["7002CB7C"] = { s = "S", k = "open", p = "Limlight Gorge, Great River" }, -- 9717
@@ -923,7 +928,7 @@ _G.GroupQuestDB = {
     ["70000D4B"] = { s = "F", k = "open", p = "Greenfields, The Shire" }, -- 9860
     ["7002BD4D"] = { s = "S", k = "open", p = "Rise of Isengard" }, -- 9884
     ["70029FC1"] = { s = "R", k = "skirm", p = "Protectors of Thangúlhad" }, -- 9899
-    ["70041172"] = { s = "F", k = "open", p = "Western Gondor: Tarlang's Crown" }, -- 9926
+    ["70041172"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 9926
     ["700007B6"] = { s = "F", k = "inst", p = "Great Barrow" }, -- 9930
     ["700173A8"] = { s = "S", k = "open", p = "Mirobel, Eregion" }, -- 9931
     ["7000135E"] = { s = "F", k = "open", p = "Imlad Balchorth, Angmar" }, -- 9934
@@ -983,9 +988,9 @@ _G.GroupQuestDB = {
     ["700173B2"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 10254
     ["7001A63D"] = { s = "S", k = "open", p = "The Drownholt, Mirkwood" }, -- 10258
     ["70029FC7"] = { s = "R", k = "skirm", p = "Rescue in Nûrz Ghâshu" }, -- 10293
-    ["7000E8BA"] = { s = "F", k = "open", p = "Bree, The Lone-lands" }, -- 10342
+    ["7000E8BA"] = { s = "F", k = "open", p = "Bree, Bree-land" }, -- 10342
     ["700006BF"] = { s = "S", k = "open", p = "Agamaur, The Lone-lands" }, -- 10384
-    ["70017525"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 10387
+    ["70017525"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 10387
     ["700006E9"] = { s = "F", k = "inst", p = "Garth Agarwen" }, -- 10425
     ["7000AE1B"] = { s = "F", k = "open", p = "Tol Ascarnen, The Ettenmoors" }, -- 10453
     ["70072F8B"] = { s = "S", k = "open", p = "Downs of Farad Shóta, Adagím, the Moulder-wood" }, -- 10471
@@ -993,7 +998,7 @@ _G.GroupQuestDB = {
     ["70041C81"] = { s = "F", k = "open", p = "Lower Lebennin, Lebennin" }, -- 10496
     ["70072B84"] = { s = "F", k = "open", p = "Downs of Farad Shóta, Adagím, the Moulder-wood" }, -- 10497
     ["7004288E"] = { s = "F", k = "open", p = "Dol Amroth, Belfalas & Dor-en-Ernil" }, -- 10498
-    ["70041C6E"] = { s = "S", k = "open", p = "Dor-en-Ernil, Belfalas & Dor-en-Ernil" }, -- 10499
+    ["70041C6E"] = { s = "S", k = "open", p = "Dor-en-Ernil" }, -- 10499
     ["7004288D"] = { s = "S", k = "open", p = "Aughaire, Angmar" }, -- 10500
     ["700715A5"] = { s = "F", k = "open", p = "The Gated Vale of Zajâna, Kighân, the Shornvale" }, -- 10501
     ["700473A0"] = { s = "F", k = "open", p = "The Noman-lands, The Wastes" }, -- 10502
@@ -1010,7 +1015,7 @@ _G.GroupQuestDB = {
     ["7004288B"] = { s = "S", k = "open", p = "Dol Amroth, Belfalas & Dor-en-Ernil" }, -- 10513
     ["70043C24"] = { s = "S", k = "open", p = "Emyn Lûm, Mirkwood" }, -- 10514
     ["7004288F"] = { s = "S", k = "open", p = "Bruinen Source West, The Misty Mountains" }, -- 10515
-    ["70041C70"] = { s = "S", k = "open", p = "Dor-en-Ernil, Belfalas & Dor-en-Ernil" }, -- 10516
+    ["70041C70"] = { s = "S", k = "open", p = "Dor-en-Ernil" }, -- 10516
     ["70042F74"] = { s = "R", k = "open", p = "South Ithilien, Eastern Gondor" }, -- 10517
     ["7004288C"] = { s = "S", k = "open", p = "Aughaire, Angmar" }, -- 10518
     ["70042893"] = { s = "S", k = "open", p = "Bruinen Source West, The Misty Mountains" }, -- 10519
@@ -1021,7 +1026,7 @@ _G.GroupQuestDB = {
     ["70042891"] = { s = "F", k = "open", p = "Dol Amroth, Belfalas & Dor-en-Ernil" }, -- 10524
     ["70042884"] = { s = "S", k = "open", p = "Jä-rannit, Forochel" }, -- 10525
     ["70041C7F"] = { s = "F", k = "open", p = "Lower Lebennin, Lebennin" }, -- 10526
-    ["70041C6C"] = { s = "F", k = "open", p = "Dor-en-Ernil, Belfalas & Dor-en-Ernil" }, -- 10527
+    ["70041C6C"] = { s = "F", k = "open", p = "Dor-en-Ernil" }, -- 10527
     ["70043C2A"] = { s = "F", k = "open", p = "Esteldín, The North Downs" }, -- 10528
     ["70041AF1"] = { s = "S", k = "open", p = "Ringló Vale" }, -- 10529
     ["70042888"] = { s = "S", k = "open", p = "Aughaire, Angmar" }, -- 10530
@@ -1037,7 +1042,7 @@ _G.GroupQuestDB = {
     ["70043C23"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 10540
     ["70042886"] = { s = "F", k = "open", p = "Aughaire, Angmar" }, -- 10541
     ["70043C27"] = { s = "F", k = "open", p = "Emyn Lûm, Mirkwood" }, -- 10542
-    ["70017582"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 10591
+    ["70017582"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 10591
     ["70022B49"] = { s = "F", k = "inst", p = "Great Barrow: Sambrog" }, -- 10617
     ["70008B80"] = { s = "R", k = "open", p = "Rivendell Valley, The Trollshaws" }, -- 10651
     ["700011F7"] = { s = "S", k = "open", p = "Eastern Malenhad, Angmar" }, -- 10661
@@ -1072,7 +1077,7 @@ _G.GroupQuestDB = {
     ["70047457"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 11066
     ["7004745C"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 11067
     ["70047459"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 11069
-    ["700173B8"] = { s = "F", k = "open", p = "Silvertine Lodes, Moria" }, -- 11073
+    ["700173B8"] = { s = "F", k = "inst", p = "The Forgotten Treasury" }, -- 11073
     ["70017514"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 11074
     ["70017515"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 11075
     ["70017521"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 11076
@@ -1114,17 +1119,17 @@ _G.GroupQuestDB = {
     ["7004103B"] = { s = "F", k = "open", p = "Dol Amroth, Belfalas & Dor-en-Ernil" }, -- 11569
     ["70041032"] = { s = "F", k = "open", p = "Dol Amroth, Belfalas & Dor-en-Ernil" }, -- 11570
     ["7004103D"] = { s = "F", k = "open", p = "Dol Amroth, Belfalas & Dor-en-Ernil" }, -- 11571
-    ["7001ABA0"] = { s = "S", k = "inst", p = "Dol Guldur" }, -- 11583
+    ["7001ABA0"] = { s = "S", k = "inst", p = "Warg-pens of Dol Guldur" }, -- 11583
     ["7001F4B0"] = { s = "F", k = "inst", p = "Garth Agarwen" }, -- 11591
-    ["7006E117"] = { s = "R", k = "open", p = "Sûr Akil, Urash Dâr" }, -- 11592
-    ["7006E119"] = { s = "R", k = "open", p = "Sûr Akil, Urash Dâr" }, -- 11593
-    ["7006E118"] = { s = "R", k = "open", p = "Sûr Akil, Urash Dâr" }, -- 11594
-    ["7006DD43"] = { s = "R", k = "open", p = "Ikorbân Valley" }, -- 11595
-    ["7006DD47"] = { s = "R", k = "open", p = "Ikorbân Valley" }, -- 11596
-    ["7006DD48"] = { s = "R", k = "open", p = "Ikorbân Valley" }, -- 11597
-    ["7006E01A"] = { s = "R", k = "open", p = "Ikorbân Valley" }, -- 11598
-    ["7006E01B"] = { s = "R", k = "open", p = "Ikorbân Valley" }, -- 11599
-    ["7006E01C"] = { s = "R", k = "open", p = "Ikorbân Valley" }, -- 11600
+    ["7006E117"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 1 - Dhórgruth" }, -- 11592
+    ["7006E119"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 1 - Dhórgruth" }, -- 11593
+    ["7006E118"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 1 - Dhórgruth" }, -- 11594
+    ["7006DD43"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 3 - Inner Sanctum" }, -- 11595
+    ["7006DD47"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 3 - Inner Sanctum" }, -- 11596
+    ["7006DD48"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 3 - Inner Sanctum" }, -- 11597
+    ["7006E01A"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 2 - Thûr Hin" }, -- 11598
+    ["7006E01B"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 2 - Thûr Hin" }, -- 11599
+    ["7006E01C"] = { s = "R", k = "inst", p = "The Temple of Utug-bûr 2 - Thûr Hin" }, -- 11600
     ["7006AACA"] = { s = "S", k = "open", p = "Dil-irmíz, The Berths, Umbar-môkh" }, -- 11614
     ["7000A209"] = { s = "F", k = "open", p = "Parth Aduial, Evendim" }, -- 11616
     ["70022B31"] = { s = "F", k = "inst", p = "Great Barrow: Thadúr" }, -- 11626
@@ -1148,14 +1153,14 @@ _G.GroupQuestDB = {
     ["70033C7A"] = { s = "F", k = "inst", p = "The Bells of Dale" }, -- 11759
     ["70022743"] = { s = "S", k = "open", p = "Thrór's Coomb, Enedwaith" }, -- 11765
     ["700544D5"] = { s = "S", k = "open", p = "Parth Daenath, Mordor Besieged" }, -- 11773
-    ["700173AF"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 11779
+    ["700173AF"] = { s = "F", k = "inst", p = "The Forges of Khazad-dûm" }, -- 11779
     ["700084CA"] = { s = "S", k = "open", p = "Western Malenhad, Angmar" }, -- 11789
     ["700084CE"] = { s = "S", k = "open", p = "Western Malenhad, Angmar" }, -- 11791
     ["70058520"] = { s = "R", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 11795
     ["7001EE03"] = { s = "F", k = "inst", p = "Sammath Gûl" }, -- 11829
     ["7002272B"] = { s = "S", k = "open", p = "Thrór's Coomb, Enedwaith" }, -- 11846
     ["7000135A"] = { s = "F", k = "open", p = "Imlad Balchorth, Angmar" }, -- 11858
-    ["700001FA"] = { s = "F", k = "open", p = "Rivendell Valley, Angmar" }, -- 11862
+    ["700001FA"] = { s = "F", k = "open", p = "Rivendell Valley, The Trollshaws" }, -- 11862
     ["70022745"] = { s = "S", k = "open", p = "Thrór's Coomb, Enedwaith" }, -- 11895
     ["7004C034"] = { s = "F", k = "inst", p = "The Court of Seregost" }, -- 11918
     ["7004C033"] = { s = "F", k = "inst", p = "The Court of Seregost" }, -- 11919
@@ -1168,7 +1173,7 @@ _G.GroupQuestDB = {
     ["700173BE"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 11985
     ["700442C8"] = { s = "S", k = "epic", p = "War for Gondor" }, -- 12000
     ["7000E8BB"] = { s = "F", k = "open", p = "Esteldín, The North Downs" }, -- 12001
-    ["70018182"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 12002
+    ["70018182"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 12002
     ["7002C913"] = { s = "S", k = "open", p = "Wailing Hills, Great River" }, -- 12003
     ["7003E2AB"] = { s = "F", k = "open", p = "Nan Wathren, The North Downs" }, -- 12004
     ["70053550"] = { s = "F", k = "inst", p = "The Depths of Kidzul-kâlah" }, -- 12017
@@ -1177,8 +1182,8 @@ _G.GroupQuestDB = {
     ["7006A14F"] = { s = "R", k = "inst", p = "Depths of Mâkhda Khorbo" }, -- 12024
     ["7006A14E"] = { s = "R", k = "inst", p = "Depths of Mâkhda Khorbo" }, -- 12025
     ["7006A14D"] = { s = "R", k = "inst", p = "Depths of Mâkhda Khorbo" }, -- 12026
-    ["70043534"] = { s = "F", k = "open", p = "Ashes and Stars" }, -- 12036
-    ["70043536"] = { s = "F", k = "open", p = "Ashes and Stars" }, -- 12037
+    ["70043534"] = { s = "F", k = "inst", p = "The Dome of Stars" }, -- 12036
+    ["70043536"] = { s = "F", k = "inst", p = "The Dome of Stars" }, -- 12037
     ["7000A8F6"] = { s = "F", k = "inst", p = "Annúminas" }, -- 12040
     ["70002D07"] = { s = "F", k = "open", p = "Angmar" }, -- 12049
     ["700001A1"] = { s = "F", k = "inst", p = "Urugarth" }, -- 12050
@@ -1205,7 +1210,7 @@ _G.GroupQuestDB = {
     ["70033C8D"] = { s = "R", k = "inst", p = "The Fires of Smaug" }, -- 12192
     ["70033CA0"] = { s = "R", k = "inst", p = "The Fires of Smaug" }, -- 12193
     ["70033CA1"] = { s = "R", k = "inst", p = "The Fires of Smaug" }, -- 12194
-    ["7000E8B8"] = { s = "S", k = "open", p = "Esteldín, The Misty Mountains" }, -- 12211
+    ["7000E8B8"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 12211
     ["700173C4"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 12217
     ["70070B02"] = { s = "R", k = "inst", p = "The Folly of Nagakhêdi" }, -- 12224
     ["70070B00"] = { s = "R", k = "inst", p = "The Folly of Nagakhêdi" }, -- 12225
@@ -1214,8 +1219,8 @@ _G.GroupQuestDB = {
     ["700173B7"] = { s = "F", k = "inst", p = "The Forgotten Treasury" }, -- 12242
     ["700173B6"] = { s = "F", k = "inst", p = "The Forgotten Treasury" }, -- 12243
     ["700544DA"] = { s = "S", k = "open", p = "Emyn Duir, Mordor Besieged" }, -- 12246
-    ["7002B8F9"] = { s = "F", k = "inst", p = "Isengard" }, -- 12253
-    ["7002BC54"] = { s = "F", k = "inst", p = "Isengard" }, -- 12254
+    ["7002B8F9"] = { s = "F", k = "inst", p = "The Foundry" }, -- 12253
+    ["7002BC54"] = { s = "F", k = "inst", p = "The Foundry" }, -- 12254
     ["70017536"] = { s = "F", k = "inst", p = "The Sixteenth Hall" }, -- 12272
     ["7003EAFD"] = { s = "F", k = "open", p = "Trollshaws" }, -- 12298
     ["700544D8"] = { s = "S", k = "open", p = "Parth Daenath, Mordor Besieged" }, -- 12306
@@ -1229,7 +1234,7 @@ _G.GroupQuestDB = {
     ["7000E8B6"] = { s = "S", k = "open", p = "Esteldín, The North Downs" }, -- 12338
     ["700544D3"] = { s = "S", k = "open", p = "Arandor, Mordor Besieged" }, -- 12345
     ["700559A4"] = { s = "S", k = "open", p = "Minas Morgul, Imlad Morgul" }, -- 12351
-    ["70042EAF"] = { s = "S", k = "open", p = "Eastern Gondor: South Ithilien" }, -- 12364
+    ["70042EAF"] = { s = "S", k = "open", p = "South Ithilien, Eastern Gondor" }, -- 12364
     ["70054F5A"] = { s = "S", k = "inst", p = "The Harrowing of Morgul" }, -- 12370
     ["70054F55"] = { s = "S", k = "inst", p = "The Harrowing of Morgul" }, -- 12371
     ["70054F52"] = { s = "S", k = "inst", p = "The Harrowing of Morgul" }, -- 12372
@@ -1264,11 +1269,11 @@ _G.GroupQuestDB = {
     ["7003E2AE"] = { s = "S", k = "open", p = "Greenway, The North Downs" }, -- 12745
     ["7003EE80"] = { s = "F", k = "open", p = "Nan Wathren, The North Downs" }, -- 12746
     ["70002C69"] = { s = "F", k = "open", p = "Trestlebridge, The North Downs" }, -- 12764
-    ["7001817F"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 12770
-    ["7001818B"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 12771
-    ["70018185"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 12772
-    ["7001818E"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 12773
-    ["70018190"] = { s = "F", k = "open", p = "Nud-melek, Moria" }, -- 12774
+    ["7001817F"] = { s = "F", k = "inst", p = "The Forges of Khazad-dûm" }, -- 12770
+    ["7001818B"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 12771
+    ["70018185"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 12772
+    ["7001818E"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 12773
+    ["70018190"] = { s = "F", k = "inst", p = "The Sixteenth Hall" }, -- 12774
     ["70018194"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 12775
     ["7004DD81"] = { s = "R", k = "open", p = "Farmers Faire" }, -- 12785
     ["700290BE"] = { s = "F", k = "open", p = "Starkmoor, Dunland" }, -- 12794
@@ -1282,15 +1287,15 @@ _G.GroupQuestDB = {
     ["70045B8F"] = { s = "S", k = "open", p = "Beacon Hills, Anórien" }, -- 12840
     ["70049FF1"] = { s = "F", k = "open", p = "Nain Enidh, The Lone-lands" }, -- 12854
     ["700173C8"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 12881
-    ["7002BD51"] = { s = "F", k = "open", p = "Isengard, Dunland" }, -- 12885
+    ["7002BD51"] = { s = "F", k = "inst", p = "The Foundry" }, -- 12885
     ["7002BD4F"] = { s = "R", k = "open", p = "Rise of Isengard" }, -- 12886
     ["7000A11A"] = { s = "S", k = "open", p = "Parth Aduial, Evendim" }, -- 12903
     ["7000F0BE"] = { s = "S", k = "open", p = "Länsi-mâ, Forochel" }, -- 12907
     ["7002CE2E"] = { s = "F", k = "inst", p = "Roots of Fangorn" }, -- 12909
-    ["7004356A"] = { s = "S", k = "open", p = "Eastern Gondor: Osgiliath" }, -- 12920
-    ["70043568"] = { s = "S", k = "open", p = "Eastern Gondor: Osgiliath" }, -- 12921
+    ["7004356A"] = { s = "S", k = "inst", p = "The Ruined City" }, -- 12920
+    ["70043568"] = { s = "S", k = "inst", p = "The Ruined City" }, -- 12921
     ["70041182"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 12938
-    ["7001752A"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 12969
+    ["7001752A"] = { s = "F", k = "inst", p = "The Sixteenth Hall" }, -- 12969
     ["700176CD"] = { s = "S", k = "open", p = "The Twenty-first Hall, Moria" }, -- 12978
     ["7000D779"] = { s = "S", k = "pe", p = "Krúslë Lannan" }, -- 12992
     ["7000D787"] = { s = "S", k = "open", p = "Gorothlad, Angmar" }, -- 12993
@@ -1321,10 +1326,10 @@ _G.GroupQuestDB = {
     ["700085E9"] = { s = "F", k = "open", p = "Gorothlad, Angmar" }, -- 13143
     ["700085EB"] = { s = "F", k = "open", p = "Gorothlad, Angmar" }, -- 13144
     ["700085EA"] = { s = "F", k = "open", p = "Gorothlad, Angmar" }, -- 13145
-    ["7001752C"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 13185
+    ["7001752C"] = { s = "F", k = "inst", p = "Dark Delvings" }, -- 13185
     ["700097E3"] = { s = "F", k = "open", p = "Parth Aduial, Evendim" }, -- 13199
     ["7001EE04"] = { s = "F", k = "inst", p = "Dol Guldur" }, -- 13208
-    ["70025A19"] = { s = "S", k = "open", p = "In Their Absence" }, -- 13210
+    ["70025A19"] = { s = "S", k = "inst", p = "Stoneheight" }, -- 13210
     ["70051F7D"] = { s = "F", k = "open", p = "Helegrod, The Misty Mountains" }, -- 13218
     ["70008283"] = { s = "F", k = "open", p = "Taur Gonwaith, The North Downs" }, -- 13227
     ["7000E8BC"] = { s = "F", k = "open", p = "Esteldín, The North Downs" }, -- 13242
@@ -1335,8 +1340,8 @@ _G.GroupQuestDB = {
     ["7003EE86"] = { s = "F", k = "open", p = "Nan Wathren, The North Downs" }, -- 13298
     ["700173C1"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 13300
     ["7003E2AD"] = { s = "S", k = "open", p = "North Downs" }, -- 13301
-    ["7001AB9D"] = { s = "S", k = "inst", p = "Dol Guldur" }, -- 13303
-    ["70018196"] = { s = "F", k = "open", p = "The Foundations of Stone, Moria" }, -- 13308
+    ["7001AB9D"] = { s = "S", k = "inst", p = "Sword-hall of Dol Guldur" }, -- 13303
+    ["70018196"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 13308
     ["70019212"] = { s = "S", k = "inst", p = "The Water Wheels: Nalâ-dûm" }, -- 13309
     ["7000EABB"] = { s = "S", k = "open", p = "Jä-rannit, Forochel" }, -- 13318
     ["700544D9"] = { s = "F", k = "open", p = "Emyn Duir, Mordor Besieged" }, -- 13363
@@ -1390,17 +1395,17 @@ _G.GroupQuestDB = {
     ["70000628"] = { s = "F", k = "inst", p = "Garth Agarwen" }, -- 14206
     ["70007F4A"] = { s = "S", k = "open", p = "Vale of Thrain, Ered Luin" }, -- 14222
     ["7001CC82"] = { s = "S", k = "open", p = "Emyn Lûm, Mirkwood" }, -- 14242
-    ["7001CC83"] = { s = "S", k = "open", p = "Egladil, Mirkwood" }, -- 14243
-    ["7001CC6F"] = { s = "F", k = "open", p = "The Twenty-first Hall, Mirkwood" }, -- 14245
+    ["7001CC83"] = { s = "S", k = "open", p = "Egladil, Lothlórien" }, -- 14243
+    ["7001CC6F"] = { s = "F", k = "inst", p = "Sammath Gûl" }, -- 14245
     ["7001CC5E"] = { s = "S", k = "open", p = "Gathbúrz, Mirkwood" }, -- 14249
     ["7004799A"] = { s = "F", k = "open", p = "The Slag-hills, The Wastes" }, -- 14258
-    ["700173C7"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 14289
+    ["700173C7"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 14289
     ["70035A75"] = { s = "S", k = "open", p = "Forlaw, Wildermore" }, -- 14297
     ["70035A80"] = { s = "S", k = "open", p = "Forlaw, Wildermore" }, -- 14298
     ["70035A7C"] = { s = "R", k = "open", p = "Forlaw, Wildermore" }, -- 14299
-    ["70035A78"] = { s = "R", k = "open", p = "Forlaw, Fangorn" }, -- 14303
+    ["70035A78"] = { s = "R", k = "open", p = "Forlaw, Wildermore" }, -- 14303
     ["70035A77"] = { s = "R", k = "open", p = "Forlaw, Wildermore" }, -- 14304
-    ["70035A79"] = { s = "S", k = "open", p = "Forlaw, Fangorn" }, -- 14307
+    ["70035A79"] = { s = "S", k = "open", p = "Forlaw, Wildermore" }, -- 14307
     ["70035A7F"] = { s = "F", k = "open", p = "Forlaw, Wildermore" }, -- 14308
     ["70035A76"] = { s = "F", k = "open", p = "Forlaw, Wildermore" }, -- 14309
     ["700350B1"] = { s = "S", k = "open", p = "The Fallows, Wildermore" }, -- 14311
@@ -1423,9 +1428,9 @@ _G.GroupQuestDB = {
     ["7003A6EC"] = { s = "F", k = "open", p = "Kingstead, Eastfold" }, -- 14336
     ["70042EAD"] = { s = "F", k = "open", p = "South Ithilien, Eastern Gondor" }, -- 14337
     ["70030F83"] = { s = "S", k = "open", p = "Norcrofts, Croftlands" }, -- 14339
-    ["70041359"] = { s = "S", k = "open", p = "Dor-en-Ernil, Belfalas & Dor-en-Ernil" }, -- 14340
+    ["70041359"] = { s = "S", k = "open", p = "Dor-en-Ernil" }, -- 14340
     ["7003FDBE"] = { s = "F", k = "open", p = "Blackroot Vale, Western Gondor" }, -- 14342
-    ["70041360"] = { s = "F", k = "open", p = "Dor-en-Ernil, Belfalas & Dor-en-Ernil" }, -- 14343
+    ["70041360"] = { s = "F", k = "open", p = "Dor-en-Ernil" }, -- 14343
     ["7004529F"] = { s = "S", k = "open", p = "Beacon Hills, Anórien" }, -- 14345
     ["70043220"] = { s = "S", k = "open", p = "Upper Lebennin, Lebennin" }, -- 14347
     ["700466E5"] = { s = "S", k = "open", p = "North Ithilien, Ithilien" }, -- 14348
@@ -1450,7 +1455,7 @@ _G.GroupQuestDB = {
     ["700350B3"] = { s = "R", k = "open", p = "The Fallows, Wildermore" }, -- 14370
     ["7004423D"] = { s = "S", k = "open", p = "Pelennor, Old Anórien" }, -- 14371
     ["70041AB5"] = { s = "S", k = "open", p = "Lower Lebennin, Lebennin" }, -- 14372
-    ["7004135A"] = { s = "F", k = "open", p = "Dor-en-Ernil, Belfalas & Dor-en-Ernil" }, -- 14373
+    ["7004135A"] = { s = "F", k = "open", p = "Dor-en-Ernil" }, -- 14373
     ["700413BB"] = { s = "S", k = "open", p = "Ringló Vale" }, -- 14375
     ["70040B6A"] = { s = "S", k = "open", p = "The Havens of Belfalas, Belfalas & Dor-en-Ernil" }, -- 14376
     ["70042EAE"] = { s = "R", k = "open", p = "South Ithilien, Eastern Gondor" }, -- 14380
@@ -1474,7 +1479,7 @@ _G.GroupQuestDB = {
     ["70032BD5"] = { s = "F", k = "inst", p = "Webs of the Scuttledells" }, -- 14499
     ["70032BD6"] = { s = "F", k = "inst", p = "Webs of the Scuttledells" }, -- 14500
     ["70072E0F"] = { s = "F", k = "open", p = "Khadakh Lûr, Kighân, the Shornvale" }, -- 14512
-    ["70072E15"] = { s = "F", k = "open", p = "The Dry-whelm, Idagâl, the Dry-whelm" }, -- 14513
+    ["70072E15"] = { s = "F", k = "open", p = "Idagâl, the Dry-whelm" }, -- 14513
     ["70072E0E"] = { s = "F", k = "open", p = "The Drenchmead, Adagím, the Moulder-wood" }, -- 14514
     ["70072E16"] = { s = "F", k = "open", p = "Uhumêlu, An Shêru, the Height of the Sky" }, -- 14515
     ["70041177"] = { s = "F", k = "open", p = "Tarlang's Crown, Western Gondor" }, -- 14566

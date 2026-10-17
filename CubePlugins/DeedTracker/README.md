@@ -2,6 +2,8 @@
 
 # 🏆 Deed Tracker (versión en español)
 
+Documentación revisada el **17 de octubre de 2026**. [Ver el catálogo de funciones, conexiones e instalación limpia](../../GUIA_COMPLETA.md).
+
 Seguimiento de **hazañas** para **The Lord of the Rings Online**, con la base de datos de hazañas **en español**.
 
 Es una **versión en español del addon original Deed Tracker de Cube** (v3.3.0, traducción de la interfaz de Heisenchad), con añadidos de esta colección: la página **«Por zona»** y la **conexión con el Mapa del Mundo**. Todo el mérito del addon original es de su autor (ver [Créditos](#requisitos-limitaciones-y-créditos)).

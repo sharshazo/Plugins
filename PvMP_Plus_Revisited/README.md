@@ -2,6 +2,8 @@
 
 # PvMP+ Revisited
 
+Documentación revisada el **17 de octubre de 2026**. [Ver el catálogo de funciones, conexiones e instalación limpia](../GUIA_COMPLETA.md).
+
 **Seguimiento completo de tu progreso en JcJ (PvMP) en las Landas de Etten**, en español o inglés. Incluye avisos de asedio compartidos, pedido de ayuda con tu posición en el mapa, temporizador del jefe Gaergoth y un aspecto moderno con auras y llamas animadas.
 
 Está basado en **PvMP+ 4.3.2 de Urundus**: conserva todas sus funciones originales y añade traducción al español, corrección de errores y las funciones nuevas descritas abajo.
