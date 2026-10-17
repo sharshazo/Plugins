@@ -81,18 +81,18 @@ Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landa
 
 ## Descarga por separado
 
-¿Solo quieres un addon? Descarga su ZIP o RAR. **Cada ZIP o RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
+¿Solo quieres un addon? Descarga su RAR actualizado del **17 de octubre de 2026**. **Cada RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
 
 | Addon | Descarga |
 |---|---|
-| ✨ LUI | [⬇️ LUI.zip](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.zip) · [⬇️ LUI.rar](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.rar) |
-| 📖 QuestSync | [⬇️ QuestSync.zip](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.zip) · [⬇️ QuestSync.rar](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.rar) |
-| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.zip](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.zip) · [⬇️ MapaDelMundo.rar](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.rar) |
-| 🏆 Deed Tracker | [⬇️ DeedTracker.zip](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.zip) · [⬇️ DeedTracker.rar](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.rar) |
-| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.zip](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.zip) · [⬇️ PvMP_Plus.rar](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.rar) |
-| 📦 Todos juntos | [⬇️ Todos_los_addons.zip](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.zip) · [⬇️ Todos_los_addons.rar](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.rar) |
+| ✨ LUI | [⬇️ LUI.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/LUI.rar) |
+| 📖 QuestSync | [⬇️ QuestSync.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/QuestSync.rar) |
+| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/MapaDelMundo.rar) |
+| 🏆 Deed Tracker | [⬇️ DeedTracker.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/DeedTracker.rar) |
+| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/PvMP_Plus.rar) |
+| 📦 Todos juntos | [⬇️ Todos_los_addons.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/Todos_los_addons.rar) |
 
-Abre el ZIP y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Para actualizar sin conservar archivos retirados, reemplaza primero la carpeta anterior del addon con el juego cerrado; conserva PluginData y otros addons. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
+Abre el RAR y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Para actualizar sin conservar archivos retirados, reemplaza primero la carpeta anterior del addon con el juego cerrado; conserva PluginData y otros addons. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
 
 Todas las versiones: [página de Releases](https://github.com/sharshazo/Plugins/releases).
 
@@ -100,7 +100,7 @@ Todas las versiones: [página de Releases](https://github.com/sharshazo/Plugins/
 
 ## Instalación rápida
 
-1. Botón verde **Code → Download ZIP** (o el ZIP de un solo addon, arriba).
+1. Botón verde **Code → Download ZIP** (o el RAR de un solo addon, arriba).
 2. Abre el ZIP. Dentro hay una sola carpeta (`Plugins-main`). Entra en ella.
 3. Copia las **6 carpetas** que hay dentro (`LOTRO_Quest_Assistant`, `LUI`, `WorldMap_Addon`, `Turbine`, `CubePlugins`, `PvMP_Plus_Revisited`) y pégalas en:
 
