@@ -165,8 +165,8 @@ local function CollectQuestNarrationParts(ndx, quest, title)
 		return s == title or s == quest.nameEN
 	end
 
-	local loc = _G.QuestLocES and _G.QuestLocES[ndx]
-	local obj = loc and type(loc) == "table" and loc.objectivesES
+	-- (2026-10-17) lista completa, con dialogos (se carga al narrar)
+	local obj = QuestLocResolver.GetFullObjectives(ndx)
 	if obj and type(obj) == "table" then
 		for i = 1, #obj do
 			if obj[i] and obj[i] ~= "" and not isDuplicateTitle(obj[i]) then
@@ -358,14 +358,21 @@ if not _G.LQA_ChatHookWatcher then
 			return
 		end
 		local current = Turbine.Chat.Received
+		-- (2026-10-17) si otro addon envolvio a un dispatcher anterior, el de
+		-- adentro no vuelve a repartir: cada oyente recibe el mensaje UNA vez
 		local dispatcher = function(sender, args)
+			local outer = _G.LQA_ChatInDispatch ~= true
+			_G.LQA_ChatInDispatch = true
 			if type(current) == "function" then
 				pcall(current, sender, args)
 			elseif type(current) == "table" then
 				for _, fn in ipairs(current) do pcall(fn, sender, args) end
 			end
-			for _, listener in pairs(_G.LQA_ChatListeners) do
-				pcall(listener, sender, args)
+			if outer then
+				for _, listener in pairs(_G.LQA_ChatListeners) do
+					pcall(listener, sender, args)
+				end
+				_G.LQA_ChatInDispatch = nil
 			end
 		end
 		Turbine.Chat.Received = dispatcher

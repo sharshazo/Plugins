@@ -52,6 +52,23 @@ local VIEW_BG_HEX = "#141005"
 local BAR_H = 26 -- barra de arriba: volver, < mapa (1/7) >, ayuda
 local FX_FRAMES = 12
 local FX_FPS = 8
+-- (v3.18) rutas de cuadros de animacion armadas una sola vez: antes cada
+-- cambio de cuadro de cada icono armaba un texto nuevo (basura constante con
+-- el mapa de zona abierto)
+local FRAME_IMG = {}
+local function FrameImg(prefix, f)
+    local t = FRAME_IMG[prefix]
+    if t == nil then
+        t = {}
+        FRAME_IMG[prefix] = t
+    end
+    local p = t[f]
+    if p == nil then
+        p = RES .. prefix .. tostring(f) .. ".tga"
+        t[f] = p
+    end
+    return p
+end
 local TIP_W = 300
 local TIP_PAD = 10
 local TIP_TITLE_H = 20
@@ -1629,11 +1646,8 @@ function ZV:_refreshQuestArrows()
 end
 
 -- la flecha sube y baja suave (cada cuadro) y su aura cambia de cuadro
-function ZV:_animateQuestArrows(now)
-    if self.qarrowBroken == true then
-        return
-    end
-    local ok = pcall(function()
+-- (v3.18: el cuerpo es una funcion fija, sin crear una nueva en cada cuadro)
+local function AnimateQuestArrowsBody(self, now)
         if self.qarrowAt == nil or now - self.qarrowAt >= QARROW_REFRESH then
             self:_refreshQuestArrows()
         end
@@ -1649,7 +1663,7 @@ function ZV:_animateQuestArrows(now)
                 local f = ((tick + item.phase) % FX_FRAMES) + 1
                 if f ~= item.qframe then
                     item.qframe = f
-                    item.qaura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
+                    item.qaura:SetBackground(FrameImg(QARROW.aura, f))
                 end
             end
         end
@@ -1663,15 +1677,21 @@ function ZV:_animateQuestArrows(now)
                     local f = ((tick + item.phase) % FX_FRAMES) + 1
                     if f ~= item.qframe then
                         item.qframe = f
-                        item.qaura:SetBackground(RES .. QARROW.aura .. tostring(f) .. ".tga")
+                        item.qaura:SetBackground(FrameImg(QARROW.aura, f))
                         if item.qring ~= nil then
-                            item.qring:SetBackground(RES .. "fl_qaura_" .. tostring(f) .. ".tga")
+                            item.qring:SetBackground(FrameImg("fl_qaura_", f))
                         end
                     end
                 end
             end
         end
-    end)
+end
+
+function ZV:_animateQuestArrows(now)
+    if self.qarrowBroken == true then
+        return
+    end
+    local ok = pcall(AnimateQuestArrowsBody, self, now)
     if not ok then
         self.qarrowBroken = true
     end
@@ -1813,17 +1833,7 @@ end
 -- ---------------------------------------------------------------------
 -- Auras (solo las de los iconos que se ven en el viewport)
 -- ---------------------------------------------------------------------
-function ZV:_animate()
-    local fx = self.fx
-    if fx.broken == true then
-        return
-    end
-    local now = Turbine.Engine.GetGameTime()
-    if now - fx.last < (1 / FX_FPS) then
-        return
-    end
-    fx.last = now
-    local ok = pcall(function()
+local function AnimateBody(self, now)
         local tick = math.floor(now * FX_FPS)
         local vw, vh = self.viewport:GetSize()
         local x0, y0 = -self.panX - 60, -self.panY - 60
@@ -1836,7 +1846,7 @@ function ZV:_animate()
                     local f = ((tick + item.phase) % FX_FRAMES) + 1
                     if f ~= item.frame then
                         item.frame = f
-                        item.aura:SetBackground(RES .. spec.aura .. tostring(f) .. ".tga")
+                        item.aura:SetBackground(FrameImg(spec.aura, f))
                     end
                     if item.eyes ~= nil then
                         item.eyes:SetOpacity(0.55 + 0.45 * math.sin((2 * math.pi * now / 1.6) + item.phase))
@@ -1850,11 +1860,23 @@ function ZV:_animate()
                 local f = ((tick + a.phase) % FX_FRAMES) + 1
                 if f ~= a.frame then
                     a.frame = f
-                    a.ctl:SetBackground(RES .. "fl_aura_" .. tostring(f) .. ".tga")
+                    a.ctl:SetBackground(FrameImg("fl_aura_", f))
                 end
             end
         end
-    end)
+end
+
+function ZV:_animate()
+    local fx = self.fx
+    if fx.broken == true then
+        return
+    end
+    local now = Turbine.Engine.GetGameTime()
+    if now - fx.last < (1 / FX_FPS) then
+        return
+    end
+    fx.last = now
+    local ok = pcall(AnimateBody, self, now)
     if not ok then
         fx.broken = true
     end
@@ -2077,16 +2099,18 @@ function ZV:_hideTip()
 end
 
 -- el mouse sigue encima del icono / conector (y dentro del area del mapa)?
+local function MouseOverBody(self, ctl)
+    local sx, sy = ctl:PointToScreen(0, 0)
+    local w, h = ctl:GetSize()
+    local mx, my = Turbine.UI.Display.GetMousePosition()
+    local vx, vy = self.viewport:PointToScreen(0, 0)
+    local vw, vh = self.viewport:GetSize()
+    return mx >= sx and mx < sx + w and my >= sy and my < sy + h
+        and mx >= vx and mx < vx + vw and my >= vy + BAR_H and my < vy + vh
+end
+
 function ZV:_mouseOver(ctl)
-    local ok, inside = pcall(function()
-        local sx, sy = ctl:PointToScreen(0, 0)
-        local w, h = ctl:GetSize()
-        local mx, my = Turbine.UI.Display.GetMousePosition()
-        local vx, vy = self.viewport:PointToScreen(0, 0)
-        local vw, vh = self.viewport:GetSize()
-        return mx >= sx and mx < sx + w and my >= sy and my < sy + h
-            and mx >= vx and mx < vx + vw and my >= vy + BAR_H and my < vy + vh
-    end)
+    local ok, inside = pcall(MouseOverBody, self, ctl)
     return ok and inside == true
 end
 
@@ -2095,7 +2119,7 @@ function ZV:_checkTip()
     if item ~= false then
         if item.vis and self:_mouseOver(item.icon) then
             if self.tipOn then
-                pcall(function() self:_placeTip() end)
+                pcall(self._placeTip, self)
             end
         else
             self:_leaveItem()
@@ -2105,7 +2129,7 @@ function ZV:_checkTip()
     if lk ~= false then
         if lk.vis and self:_mouseOver(lk.ctl) then
             if self.tipOn then
-                pcall(function() self:_placeTip() end)
+                pcall(self._placeTip, self)
             end
         else
             self:_leaveLink()
@@ -2371,7 +2395,7 @@ function ZV:Tick()
     self:_animate()
     self:_animateQuestArrows(Turbine.Engine.GetGameTime())
     if self.findArrow ~= nil then
-        pcall(function() self:_animateFind(Turbine.Engine.GetGameTime()) end)
+        pcall(self._animateFind, self, Turbine.Engine.GetGameTime())
     end
     -- v3.3: cada pocos segundos, misiones activas y estado de hazañas
     local now = Turbine.Engine.GetGameTime()

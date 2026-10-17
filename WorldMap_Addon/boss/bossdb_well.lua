@@ -1,0 +1,146 @@
+-- Generado desde BossCodex (Arebel) Data.lua -- no editar a mano.
+-- skill = { nombre, etiquetas, reutilizacion, primer uso, induccion, iconos de efecto, gritos, area }
+local DB = WorldMapAddon.BossDB
+DB.inst["well"] = {
+  { "Ambarûli Crocodile Hatchling", {
+    { "Bite", "C", 3, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Mûkh Bahora, the Mouth of Forgetting", {
+    { "Venomous Bite", "P", 10, 8, nil, { 1090522396 }, nil, "Single Target" },
+    { "Cocoon", "SW", 35, 20, nil, { 1090529649 }, nil, "Single Target" },
+    { "Cleaving Strike", "C", 0, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Thrash", "A", 14, 0, 3, { 1090580244 }, nil, "6.0m around Self" },
+    { "Stunning Blow", "K", 18, 0, nil, nil, nil, "Single Target" },
+    { "War Horn", "AF", 30, 0, 2, { 1091831486 }, nil, "80.0m around Self" },
+    { "Bite", "C", 0, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Savage Bite", "C", 10, 0, nil, { 1090555733 }, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Utûgi Shade", {
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a strong swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "Shadow Smite", "T", 20, 5, nil, nil, nil, "Single Target" },
+  } },
+  { "Bahádring the Unmindful", {
+    { "Memory of Pain", "C", 1, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Lash of Anger", "C", 4, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Curse of Regret", "A", 60, 5, 3, nil, { "feel the weight of your regr", "you are cursed by your regre" }, "80.0m around Self" },
+    { "Abolition of Self", "R", 65, 30, nil, { 1090553954 }, nil, "Single Target" },
+  } },
+  { "Gorthorog Berserker", {
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "Crushing Blow", "A", 10, 10, 2, nil, nil, "10.0m around Self" },
+    { "Weapon Breaker", "C", 10, 12, nil, { 1091455326 }, nil, "120° by 4.5m arc from Self" },
+    { "Crushing Sweep", "CK", 10, 3, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Corrupting Sweep", "C", 12, 6, nil, { 1092995736 }, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Ordâkhai Warrior", {
+    { "Jagged Cut", "C", 10, 5, nil, nil, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Ordâkhai Dôlo", {
+    { "a mighty swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a destructive swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a deadly swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "Ordâkhai Blessing", "I", 25, 5, 3, { 1092403846 }, nil, "Single Target" },
+    { "Call Allies", "I", 99999, 15, 3, nil, nil, "Single Target" },
+    { "Restore Morale", "IA", 35, 10, 3, nil, nil, "12.0m around Self" },
+  } },
+  { "Ambarûli Crocodile Shade", {
+    { "Shadow Smite", "T", 20, 5, nil, nil, nil, "Single Target" },
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a strong swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Gorthorog Crusher", {
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "Armour Crusher", "C", 10, 10, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Guard Breaker", "C", 10, 15, nil, { 1090532210 }, nil, "120° by 4.5m arc from Self" },
+    { "Crushing Blow", "CW", 15, 6, nil, { 1090531521 }, nil, "120° by 4.5m arc from Self" },
+    { "Corrupting Sweep", "C", 18, 12, nil, { 1092995736 }, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Ambarûli Crocodile", {
+    { "Bite", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Gorthorog Devastator", {
+    { "Quick Slam", "C", 1, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Slam", "C", 2, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Heavy Slam", "C", 8, 0, nil, { 1090523949 }, nil, "120° by 4.5m arc from Self" },
+    { "Corrupting Sweep", "C", 20, 12, nil, { 1092995736 }, nil, "120° by 4.5m arc from Self" },
+    { "Execute", "T", 15, 15, nil, nil, nil, "Single Target" },
+    { "Endure", "I", 25, 10, 3, nil, nil, "Single Target" },
+    { "Chain Breaker", "AK", 45, 30, nil, { 1092404616 }, nil, "80.0m around Self" },
+    { "Crushing Blow", "A", 10, 10, 2, nil, nil, "10.0m around Self" },
+    { "Weapon Breaker", "C", 10, 12, nil, { 1091455326 }, nil, "120° by 4.5m arc from Self" },
+    { "Crushing Sweep", "CK", 10, 3, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Armour Crusher", "C", 10, 10, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Guard Breaker", "C", 10, 15, nil, { 1090532210 }, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Utûgi Slaughterer", {
+    { "Cleaving Strike", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Thrash", "A", 12, 12, 3, { 1090580244 }, nil, "6.0m around Self" },
+    { "Stunning Blow", "K", 25, 16, nil, nil, nil, "Single Target" },
+  } },
+  { "Bauko, Left Hand of Forgetting", {
+    { "Brother's Bellow", "AB", 50, 20, nil, { 1092995715, 1092995733 }, { "and you brother take my bles", "be heartened brother" }, "80.0m around Self" },
+    { "Mournful Bellow", "A", 30, 20, nil, nil, { "brother you will be avenged" }, "80.0m around Self" },
+    { "Sludge Pot", "S", 20, 15, 1.5, nil, nil, "6.0m around Selection" },
+    { "The Water's Kiss", "I", 20, 20, 3, { 1091686947, 1092926705 }, nil, "Single Target" },
+    { "Field Survey", "A", 18, 15, nil, { 1091479052 }, { "engage me in battle", "come back and face me" }, "80.0m around Self" },
+    { "Find Enemy", "A", 18, 15, nil, { 1092830866, 1091479052, 1091479054, 1091479056 }, { "engage me in battle", "come back and face me" }, "80.0m around Self" },
+    { "The Arrow's Kiss", "F", 25, 10, nil, { 1092995724 }, nil, "Single Target" },
+    { "Piercing Arrow", "W", 10, 5, nil, { 1090555713 }, nil, "Single Target" },
+  } },
+  { "Utûgi Destroyer", {
+    { "Cleaving Strike", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Ordâkhai Skulker", {
+    { "Jagged Cut", "C", 2, 5, nil, nil, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Imhûlari Trapper", {
+    { "Venomous Bite", "P", 12, 10, nil, { 1090522396 }, nil, "Single Target" },
+  } },
+  { "Imhûlari Spider Shade", {
+    { "Shadow Smite", "T", 20, 5, nil, nil, nil, "Single Target" },
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a strong swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Khûdi Shadow-spreader", {
+    { "Shadow Smite", "T", 20, 5, nil, nil, nil, "Single Target" },
+  } },
+  { "Ordâkhai Bowman", {
+    { "Piercing Arrow", "W", 10, 5, nil, { 1090555713 }, nil, "Single Target" },
+  } },
+  { "Ordâkhai Sorcerer", {
+    { "Weak Ordâkhai Blessing", "I", 20, 5, 3, { 1092403827 }, nil, "Single Target" },
+  } },
+  { "Daiko, Right Hand of Forgetting", {
+    { "Brother's Bellow", "AB", 50, 20, nil, { 1092995715, 1092995733 }, { "brother take my blessing", "do not fall my brother" }, "80.0m around Self" },
+    { "Mournful Bellow", "A", 30, 20, nil, nil, { "brother you will be avenged" }, "80.0m around Self" },
+    { "Sludge Pot", "S", 20, 15, 1.5, nil, nil, "6.0m around Selection" },
+    { "The Water's Kiss", "I", 20, 20, 3, { 1091686947, 1092926705 }, nil, "Single Target" },
+    { "Field Survey", "A", 18, 15, nil, { 1091479052 }, { "face me or die", "you shall not run from me" }, "80.0m around Self" },
+    { "Find Enemy", "A", 18, 15, nil, { 1090541218, 1091479052, 1091479054, 1091479056 }, { "face me or die", "you shall not run from me" }, "80.0m around Self" },
+    { "The Spear's Kiss", "F", 25, 10, nil, { 1092995723 }, nil, "Single Target" },
+    { "Spear of Deadly Shadow", "S", 10, 15, nil, nil, nil, "4.0m by 40.0m rectangle from Self" },
+  } },
+  { "Giant Ambarûli Crocodile", {
+    { "Bite", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Savage Bite", "C", 10, 2, nil, { 1090555733 }, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Ordâkhai Cat-keeper", {
+    { "Piercing Arrow", "W", 10, 5, nil, { 1090555713 }, nil, "Single Target" },
+  } },
+}

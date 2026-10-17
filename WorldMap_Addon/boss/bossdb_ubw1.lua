@@ -1,0 +1,127 @@
+-- Generado desde BossCodex (Arebel) Data.lua -- no editar a mano.
+-- skill = { nombre, etiquetas, reutilizacion, primer uso, induccion, iconos de efecto, gritos, area }
+local DB = WorldMapAddon.BossDB
+DB.inst["ubw1"] = {
+  { "Utûgi Destroyer", {
+    { "Cleaving Strike", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+  } },
+  { "Kulkorth", {
+    { "Roar", "A", 30, 15, nil, nil, nil, "60.0m around Self" },
+    { "Burn!", "A", 30, 10, nil, { 1090623585 }, nil, "60.0m around Self" },
+    { "Cursed Arrow", "S", 20, 20, 3, { 1091840260, 1093004319 }, { "may this ground you tread be" }, "2.0m around Selection" },
+    { "Dreadful Arrow (distributed)", "S", 20, 20, 1.5, nil, { "may this ground you tread be" }, "5.0m around Selection | distributed damage" },
+    { "Cleaving Strike", "C", 15, 15, nil, { 1093004330, 1093004355, 1093004318, 1093004322 }, nil, "120° by 4.5m arc from Self" },
+    { "a mighty swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a destructive swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a deadly swipe attack", "C", 0, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+  } },
+  { "Utûgi Slaughterer", {
+    { "Cleaving Strike", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Thrash", "A", 12, 12, 3, { 1090580244 }, nil, "6.0m around Self" },
+    { "Stunning Blow", "K", 25, 16, nil, nil, nil, "Single Target" },
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Urâshi Archer", {
+    { "Poisoned Dart", "ISP", 20, 0, 3, { 1090523646 }, nil, "Single Target" },
+  } },
+  { "Urâshi Berserker", {
+    { "Jagged Cut", "CSW", 15, 0, nil, { 1090553355 }, nil, "120° by 4.5m arc from Self" },
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Urâshi Captain", {
+    { "Blistering Derision", "I", 10, 10, 3, nil, nil, "Single Target" },
+  } },
+  { "Wretched Utug-bûr Spirit", {
+    { "Release", "AB", 1, 0, 3, nil, nil, "8.0m around Self" },
+    { "Induction Enter Invulnerability State", "I", -1, 0, 3, nil, nil, "Single Target" },
+    { "Shadow Burst", "A", -1, 0, nil, nil, nil, "5.0m around Self" },
+    { "Shadow Scream", "IA", 30, 0, 3, nil, nil, "20.0m around Self" },
+    { "Shadow Touched", "F", 20, 0, nil, { 1090528810 }, nil, "Single Target" },
+    { "Shadow Grip", "F", 20, 0, nil, { 1090532173 }, nil, "Single Target" },
+  } },
+  { "Utug-bûr Crypt-guardian", {
+    { "Shield of the Dead", "AK", 30, 10, 10, { 1091423618, 1091401422, 1092979838, 1093004317 }, nil, "10.0m around Self" },
+    { "a moderate swipe attack", "C", 10, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Maluchon, the Pale Brother", {
+    { "Lingering Fear", "F", -1, 15, nil, { 1093004350, 1090532791, 1092746846, 1092995894 }, nil, "Single Target" },
+    { "Breaking Bonds", "E", -1, 0, 30, { 1090553954, 1091401423 }, nil, "Single Target" },
+    { "Deathly Chill", "A", 22, 0, nil, { 1091429123, 1092995856, 1092995904, 1092995875, 1092995873, 1092995880, 1092995854 }, nil, "80.0m around Self" },
+    { "Call to the Dead", "SF", 35, 22, nil, { 1093004351, 1093004353, 1090625091 }, nil, "Single Target" },
+    { "Cleaving Strike", "C", 5, 0, nil, nil, nil, "120° by 4.5m arc from Self" },
+    { "Contagious Fear", "SF", 0, 20, nil, { 1090625091 }, nil, "Single Target" },
+  } },
+  { "Utug-bûr Crypt-sentinel", {
+    { "Sentinel's Barbed Arrow", "SW", 1, 0, 3, { 1091734506 }, nil, "Single Target" },
+    { "Sentinel's Killing Arrow", "SW", 1, 0, 3, { 1090555710 }, nil, "Single Target" },
+    { "a ranged double attack", "I", 10, 0, 3, nil, nil, "Single Target" },
+  } },
+  { "Utug-bûr Crypt-champion", {
+    { "Call to Allies", "A", 30, 5, nil, { 1091476366 }, nil, "12.0m around Self" },
+    { "Chill Foes", "A", 15, 20, nil, { 1090532174 }, nil, "12.0m around Self" },
+    { "Mark Foe", "R", 20, 10, nil, { 1090625091 }, nil, "Single Target" },
+    { "Hooked Arrow", "SW", 10, 5, 2, { 1090555713 }, nil, "Single Target" },
+    { "a moderate swipe attack", "C", 10, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Bashâru", {
+    { "Stand Ground", "T", 60, 30, nil, { 1093000218 }, nil, "Single Target" },
+    { "Deafening Roar", "AS", 10, 0, 3, nil, nil, "10.0m around Self" },
+    { "Rejuvenating Strike", "CS", 5, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "Swipe", "C", 3, 0, nil, { 1091744625 }, nil, "120° by 5.0m arc from Self" },
+    { "Broad Swipe", "C", 3, 0, nil, { 1090531521, 1091744625 }, nil, "120° by 5.0m arc from Self" },
+    { "a weak swipe attack", "CW", 2, 0, nil, { 1090523647, 1090529420 }, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "CW", 2, 0, nil, { 1090523647, 1090529420 }, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "CW", 2, 0, nil, { 1090523647, 1090523648 }, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "CW", 0, 0, nil, { 1090523647, 1090537950 }, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Dreadful Utug-bûr Spirit", {
+    { "Tie Sinew", "A", 30, 15, nil, nil, nil, "10.0m around Self" },
+    { "Embrace Death", "F", 10, 120, 3, { 1093004351, 1093004353, 1090625091 }, nil, "Single Target" },
+    { "Death Burst", "S", 0, 1, 3, nil, nil, "8.0m around Selection" },
+    { "Black Thoughts", "SF", 0, 1, 2, { 1093004351, 1093004353, 1090625091 }, nil, "Single Target" },
+    { "Induction Enter Invulnerability State", "I", -1, 0, 3, nil, nil, "Single Target" },
+    { "Shadow Burst", "A", -1, 0, nil, nil, nil, "5.0m around Self" },
+    { "Weaken Courage", "F", 10, 0, nil, { 1090528810 }, nil, "Single Target" },
+    { "Open Fissure", "I", -1, 0, 4, { 1090528808, 1090524461 }, nil, "Single Target" },
+  } },
+  { "Tamâkh", {
+    { "Savage Bite", "T", 15, 10, 3, nil, nil, "Single Target" },
+    { "Restorative Howl", "I", 10, 0, 4, { 1090553329 }, nil, "12.0m around Donut" },
+    { "a weak melee attack", "W", 2, 0, nil, { 1090523647, 1090529420 }, nil, "Single Target" },
+    { "a minor melee attack", "W", 2, 0, nil, { 1090523647, 1090529420 }, nil, "Single Target" },
+    { "a moderate melee attack", "W", 2, 0, nil, { 1090523647, 1090529420 }, nil, "Single Target" },
+    { "a mighty melee attack", "W", 0, 0, nil, { 1090523647, 1090529420 }, nil, "Single Target" },
+  } },
+  { "Kanâshu", {
+    { "a moderate swipe attack", "C", 10, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Urâshi Gut-slasher", {
+    { "Brutal Strike", "T", 1, 0, nil, nil, nil, "Single Target" },
+    { "a weak swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a minor swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a moderate swipe attack", "C", 2, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "a mighty swipe attack", "C", 0, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+  } },
+  { "Utûgi Demolisher", {
+    { "Sweep", "C", 7, 5, nil, nil, nil, "100° by 4.0m arc from Self" },
+    { "Great Smash", "K", 5, 3, nil, nil, nil, "5.0m around Selection" },
+    { "Thresh the Chaff", "CK", 10, 5, 3, nil, nil, "100° by 4.0m arc from Self" },
+    { "Furious Smite", "T", 5, 5, nil, nil, nil, "Single Target" },
+    { "a mighty swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a destructive swipe attack", "C", 2, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+    { "a deadly swipe attack", "C", 0, 0, nil, nil, nil, "120° by 5.0m arc from Self" },
+  } },
+  { "Urâshi Assassin", {
+    { "Enraged Shot", "E", 3, 5, 1, { 1091401433, 1090522261 }, nil, "Single Target" },
+  } },
+  { "Risen Arm", {
+    { "Death Grip", "C", 2, 0, nil, { 1090522260 }, nil, "120° by 3.0m arc from Self" },
+    { "Expire", "A", 30, 45, nil, { 1090522260 }, nil, "5.0m around Self | distributed damage" },
+  } },
+}

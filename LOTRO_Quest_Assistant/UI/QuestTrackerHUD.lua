@@ -471,6 +471,11 @@ function LQA.UI.QuestTrackerHUD:Constructor()
     self.ringHoverPoll:SetWantsUpdates(true)
     self.ringHovering = false
     self.ringHoverPoll.Update = function()
+        -- (2026-10-17) 10 veces por segundo y nada con la ventana oculta
+        local nowP = Turbine.Engine.GetGameTime()
+        if nowP < (self.ringPollAt or 0) then return end
+        self.ringPollAt = nowP + 0.1
+        if not self:IsVisible() then return end
         local mx, my = self:GetMousePosition()
         local over = mx >= 0 and mx < PAGE_W and my >= CHROME_TOP and my < (CHROME_TOP + PAGE_H)
         if over ~= self.ringHovering then

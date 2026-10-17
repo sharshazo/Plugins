@@ -31,6 +31,25 @@ LQA.UI.TrackerFireFX = LQA.UI.TrackerFireFX or {}
 local FX = LQA.UI.TrackerFireFX
 
 local RES = "LOTRO_Quest_Assistant/Resources/Book/tracker_fx_"
+
+-- (2026-10-17) rutas de cuadros armadas una sola vez (antes se armaba un
+-- texto nuevo en cada cambio de cuadro: basura para el recolector)
+local IMG_CACHE = {}
+local function Img(prefix, n)
+    local t = IMG_CACHE[prefix]
+    if t == nil then
+        t = {}
+        IMG_CACHE[prefix] = t
+    end
+    local p = t[n]
+    if p == nil then
+        p = prefix .. tostring(n) .. ".tga"
+        t[n] = p
+    end
+    return p
+end
+local RING_PREFIX = RES .. "anillo_llama_"
+local TITLE_PREFIX = RES .. "titulo_barrido_"
 local FRAME_TIME = 1 / 30
 local TWO_PI = 2 * math.pi
 
@@ -271,7 +290,7 @@ function FX.Tick(fx)
     if now >= fx.ring_frame_at then
         fx.ring_frame_at = now + RING_FRAME_TIME
         fx.ring_frame = (fx.ring_frame % RING_FRAMES) + 1
-        fx.ring_flame:SetBackground(RES .. "anillo_llama_" .. tostring(fx.ring_frame) .. ".tga")
+        fx.ring_flame:SetBackground(Img(RING_PREFIX, fx.ring_frame))
     end
     fx.ring_flame:SetOpacity(math.min(1, 0.72 + (0.12 * math.sin(now * 9.1)) + (0.25 * boost)))
 
@@ -290,7 +309,7 @@ function FX.Tick(fx)
         else
             if f ~= fx.title_frame then
                 fx.title_frame = f
-                fx.title:SetBackground(RES .. "titulo_barrido_" .. tostring(f) .. ".tga")
+                fx.title:SetBackground(Img(TITLE_PREFIX, f))
                 -- chispas doradas que saltan donde pasa el fuego
                 if f % 3 == 0 then
                     local sx = TITLE_X - 24 + ((TITLE_W + 48) * (f - 1) / (TITLE_FRAMES - 1))
@@ -318,8 +337,12 @@ function FX.Tick(fx)
         spawn(fx.blue, now, x, e[1] + rnd(-5, 5), rnd(28, 60) + (15 * boost), rnd(1.4, 2.4),
             rnd(1.5, 3.0), left and rnd(-5, 1) or rnd(-1, 5), 1)
     end
-    -- ...y se mueven
-    local pools = { fx.blue, fx.ring, fx.gold }
+    -- ...y se mueven (la lista de grupos se arma una vez, no 30 por segundo)
+    local pools = fx.pools
+    if pools == nil then
+        pools = { fx.blue, fx.ring, fx.gold }
+        fx.pools = pools
+    end
     for _, pool in ipairs(pools) do
         for i = 1, #pool do
             local p = pool[i]

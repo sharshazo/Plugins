@@ -28,6 +28,24 @@ LQA.UI.RingFireFX = LQA.UI.RingFireFX or {}
 local FX = LQA.UI.RingFireFX
 
 local RES = "LOTRO_Quest_Assistant/Resources/Book/"
+
+-- (2026-10-17) rutas de cuadros armadas una sola vez (antes se armaba un
+-- texto nuevo en cada cambio de cuadro: basura para el recolector)
+local IMG_CACHE = {}
+local function Img(prefix, n)
+    local t = IMG_CACHE[prefix]
+    if t == nil then
+        t = {}
+        IMG_CACHE[prefix] = t
+    end
+    local p = t[n]
+    if p == nil then
+        p = prefix .. tostring(n) .. ".tga"
+        t[n] = p
+    end
+    return p
+end
+local STAR_PREFIX = RES .. "questsync_fx_estrella_"
 local FRAME_TIME = 1 / 30
 local TWO_PI = 2 * math.pi
 local RING_FRAMES = 12
@@ -75,6 +93,13 @@ local function ticker_for(win)
     win.fxBurstUntil = 0
     local broken = false
     local last = 0
+    local wasHidden, hiddenCount = false, 0
+    local tickNow, tickShow = 0, false
+    local function tickAll()
+        for i = 1, #parts do
+            parts[i]:tick(tickNow, tickShow)
+        end
+    end
     local t = Turbine.UI.Control()
     t:SetParent(win)
     t:SetVisible(false)
@@ -89,11 +114,15 @@ local function ticker_for(win)
         end
         last = now
         local show = enabled() and win:IsVisible()
-        local ok, err = pcall(function()
-            for i = 1, #parts do
-                parts[i]:tick(now, show)
-            end
-        end)
+        -- (2026-10-17) oculta y ya apagada: nada que hacer; y sin crear una
+        -- funcion nueva en cada cuadro (antes 30 por segundo, basura)
+        if not show and wasHidden and #parts == hiddenCount then
+            return
+        end
+        wasHidden = not show
+        hiddenCount = #parts
+        tickNow, tickShow = now, show
+        local ok, err = pcall(tickAll)
         if ok ~= true then
             broken = true
             for i = 1, #parts do
@@ -165,7 +194,10 @@ function FX.AttachRing(win, page, cfg)
         if now >= self.frame_at then
             self.frame_at = now + RING_FRAME_TIME
             self.frame = (self.frame % RING_FRAMES) + 1
-            self.flame:SetBackground(RES .. cfg.prefix .. "anillo_llama_" .. tostring(self.frame) .. ".tga")
+            if self.flamePrefix == nil then
+                self.flamePrefix = RES .. cfg.prefix .. "anillo_llama_"
+            end
+            self.flame:SetBackground(Img(self.flamePrefix, self.frame))
         end
         self.flame:SetOpacity(math.min(1, 0.72 + (0.12 * math.sin(now * 9.1)) + (0.25 * boost)))
 
@@ -371,7 +403,7 @@ function FX.AttachTitleStars(win, page, label, active)
                     local size = STAR_FRAMES[f]
                     if f ~= p.frame then
                         p.frame = f
-                        p.ctl:SetBackground(RES .. "questsync_fx_estrella_" .. tostring(size) .. ".tga")
+                        p.ctl:SetBackground(Img(STAR_PREFIX, size))
                         p.ctl:SetSize(size, size)
                     end
                     local half = math.floor(size / 2)

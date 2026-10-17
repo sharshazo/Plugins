@@ -59,6 +59,10 @@ import "WorldMap_Addon.worldmap"
 import "WorldMap_Addon.worldmap_launcher"
 -- v3.15: ventana propia "Recoleccion" (si fallara, el mapa sigue igual)
 pcall(import, "WorldMap_Addon.worldmap_gather")
+-- v3.17: mecanicas de jefe por rol (BossCodex + Prime); los datos de cada
+-- instancia se cargan solo al encontrar uno de sus jefes
+pcall(import, "WorldMap_Addon.mecanicas.mj_index")
+pcall(import, "WorldMap_Addon.worldmap_mecanicas")
 
 _G.WorldMapAddon = _G.WorldMapAddon or {}
 
@@ -82,6 +86,10 @@ pcall(function()
 		me.Unload = function()
 			if WorldMapAddon.launcher ~= nil then
 				pcall(function() WorldMapAddon.launcher:RestoreLqaLauncher() end)
+			end
+			-- v3.16: las senales de jefe sueltan sus eventos y su oyente de chat
+			if WorldMapAddon.Boss ~= nil and WorldMapAddon.Boss.Shutdown ~= nil then
+				pcall(WorldMapAddon.Boss.Shutdown)
 			end
 		end
 	end

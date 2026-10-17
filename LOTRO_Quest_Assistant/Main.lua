@@ -38,8 +38,16 @@ import "LOTRO_Quest_Assistant.Data.QuestNameIndex"
 -- de fusion mas abajo y era una trampa latente si alguna vez cambiaba.
 -- import "LOTRO_Quest_Assistant.Data.QuestNameESIndex"
 import "LOTRO_Quest_Assistant.Data.QuestNameESIndex_Full"
-import "LOTRO_Quest_Assistant.Data.QuestObjectiveESIndex_Full"
-import "LOTRO_Quest_Assistant.Data.QuestLocalization_Full"
+-- (2026-10-17, memoria) QuestObjectiveESIndex_Full y QuestLocalization_Full
+-- (88 MB en memoria entre los dos) ya no se cargan. Los reemplazan (28 MB):
+--   QuestObjectiveESHash: el mismo indice, con la huella numerica del texto
+--     como clave (QuestLocResolver.ObjectiveLookup);
+--   QuestLocalization_Lite: nombre + objetivos limpios;
+--   QuestLocFlavor_NN: los textos completos con dialogos, que solo usa la
+--     narracion, se cargan por tramos al narrar (GetFullObjectives).
+-- Mismos resultados de deteccion (verificado clave por clave).
+import "LOTRO_Quest_Assistant.Data.QuestObjectiveESHash"
+import "LOTRO_Quest_Assistant.Data.QuestLocalization_Lite"
 -- QuestObjectiveES_Generated.lua (2026-09-06): traduccion automatica (Argos
 -- Translate, motor offline/gratuito -- ver ese archivo para la nota completa)
 -- SOLO para las 2.959 misiones cuyo objectivesES en QuestLocalization_Full
@@ -95,8 +103,7 @@ import "LOTRO_Quest_Assistant.Data.MoorMapZonesES"
 
 -- 2b. Map professional ES localization directly to runtime globals
 _G.QuestNameESIndex = _G.QuestNameESIndex_Full
-_G.QuestObjectiveESIndex = _G.QuestObjectiveESIndex_Full
-_G.QuestLocES = _G.QuestLocalization_Full
+_G.QuestLocES = _G.QuestLocalization_Lite
 
 -- Relleno de QuestObjectiveES_Generated (ver import e nota grande arriba):
 -- solo pisa objectivesES para las ndx que ese archivo trae (exactamente las
@@ -106,6 +113,7 @@ if _G.QuestObjectiveES_Generated then
     for ndx, data in pairs(_G.QuestObjectiveES_Generated) do
         if _G.QuestLocES[ndx] then
             _G.QuestLocES[ndx].objectivesES = data.objectivesES
+            _G.QuestLocES[ndx].generated = true   -- la narracion usa esta lista
         end
     end
 end
@@ -121,6 +129,9 @@ if _G.QuestNameES_Missing then
         _G.QuestLocES[ndx].nameES = data.nameES
     end
 end
+-- (2026-10-17) ya copiados a QuestLocES: las tablas sueltas no hacen falta
+_G.QuestObjectiveES_Generated = nil
+_G.QuestNameES_Missing = nil
 
 -- 3. Load Core Managers
 import "LOTRO_Quest_Assistant.Core.QuestLocResolver"
@@ -441,14 +452,21 @@ local function LQA_InstallSharedDispatcher()
         return -- ya somos nosotros (o DeedTracker ya lo instalo), nada que hacer
     end
     local current = Turbine.Chat.Received
+    -- (2026-10-17) si otro addon envolvio a un dispatcher anterior, el de
+    -- adentro no vuelve a repartir: cada oyente recibe el mensaje UNA vez
     local dispatcher = function(sender, args)
+        local outer = _G.LQA_ChatInDispatch ~= true
+        _G.LQA_ChatInDispatch = true
         if type(current) == "function" then
             pcall(current, sender, args)
         elseif type(current) == "table" then
             for _, fn in ipairs(current) do pcall(fn, sender, args) end
         end
-        for _, listener in pairs(_G.LQA_ChatListeners) do
-            pcall(listener, sender, args)
+        if outer then
+            for _, listener in pairs(_G.LQA_ChatListeners) do
+                pcall(listener, sender, args)
+            end
+            _G.LQA_ChatInDispatch = nil
         end
     end
     Turbine.Chat.Received = dispatcher

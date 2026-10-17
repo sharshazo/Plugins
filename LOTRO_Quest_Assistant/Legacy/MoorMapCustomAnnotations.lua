@@ -82,6 +82,7 @@ end
 local queue = {}
 local processing = false
 local pendingCmd = nil
+local startedAt = 0   -- (2026-10-17) si MMCust no contesta en 15 s, se sigue
 
 local function FinishCurrent()
     if pendingCmd ~= nil then
@@ -99,6 +100,7 @@ local function StartNext()
     local item = table.remove(queue, 1)
     if item == nil then return end
     processing = true
+    startedAt = Turbine.Engine.GetGameTime()
 
     local cmdStr = "0MMCD_SM_" .. tostring(item.region) .. "_" ..
         FormatCoord(item.ns) .. "_" .. FormatCoord(item.ew) .. "_" ..
@@ -114,15 +116,20 @@ local function StartNext()
     Turbine.PluginManager.LoadPlugin("MMCust")
 end
 
+-- (2026-10-17) el vigilante solo corre mientras hay algo en la cola; antes
+-- corria en cada cuadro de juego para siempre aunque no hubiera nada.
 local watcher = Turbine.UI.Control()
 watcher.Update = function()
     if processing then
-        if Turbine.Shell.IsCommand("0MMCC") then
+        if Turbine.Shell.IsCommand("0MMCC") or Turbine.Engine.GetGameTime() - startedAt > 15 then
             FinishCurrent()
             StartNext()
         end
     else
         StartNext()
+    end
+    if not processing and #queue == 0 then
+        watcher:SetWantsUpdates(false)
     end
 end
 watcher:SetWantsUpdates(true)
@@ -162,4 +169,5 @@ function MoorMapCustomAnnotations.RegisterNode(region, ns, ew, nodeType, tier, n
         type = nodeType, tier = tier or 1,
         name = name or "", desc = desc or name or "",
     })
+    watcher:SetWantsUpdates(true)
 end

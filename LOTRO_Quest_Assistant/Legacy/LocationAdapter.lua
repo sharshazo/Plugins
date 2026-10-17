@@ -94,6 +94,11 @@ local unparsedWarned = false
 
 function LocationAdapter.ParseLocationMessage(message)
     if not message then return false end
+    -- (2026-10-17) toda respuesta de /loc trae "lx" y "ox": el resto del chat
+    -- (cientos de lineas de combate) sale aca sin crear tablas
+    if not string.find(message, "lx", 1, true) or not string.find(message, "ox", 1, true) then
+        return false
+    end
     local candidates = {}
     for _, pattern in ipairs(PATTERNS) do
         candidates[#candidates + 1] = { string.match(message, pattern) }

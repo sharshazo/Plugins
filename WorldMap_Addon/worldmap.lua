@@ -253,6 +253,22 @@ local Quests = WorldMapAddon.Quests
 local Deeds = WorldMapAddon.Deeds
 
 local RES_BASE = "WorldMap_Addon/assets/worldmap/"
+-- (v3.18) rutas de cuadros de animacion armadas una sola vez (antes un texto
+-- nuevo en cada cambio de cuadro de cada marca: basura constante)
+local FRAME_IMG = {}
+local function FrameImg(prefix, f)
+    local t = FRAME_IMG[prefix]
+    if t == nil then
+        t = {}
+        FRAME_IMG[prefix] = t
+    end
+    local p = t[f]
+    if p == nil then
+        p = RES_BASE .. prefix .. tostring(f) .. ".tga"
+        t[f] = p
+    end
+    return p
+end
 
 -- Alto real del titulo nativo de una Turbine.UI.Lotro.Window, confirmado en
 -- QuestBookWindow.lua/GatherWindow.lua de LOTRO_Quest_Assistant (constante
@@ -692,6 +708,15 @@ function WorldMapAddon.UI.WorldMap:Constructor()
     self.hoverPoll:SetVisible(false)
     self.hoverPoll:SetWantsUpdates(true)
     self.hoverPoll.Update = function()
+        -- (v3.18) con el mapa cerrado no hay nada que animar ni resaltar:
+        -- 4 veces por segundo basta (avisos de misiones, guardar estado)
+        if not this:IsVisible() then
+            local nowH = Turbine.Engine.GetGameTime()
+            if nowH < (this.hiddenPollAt or 0) then
+                return
+            end
+            this.hiddenPollAt = nowH + 0.25
+        end
         this:_checkQuestInfo()
         this:_pollHover()
         -- v2.9: aviso de Quest Assistant (mision aceptada, completada,
@@ -874,7 +899,7 @@ function WorldMapAddon.UI.WorldMap:_animateLogo()
                 fx.shine_at = now + LOGO_SHINE_EVERY
             elseif f ~= fx.shine_frame then
                 fx.shine_frame = f
-                self.logoShine:SetBackground(RES_BASE .. "logo_mapa_brillo_" .. tostring(f) .. ".tga")
+                self.logoShine:SetBackground(FrameImg("logo_mapa_brillo_", f))
             end
         end
         -- estrellas: una a la vez en un rombo/hoja al azar
@@ -900,7 +925,7 @@ function WorldMapAddon.UI.WorldMap:_animateLogo()
                     local size = LOGO_STAR_FRAMES[f]
                     if f ~= s.frame then
                         s.frame = f
-                        s.ctl:SetBackground(RES_BASE .. "logo_mapa_estrella_" .. tostring(size) .. ".tga")
+                        s.ctl:SetBackground(FrameImg("logo_mapa_estrella_", size))
                         s.ctl:SetSize(size, size)
                     end
                     local half = math.floor(size / 2)
@@ -4015,6 +4040,26 @@ end
 -- imagen y opacidad de controles sin mouse: no toca nada mas. Un error no
 -- se repite: las marcas quedan quietas.
 -- ---------------------------------------------------------------------
+local function AnimateBadgesBody(fx, now)
+        local tick = math.floor(now * FX_FPS)
+        for _, g in ipairs(fx.groups) do
+            if g.vis == true then
+                local f = ((tick + g.phase) % FX_FRAMES) + 1
+                for _, a in ipairs(g.anim) do
+                    if a.prefix ~= nil then
+                        if a.frame ~= f then
+                            a.frame = f
+                            a.ctl:SetBackground(FrameImg(a.prefix, f))
+                        end
+                    elseif a.pulse ~= nil then
+                        local s = math.sin((2 * math.pi * now / a.pulse) + g.phase)
+                        a.ctl:SetOpacity(0.55 + (0.45 * s))
+                    end
+                end
+            end
+        end
+end
+
 function WorldMapAddon.UI.WorldMap:_animateBadges()
     local fx = self.badgeFx
     if fx == nil or fx.broken == true or not self:IsVisible() or self.zoneMode then
@@ -4025,25 +4070,7 @@ function WorldMapAddon.UI.WorldMap:_animateBadges()
         return
     end
     fx.last = now
-    local ok = pcall(function()
-        local tick = math.floor(now * FX_FPS)
-        for _, g in ipairs(fx.groups) do
-            if g.vis == true then
-                local f = ((tick + g.phase) % FX_FRAMES) + 1
-                for _, a in ipairs(g.anim) do
-                    if a.prefix ~= nil then
-                        if a.frame ~= f then
-                            a.frame = f
-                            a.ctl:SetBackground(RES_BASE .. a.prefix .. tostring(f) .. ".tga")
-                        end
-                    elseif a.pulse ~= nil then
-                        local s = math.sin((2 * math.pi * now / a.pulse) + g.phase)
-                        a.ctl:SetOpacity(0.55 + (0.45 * s))
-                    end
-                end
-            end
-        end
-    end)
+    local ok = pcall(AnimateBadgesBody, fx, now)
     if not ok then
         fx.broken = true
     end

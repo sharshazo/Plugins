@@ -487,6 +487,11 @@ function QuestSyncWindow:Constructor()
     self.ringHoverPoll:SetWantsUpdates(true)
     self.ringHovering = false
     self.ringHoverPoll.Update = function()
+        -- (2026-10-17) 10 veces por segundo y nada con la ventana oculta
+        local nowP = Turbine.Engine.GetGameTime()
+        if nowP < (self.ringPollAt or 0) then return end
+        self.ringPollAt = nowP + 0.1
+        if not self:IsVisible() then return end
         local mx, my = self:GetMousePosition()
         local over = mx >= 0 and mx < PAGE_W and my >= CHROME_TOP and my < HEIGHT
         if over ~= self.ringHovering then
@@ -1533,12 +1538,21 @@ function QuestSyncWindow:PerformSearch(queryRaw)
         end
     end
 
-    if _G.QuestObjectiveESIndex then
-        for key, ndxs in pairs(_G.QuestObjectiveESIndex) do
-            if string.find(key, q, 1, true) then
-                local list = type(ndxs) == "table" and ndxs or { ndxs }
-                for _, ndx in ipairs(list) do
-                    if not seen[ndx] then seen[ndx] = true; table.insert(matched, ndx) end
+    -- (2026-10-17) Objetivos: se busca directo en los textos en espanol
+    -- (QuestLocES), con un patron que no distingue mayusculas, sin copiar
+    -- cada texto (antes se recorria el indice de 163.000 textos en memoria).
+    local L = _G.QuestLocES
+    if type(L) == "table" and q ~= "" then
+        local okP, pat = pcall(QuestLocResolver.CaseFreePattern, q)
+        if okP and pat then
+            for ndx, loc in pairs(L) do
+                if not seen[ndx] and type(loc) == "table" and type(loc.objectivesES) == "table" then
+                    for _, t in ipairs(loc.objectivesES) do
+                        if type(t) == "string" and string.find(t, pat) then
+                            seen[ndx] = true; table.insert(matched, ndx)
+                            break
+                        end
+                    end
                 end
             end
         end

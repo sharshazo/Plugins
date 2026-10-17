@@ -64,6 +64,79 @@ local function toLowerES(s)
     return lower_s
 end
 
+-- (2026-10-17) Huella numerica del texto ya normalizado (toLowerES): dos
+-- polinomios (mod primo de 32 bits y de 21 bits) en un entero exacto < 2^53.
+-- Identica a la del generador de Data/QuestObjectiveESHash.lua.
+local byte = string.byte
+function QuestLocResolver.TextHash(s)
+    local h1, h2 = 0, 0
+    for i = 1, #s do
+        local b = byte(s, i)
+        h1 = (h1 * 31 + b) % 4294967291
+        h2 = (h2 * 131 + b) % 2097143
+    end
+    return h1 * 2097152 + h2
+end
+
+-- texto de objetivo (normalizado) -> misiones (numero o lista), o nil
+function QuestLocResolver.ObjectiveLookup(cleanName)
+    local idx = _G.QuestObjectiveESHash
+    if type(idx) ~= "table" or type(cleanName) ~= "string" or cleanName == "" then return nil end
+    return idx[QuestLocResolver.TextHash(cleanName)]
+end
+
+-- (2026-10-17) Objetivos completos (con dialogos de PNJ) para narrar. La
+-- lista corta de QuestLocES no trae los dialogos; estan en tramos de 500
+-- misiones (Data/QuestLocFlavor_NN.lua) que se cargan solo al pedirlos.
+local FLAVOR_SHARD = 500
+local flavorTried = {}
+function QuestLocResolver.GetFullObjectives(ndx)
+    local loc = _G.QuestLocES and _G.QuestLocES[ndx]
+    local obj = type(loc) == "table" and loc.objectivesES or nil
+    if type(loc) ~= "table" or loc.generated or type(ndx) ~= "number" then return obj end
+    local sk = math.floor(ndx / FLAVOR_SHARD)
+    local F = _G.QuestLocFlavor
+    if (F == nil or F[sk] == nil) and not flavorTried[sk] then
+        flavorTried[sk] = true
+        pcall(import, string.format("LOTRO_Quest_Assistant.Data.QuestLocFlavor_%02d", sk))
+        F = _G.QuestLocFlavor
+    end
+    local full = F and F[sk] and F[sk][ndx]
+    return full or obj
+end
+
+-- (2026-10-17) Patron sin distinguir mayusculas para el buscador: busca el
+-- texto ya normalizado (NormalizeES) dentro del original sin crear copias.
+local UPPER_OF = {}
+function QuestLocResolver.CaseFreePattern(q)
+    if not next(UPPER_OF) then
+        for _, pair in ipairs(accentPairs) do UPPER_OF[pair[2]] = pair[1] end
+    end
+    local out = {}
+    local i, n = 1, #q
+    while i <= n do
+        local c = string.sub(q, i, i)
+        local two = string.sub(q, i, i + 1)
+        if UPPER_OF[two] then
+            out[#out + 1] = "\195[" .. string.sub(two, 2, 2) .. string.sub(UPPER_OF[two], 2, 2) .. "]"
+            i = i + 2
+        elseif string.find(c, "%a") then
+            out[#out + 1] = "[" .. c .. string.upper(c) .. "]"
+            i = i + 1
+        elseif c == " " then
+            out[#out + 1] = "%s+"
+            i = i + 1
+        elseif string.find(c, "[%^%$%(%)%%%.%[%]%*%+%-%?]") then
+            out[#out + 1] = "%" .. c
+            i = i + 1
+        else
+            out[#out + 1] = c
+            i = i + 1
+        end
+    end
+    return table.concat(out)
+end
+
 function QuestLocResolver.NormalizeES(s)
     if not s or s == "" then return "" end
     return toLowerES(s)
@@ -221,7 +294,7 @@ function QuestLocResolver.FindQuestByAnyName(nameRaw)
     local resType = "NAME"
 
     if not ndxs then
-        ndxs = QuestObjectiveESIndex and QuestObjectiveESIndex[cleanName]
+        ndxs = QuestLocResolver.ObjectiveLookup(cleanName)
         resType = "OBJECTIVE"
     end
 
@@ -328,46 +401,18 @@ end
 -- ===================================================================
 local RGB_FREE = nil
 
-local function addCands(list, v)
-    local function add(n)
-        n = tonumber(n)
-        if not n then return end
-        for _, x in ipairs(list) do if x == n then return end end
-        list[#list + 1] = n
-    end
-    if type(v) == "table" then
-        for _, n in ipairs(v) do add(n) end
-    elseif type(v) == "number" then
-        add(v)
-    elseif type(v) == "string" then
-        for n in string.gmatch(v, "%d+") do add(n) end
-    end
-end
-
+-- (2026-10-17) La lista ya viene armada en Data/QuestObjectiveESHash.lua
+-- (QuestObjectiveESRgbFree, misma regla de antes, por huella del texto).
 local function buildRgbFree()
-    RGB_FREE = {}
-    local idx = QuestObjectiveESIndex
-    if type(idx) ~= "table" then return end
-    for key, v in pairs(idx) do
-        if string.find(key, "<rgb", 1, true) then
-            local plain = toLowerES(QuestLocResolver.StripRGB(key))
-            if plain ~= "" and idx[plain] == nil then
-                local list = RGB_FREE[plain]
-                if not list then
-                    list = {}
-                    RGB_FREE[plain] = list
-                end
-                addCands(list, v)
-            end
-        end
-    end
+    RGB_FREE = _G.QuestObjectiveESRgbFree or {}
 end
 
 function QuestLocResolver.RgbFreeObjective(key)
     if not RGB_FREE then buildRgbFree() end
     if not key or key == "" then return nil end
-    local list = RGB_FREE[key]
-    if list and #list > 0 then return list end
+    local list = RGB_FREE[QuestLocResolver.TextHash(key)]
+    if type(list) == "number" then return { list } end
+    if type(list) == "table" and #list > 0 then return list end
     return nil
 end
 

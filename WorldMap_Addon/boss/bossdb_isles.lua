@@ -1,0 +1,91 @@
+-- Generado desde BossCodex (Arebel) Data.lua -- no editar a mano.
+-- skill = { nombre, etiquetas, reutilizacion, primer uso, induccion, iconos de efecto, gritos, area }
+local DB = WorldMapAddon.BossDB
+DB.inst["isles"] = {
+  { "Krizhmûl", {
+    { "Septic Bite", "D", 16, 20, nil, { 1091657100, 1091657099, 1091657098, 1091659752 }, nil, "Single Target" },
+    { "Thrashing Jaws", "CW", 15, 0, nil, { 1091401111 }, nil, "120° by 6.0m arc from Self" },
+    { "Lashing Tail", "CK", 20, 0, nil, nil, nil, "120° by 6.0m arc from Self with 180° offset" },
+    { "Septic Cloud", "D", 35, 0, 2.5, { 1091657100, 1091657099, 1091657098, 1091659752, 1091400596 }, nil, "Single Target" },
+  } },
+  { "Urâbaz the Mighty", {
+    { "Backhand Smash", "K", 0, 0, nil, nil, nil, "Single Target" },
+    { "Spinning Swipe", "K", 0, 0, nil, { 1090541206 }, nil, "Single Target" },
+    { "Hurl Coconut", "K", 0, 30, nil, nil, nil, "Single Target" },
+    { "Ground Pound", "K", 45, 45, 5, { 1090541206 }, nil, "Single Target" },
+    { "Grog Barrel", "SP", 0, 25, nil, { 1090640842 }, nil, "Single Target" },
+  } },
+  { "Raghârik", {
+    { "Slashing Beak", "C", 0, 0, nil, nil, nil, "90° by 8.0m arc from Self" },
+    { "Lightning Blast", "K", 10, 0, nil, { 1091565008 }, nil, "Single Target" },
+    { "Updraft", "K", 0, 12, nil, nil, nil, "Single Target" },
+    { "Downdraft", "AK", 0, 30, 4, nil, nil, "60.0m around Self" },
+  } },
+  { "Fallen Buccaneer", {
+    { "Submerging...", "I", -1, 0, 3, nil, nil, "Single Target" },
+    { "Shadow Burst", "A", -1, 0, nil, nil, nil, "5.0m around Self" },
+    { "Lesser Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Lesser Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Festering disease", "K", 0, 0, nil, { 1090522617 }, nil, "Single Target" },
+  } },
+  { "Fallen Privateer", {
+    { "Submerging...", "I", -1, 0, 3, nil, nil, "Single Target" },
+    { "Shadow Burst", "A", -1, 0, nil, nil, nil, "5.0m around Self" },
+    { "Lesser Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Lesser Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Festering disease", "K", 0, 0, nil, { 1090522617 }, nil, "Single Target" },
+  } },
+  { "Vengeful Mariner", {
+    { "Submerging...", "I", -1, 0, 3, nil, nil, "Single Target" },
+    { "Shadow Burst", "A", -1, 0, nil, nil, nil, "5.0m around Self" },
+    { "Lesser Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Lesser Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Festering disease", "K", 0, 0, nil, { 1090522617 }, nil, "Single Target" },
+  } },
+  { "Wandering Cyclone", {
+    { "Frost Wave", "AS", 15, 0, nil, nil, nil, "30.0m around Self" },
+    { "Frost Vortex", "K", 5, 0, nil, nil, nil, "Single Target" },
+    { "Snow Geyser", "SKW", 5, 0, nil, { 1091429125 }, nil, "Single Target" },
+    { "Frost Swipe High", "CS", 3, 0, nil, nil, nil, "180° by 5.0m arc from Self" },
+  } },
+  { "Ghostly Captain", {
+    { "Submerging...", "I", -1, 0, 3, nil, nil, "Single Target" },
+    { "Shadow Burst", "A", -1, 0, nil, nil, nil, "5.0m around Self" },
+    { "Lesser Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Lesser Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Festering disease", "K", 0, 0, nil, { 1090522617 }, nil, "Single Target" },
+  } },
+  { "Accursed Privateer", {
+    { "Diseased Roar", "D", -1, 0, nil, { 1090522616 }, nil, "6.0m by 10.0m rectangle from Self" },
+    { "Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Greater Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Greater Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Festering disease", "K", 0, 0, nil, { 1090522617 }, nil, "Single Target" },
+  } },
+  { "Accursed Corsair", {
+    { "a moderate swipe attack", "C", 10, 0, nil, nil, nil, "120° by 3.0m arc from Self" },
+    { "Lesser Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Lesser Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Wasting Sickness", "D", 0, 0, nil, { 1091401231 }, nil, "Single Target" },
+    { "Diseased Frailty", "D", 0, 0, nil, { 1090522616 }, nil, "Single Target" },
+    { "Festering disease", "K", 0, 0, nil, { 1090522617 }, nil, "Single Target" },
+  } },
+  { "Errant Winds", {
+    { "a moderate swipe attack", "C", 6, 0, nil, nil, nil, "180° by 5.0m arc from Self" },
+    { "Errant Winds", "IAK", 12, 4, 3.5, nil, nil, "7.0m around Self" },
+  } },
+  { "Chaotic Winds", {
+    { "Frost Swipe High", "C", 4, 0, nil, nil, nil, "180° by 5.0m arc from Self" },
+    { "Lightning Bolt", "K", 8, 6, nil, nil, nil, "Single Target" },
+    { "Chaotic Lightning", "IA", 16, 8, 3.5, nil, nil, "7.0m around Self" },
+  } },
+}

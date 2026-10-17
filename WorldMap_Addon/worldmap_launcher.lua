@@ -139,6 +139,12 @@ function WorldMapAddon.UI.Launcher:Constructor()
             _G.GatherWindow:SetVisible(not _G.GatherWindow:IsVisible())
         end
     end)
+    -- v3.16: senales de jefe (opciones, prueba)
+    self:_AddSub("senales", RES_BASE .. "icon/senales_icon_35.tga", function()
+        if WorldMapAddon.Boss ~= nil and WorldMapAddon.Boss.ToggleOptions ~= nil then
+            WorldMapAddon.Boss.ToggleOptions()
+        end
+    end)
 
     self.menu = Turbine.UI.ContextMenu()
     local itemToggle = Turbine.UI.MenuItem("Abrir/Cerrar Mapa del Mundo")
@@ -152,6 +158,14 @@ function WorldMapAddon.UI.Launcher:Constructor()
         end
     end
     self.menu:GetItems():Add(itemGather)
+    -- v3.16: senales de jefe
+    local itemBoss = Turbine.UI.MenuItem("Mec\195\161nicas de jefe")
+    itemBoss.Click = function()
+        if WorldMapAddon.Boss ~= nil and WorldMapAddon.Boss.ToggleOptions ~= nil then
+            WorldMapAddon.Boss.ToggleOptions()
+        end
+    end
+    self.menu:GetItems():Add(itemBoss)
 
     self.itemLock = Turbine.UI.MenuItem("Bloquear posicion")
     self.itemLock.Click = function()
@@ -208,6 +222,8 @@ function WorldMapAddon.UI.Launcher:_AvailableSubs()
             ok = LqaLauncher(self) ~= nil
         elseif btn.subKey == "lupa" then
             ok = _G.GatherWindow ~= nil or _G.GatherPointsStore ~= nil
+        elseif btn.subKey == "senales" then
+            ok = WorldMapAddon.Boss ~= nil
         end
         if ok then
             list[#list + 1] = btn
@@ -612,6 +628,15 @@ function WorldMapAddon.MapCommand:Execute(command, arguments)
     -- v3.15: "/mapa recoleccion" abre / cierra la ventana Recoleccion
     if (low == "recoleccion" or low == "recolecci\195\179n" or low == "gathering") and WorldMapAddon.Gather ~= nil then
         WorldMapAddon.Gather.Toggle()
+        return
+    end
+    -- v3.16: "/mapa jefe" (opciones), "/mapa jefe prueba", "/mapa jefe <nombre>", "/mapa jefe off"
+    local bossArg = query:match("^[Jj][Ee][Ff][Ee]%s*(.*)$") or query:match("^[Bb][Oo][Ss][Ss]%s*(.*)$")
+    if bossArg ~= nil and WorldMapAddon.Boss ~= nil and WorldMapAddon.Boss.Command ~= nil then
+        local okB, errB = pcall(WorldMapAddon.Boss.Command, bossArg)
+        if not okB then
+            Turbine.Shell.WriteLine("<rgb=#FF0000>Mapa del Mundo: " .. tostring(errB) .. "</rgb>")
+        end
         return
     end
     if (low == "opciones" or low == "options") and WorldMapAddon.Options ~= nil and WorldMapAddon.Options.Show ~= nil then
