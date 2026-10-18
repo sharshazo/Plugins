@@ -184,6 +184,11 @@ function CompanionImportWindow:DoImport()
     end
     IS_IMPORT_HAPPENING = false;
 
+    -- 2026-10-18 (DT-02): only now the import file is marked as used
+    if (ConsumeCompanionImport ~= nil) then
+        ConsumeCompanionImport();
+    end
+
     self.deedsToAdd = {};
     self.deedsToBeCompletedControl:ClearItems();
     self:UpdateSectionTitles();

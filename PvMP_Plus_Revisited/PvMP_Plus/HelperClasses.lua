@@ -1,3 +1,17 @@
+-- 2026-10-18 (PVMP-01): the timestamps are "seconds of the year" (no
+-- year). Right after New Year "now" restarts at 0, so an entry from the end
+-- of December gives a negative difference; it is the previous year, so the
+-- length of that year is added back. Used by GetRecentData and
+-- DeleteObsoleteData.
+function GetAgeSeconds(now, timestamp)
+	local dif = now - (tonumber(timestamp) or now)
+	if dif < 0 then
+		local year = Turbine.Engine.GetDate().Year
+		dif = dif + GetDaysPerYear(year - 1) * 86400
+	end
+	return dif
+end
+
 function GetRecentData(input)
 	local now = GetSecondsOfYear()
 	local last_10_minutes = 0
@@ -5,7 +19,7 @@ function GetRecentData(input)
 	local last_24_hours = 0
 
 	for i, j in pairs(input) do
-		local dif = now - i
+		local dif = GetAgeSeconds(now, i)
 		if (dif <= 86400 and dif >= 0) then
 			last_24_hours = last_24_hours + j
 			if (dif <= 3600) then

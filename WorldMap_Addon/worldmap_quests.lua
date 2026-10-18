@@ -57,6 +57,16 @@ local function Norm(text)
 end
 Q.Norm = Norm
 
+-- Two world-map polygons share the same playable Hatokali territory.
+function Q.CanonicalZone(name)
+    if name == "Pahar Hatokali" then return "The Hatokali Fells" end
+    return name
+end
+function Q.SameZone(a, b)
+    return a ~= nil and b ~= nil and Q.CanonicalZone(a) == Q.CanonicalZone(b)
+end
+
+
 -- zona de la base de misiones (quest.zone) -> nombre_original del mapa
 local BY_ZONE = {
     ["bree-land"] = "Bree-land",
@@ -309,6 +319,9 @@ function Q.ActiveCounts()
             counts[zoneName] = (counts[zoneName] or 0) + 1
         end
     end
+    local hatokali = (counts["The Hatokali Fells"] or 0) + (counts["Pahar Hatokali"] or 0)
+    counts["Pahar Hatokali"] = hatokali
+    counts["The Hatokali Fells"] = hatokali
     return counts
 end
 
@@ -398,28 +411,43 @@ end
 -- lugares de la mision; si no hay, QuestLocCoords = uno). Solo las activas
 -- del jugador, nunca todas las del juego.
 -- { { ndx, quest, stages = { { name, nameES, loc }, ... } }, ... }
-function Q.ActiveInZone(zoneName)
+-- With mapId, stages select their actual map territory, even when the
+-- quest journal groups the quest elsewhere. Legacy stages stay zone-scoped.
+function Q.ActiveInZone(zoneName, mapId)
     local out = {}
-    if zoneName == nil or not Q.Available() then
-        return out
-    end
+    if zoneName == nil or not Q.Available() then return out end
+    local maps = WorldMapAddon.ZoneMapsData and WorldMapAddon.ZoneMapsData.Maps
+    local targetIsInterior = maps and maps[mapId] and maps[mapId].inst == true
     for _, ndx in ipairs(ActiveNdxList()) do
         local quest = QuestByNdx(ndx)
-        if quest ~= nil and Q.ZoneOfQuest(quest) == zoneName then
+        if quest ~= nil then
+            local same = Q.SameZone(Q.ZoneOfQuest(quest), zoneName)
             local key = tonumber(ndx) or ndx
             local stages = {}
             local list = type(_G.QuestStagesCoords) == "table" and _G.QuestStagesCoords[key] or nil
             if type(list) == "table" then
                 for _, st in ipairs(list) do
                     if type(st) == "table" and type(st.loc) == "string" then
-                        stages[#stages + 1] = { name = st.name or "", nameES = st.nameES or "", loc = st.loc }
+                        local belongs
+                        if st.verified then
+                            if st.interior then
+                                belongs = st.mapId == mapId
+                            else
+                                belongs = not targetIsInterior and st.mapId ~= nil and (st.mapId == mapId or Q.SameZone(st.zone, zoneName))
+                            end
+                        else
+                            belongs = same
+                        end
+                        if belongs then stages[#stages + 1] = st end
                     end
                 end
             end
-            if #stages == 0 and type(_G.QuestLocCoords) == "table" and type(_G.QuestLocCoords[key]) == "string" then
+            if #stages == 0 and type(list) ~= "table" and same and type(_G.QuestLocCoords) == "table" and type(_G.QuestLocCoords[key]) == "string" then
                 stages[1] = { name = quest.poiName or "", nameES = "", loc = _G.QuestLocCoords[key] }
             end
-            out[#out + 1] = { ndx = ndx, quest = quest, stages = stages }
+            if same or #stages > 0 then
+                out[#out + 1] = { ndx = ndx, quest = quest, stages = stages }
+            end
         end
     end
     return out
@@ -517,6 +545,68 @@ function Q.Rows(zone)
         return (tonumber(a.ndx) or 0) < (tonumber(b.ndx) or 0)
     end)
     return rows
+end
+
+-- Native journal links use the client's DID, never Quest Assistant's row index.
+-- QuestRef is processed by the client's text control on an actual mouse click;
+-- a Lua MouseClick handler cannot substitute for activating that native link.
+Q.JournalRingSize = 32
+Q.JournalRingGap = 4
+
+function Q.JournalLink(ndx)
+    if type(ndx) ~= "number" and type(ndx) ~= "string" then return nil end
+    local db = _G.QuestDB
+    local quest = db and db.quests and db.quests[tonumber(ndx) or ndx]
+    local id = quest and quest.id
+    if type(id) ~= "string" then return nil end
+    id = id:gsub("^0[xX]", "")
+    if #id ~= 8 or not id:match("^7%x%x%x%x%x%x%x$") then return nil end
+    return "<QuestRef:DID:0x" .. id:upper() .. ">OO<\\QuestRef>"
+end
+
+function Q.UpdateJournalRing(ring, ndx)
+    local link = Q.JournalLink(ndx)
+    ring.questNdx = link and ndx or nil
+    -- Clear hidden links as well, so pooled controls cannot retain an old DID.
+    ring.hit:SetText(link or "")
+    ring.hit:SetMouseVisible(link ~= nil)
+    ring:SetVisible(link ~= nil)
+    return link ~= nil
+end
+
+function Q.CreateJournalRing(parent, ndx, onBack)
+    local ring = Turbine.UI.Control()
+    ring:SetParent(parent)
+    ring:SetSize(Q.JournalRingSize, Q.JournalRingSize)
+    ring:SetMouseVisible(false)
+    local image = Turbine.UI.Control()
+    image:SetParent(ring)
+    image:SetSize(Q.JournalRingSize, Q.JournalRingSize)
+    image:SetBackground("WorldMap_Addon/assets/worldmap/icon/quest_journal_ring.tga")
+    image:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
+    image:SetMouseVisible(false)
+    ring.image = image
+    local hit = Turbine.UI.Label()
+    hit:SetParent(ring)
+    hit:SetSize(Q.JournalRingSize, Q.JournalRingSize)
+    local fonts = Turbine.UI.Lotro.Font
+    hit:SetFont(fonts.Verdana20 or fonts.TrajanPro20 or fonts.Verdana16 or fonts.Verdana12)
+    hit:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
+    hit:SetMultiline(false)
+    hit:SetSelectable(true)
+    -- Keep the native text link clickable while showing the existing ring art
+    -- beneath it. Opacity applies only to this label, not its sibling image.
+    hit:SetOpacity(0.01)
+    hit.MouseEnter = function() image:SetBackColor(Turbine.UI.Color(0.18, 1, 0.82, 0.25)) end
+    hit.MouseLeave = function() image:SetBackColor(Turbine.UI.Color(0, 0, 0, 0)) end
+    if type(onBack) == "function" then
+        hit.MouseClick = function(sender, args)
+            if args and args.Button == Turbine.UI.MouseButton.Right then onBack() end
+        end
+    end
+    ring.hit = hit
+    Q.UpdateJournalRing(ring, ndx)
+    return ring
 end
 
 -- abre la mision en la ventana de Quest Assistant (mismo camino que su

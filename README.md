@@ -1,13 +1,16 @@
 # Addons de LOTRO en español
 
-## Guía de funciones actualizada — 17 de octubre de 2026
+## Guía de funciones actualizada — 18 de octubre de 2026
 
 **[Ver la guía completa de todos los addons](GUIA_COMPLETA.md)**: interfaz, misiones, mapas, mecánicas de jefe, alertas propias, recolección, hazañas, JcJ, comandos, conexiones e instalación limpia.
 
-- **QuestSync:** Buscar grupo usa el canal **LFF**, con lugar, tipo y tamaño de grupo; se envía al pulsar el botón.
-- **Mapa del Mundo 3.20.0:** mecánicas por rol, cuatro modelos de aviso, alertas propias y recolección integrada.
+- **QuestSync:** Buscar grupo usa **LFF** con el nombre exacto en inglés de la instancia, mazmorra o raid; también el mensaje es en inglés.
+- **Mapa del Mundo:** las misiones activas de las fichas de instancias se pueden pulsar para seleccionarlas en QuestSync. El anillo original a la derecha prepara un enlace al diario del juego, pendiente de confirmación dentro del cliente.
+- **Mapa del Mundo 3.20.1:** mecánicas por rol, cuatro modelos de aviso, alertas propias y recolección integrada.
 - **LUI:** versión limpia, con interfaz, objetos, artesanía y efectos; Viaje y Bienes se retiraron.
+- Mejoras de protección de guardados, recuperación de cargas, sincronización de hazañas y límites de caché.
 - Descargas individuales y colección completa en **RAR y ZIP**, siempre con Turbine.
+- [Comprobaciones y problemas pendientes de esta publicación](COMPROBACIONES_2026-10-18.md).
 
 Para actualizar, reemplaza la carpeta anterior de cada addon con el juego cerrado; combinar archivos puede conservar componentes retirados. Conserva PluginData y los demás addons.
 
@@ -81,16 +84,16 @@ Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landa
 
 ## Descarga por separado
 
-¿Solo quieres un addon? Descarga su RAR actualizado del **17 de octubre de 2026**. **Cada RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
+¿Solo quieres un addon? Descarga su RAR actualizado del **18 de octubre de 2026**. Los enlaces de esta tabla llevan siempre a la publicación más reciente. **Cada RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
 
 | Addon | Descarga |
 |---|---|
-| ✨ LUI | [⬇️ LUI.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/LUI.rar) |
-| 📖 QuestSync | [⬇️ QuestSync.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/QuestSync.rar) |
-| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/MapaDelMundo.rar) |
-| 🏆 Deed Tracker | [⬇️ DeedTracker.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/DeedTracker.rar) |
-| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/PvMP_Plus.rar) |
-| 📦 Todos juntos | [⬇️ Todos_los_addons.rar](https://github.com/sharshazo/Plugins/releases/download/v2026.10.17-2/Todos_los_addons.rar) |
+| ✨ LUI | [⬇️ LUI.rar](https://github.com/sharshazo/Plugins/releases/latest/download/LUI.rar) |
+| 📖 QuestSync | [⬇️ QuestSync.rar](https://github.com/sharshazo/Plugins/releases/latest/download/QuestSync.rar) |
+| 🗺️ Mapa del Mundo | [⬇️ MapaDelMundo.rar](https://github.com/sharshazo/Plugins/releases/latest/download/MapaDelMundo.rar) |
+| 🏆 Deed Tracker | [⬇️ DeedTracker.rar](https://github.com/sharshazo/Plugins/releases/latest/download/DeedTracker.rar) |
+| ⚔️ PvMP+ Revisited | [⬇️ PvMP_Plus.rar](https://github.com/sharshazo/Plugins/releases/latest/download/PvMP_Plus.rar) |
+| 📦 Todos juntos | [⬇️ Todos_los_addons.rar](https://github.com/sharshazo/Plugins/releases/latest/download/Todos_los_addons.rar) |
 
 Abre el RAR y copia **las 2 carpetas** que hay dentro (el addon y `Turbine`) en `Documentos\The Lord of the Rings Online\Plugins\`. Para actualizar sin conservar archivos retirados, reemplaza primero la carpeta anterior del addon con el juego cerrado; conserva PluginData y otros addons. Si instalas varios addons, no pasa nada por copiar `Turbine` más de una vez.
 

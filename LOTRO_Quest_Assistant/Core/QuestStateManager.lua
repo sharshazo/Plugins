@@ -16,6 +16,29 @@ QuestStateManager.State = {
 }
 
 function QuestStateManager.Initialize()
+    if QuestStateManager._loadDriver then
+        QuestStateManager._loadDriver:SetWantsUpdates(false)
+        QuestStateManager._loadDriver = nil
+    end
+    QuestStateManager._loading = false
+    QuestStateManager._readErrorNoticed = false
+    QuestStateManager._stopped = false
+    local me = Plugins and Plugins["QuestSync"]
+    if me ~= nil and not QuestStateManager._unloadHooked then
+        QuestStateManager._unloadHooked = true
+        local previous = me.Unload
+        local manager = QuestStateManager
+        me.Unload = function(sender, args)
+            manager._stopped = true
+            manager._loadAttemptToken = nil
+            manager._loadToken = nil
+            if manager._loadDriver then
+                manager._loadDriver:SetWantsUpdates(false)
+                manager._loadDriver = nil
+            end
+            if type(previous) == "function" then previous(sender, args) end
+        end
+    end
     -- Inicializacion limpia primero...
     QuestStateManager.State.active = {}
     QuestStateManager.State.completed = {}
@@ -27,20 +50,48 @@ function QuestStateManager.Initialize()
     -- asincrona (el callback puede llegar antes o despues de que se cree la
     -- UI), asi que al terminar publicamos QUEST_STATE_CHANGED para forzar un
     -- refresco tanto si la ventana/HUD ya existen como si se crean despues.
-    Turbine.PluginData.Load(Turbine.DataScope.Character, SAVE_KEY, function(loadedData)
+    --
+    -- 2026-10-18 (QS-01): mientras la carga esta pendiente, lo que pase en el
+    -- juego (aceptar, completar, abandonar, seguir otra mision...) se anota y
+    -- NO se guarda todavia (se guardaria un historial a medias). Al llegar
+    -- el guardado anterior se mezcla: lo de esta sesion gana para las
+    -- misiones tocadas, el resto sale del guardado; y recien ahi se guarda.
+    QuestStateManager._loaded = false
+    QuestStateManager._touched = {}
+    QuestStateManager._trackedTouched = false
+    QuestStateManager._saveWanted = false
+    local token = {}
+    QuestStateManager._loadToken = token
+    local function finish(loadedData)
+        if QuestStateManager._loadToken ~= token or QuestStateManager._loaded then
+            return   -- callback repetido o de una carga anterior
+        end
+        QuestStateManager._loaded = true
+        QuestStateManager._loading = false
+        if QuestStateManager._loadDriver then
+            QuestStateManager._loadDriver:SetWantsUpdates(false)
+            QuestStateManager._loadDriver = nil
+        end
+        local wanted = QuestStateManager._saveWanted
+        QuestStateManager._saveWanted = false
         if loadedData and type(loadedData) == "table" then
-            if type(loadedData.active) == "table" then
-                QuestStateManager.State.active = loadedData.active
+            local cur = QuestStateManager.State
+            local act = type(loadedData.active) == "table" and loadedData.active or {}
+            local comp = type(loadedData.completed) == "table" and loadedData.completed or {}
+            for ndx in pairs(QuestStateManager._touched) do
+                act[ndx] = cur.active[ndx]
+                comp[ndx] = cur.completed[ndx]
             end
-            if type(loadedData.completed) == "table" then
-                QuestStateManager.State.completed = loadedData.completed
+            cur.active = act
+            cur.completed = comp
+            if not QuestStateManager._trackedTouched then
+                cur.tracked = loadedData.tracked
             end
-            QuestStateManager.State.tracked = loadedData.tracked
-            if type(loadedData.zone) == "string" then
-                QuestStateManager.State.zone = loadedData.zone
+            if cur.zone == nil and type(loadedData.zone) == "string" then
+                cur.zone = loadedData.zone
             end
-            if loadedData.fxOff == true then
-                QuestStateManager.State.fxOff = true
+            if cur.fxOff == nil and loadedData.fxOff == true then
+                cur.fxOff = true
             end
 
             local activeCount = 0
@@ -54,10 +105,62 @@ function QuestStateManager.Initialize()
                 LQA.Core.EventBus:Publish("QUEST_STATE_CHANGED", {})
             end
         end
+        QuestStateManager._touched = {}
+        if wanted then
+            QuestStateManager.Save()
+        end
+    end
+    QuestStateManager._loadFinish = finish
+    QuestStateManager.RetryLoad()
+end
+
+-- Retry without resetting the live changes or authorizing a partial save.
+function QuestStateManager.RetryLoad()
+    local Q = QuestStateManager
+    if Q._stopped or Q._loaded or Q._loading or Q._loadFinish == nil then return end
+    local token = {}
+    Q._loadAttemptToken = token
+    Q._loading = true
+    Q._loadDeadline = Turbine.Engine.GetGameTime() + 15
+    local ok = pcall(Turbine.PluginData.Load, Turbine.DataScope.Character, SAVE_KEY, function(data)
+        if Q._loadAttemptToken ~= token or Q._loaded then return end
+        Q._loadFinish(data)
     end)
+    if not ok and not Q._loaded then
+        Q._loading = false
+        Q._loadAttemptToken = nil
+        Q._retryAt = Turbine.Engine.GetGameTime() + 5
+        if not Q._readErrorNoticed then
+            Q._readErrorNoticed = true
+            Turbine.Shell.WriteLine("QuestSync: saved progress could not be read. Changes stay in memory while loading is retried; the existing file will not be overwritten.")
+        end
+    end
+    if not Q._loaded and Q._loadDriver == nil and Turbine.UI ~= nil then
+        local driver = Turbine.UI.Control()
+        Q._loadDriver = driver
+        driver.Update = function()
+            if Q._loaded or Q._stopped then
+                driver:SetWantsUpdates(false)
+                return
+            end
+            local now = Turbine.Engine.GetGameTime()
+            if Q._loading and now >= Q._loadDeadline then
+                Q._loading = false
+                Q._loadAttemptToken = nil
+                Q._retryAt = now + 5
+            elseif not Q._loading and now >= (Q._retryAt or 0) then
+                Q.RetryLoad()
+            end
+        end
+        driver:SetWantsUpdates(true)
+    end
 end
 
 function QuestStateManager.Save()
+    if QuestStateManager._loaded == false then
+        QuestStateManager._saveWanted = true   -- se guarda al terminar la carga
+        return
+    end
     Turbine.PluginData.Save(Turbine.DataScope.Character, SAVE_KEY, QuestStateManager.State)
 end
 
@@ -215,4 +318,33 @@ function QuestStateManager.SetTrackedQuest(ndx)
         pcall(QuestStateManager.Save)
     end
     LQA.Core.EventBus:Publish("QUEST_TRACKED", {ndx=ndx})
+end
+
+-- 2026-10-18 (QS-01): cada cambio hecho mientras la carga esta pendiente
+-- queda anotado para que la mezcla de Initialize lo respete.
+for _, name in ipairs({ "SetQuestActive", "UpdateProgress", "SetQuestCompleted", "SetQuestAbandoned", "ResetQuest" }) do
+    local f = QuestStateManager[name]
+    QuestStateManager[name] = function(ndx, ...)
+        if QuestStateManager._loaded ~= false then
+            return f(ndx, ...)
+        end
+        if ndx ~= nil and QuestStateManager._touched then
+            QuestStateManager._touched[ndx] = true
+        end
+        local before = QuestStateManager.State.tracked
+        local r = f(ndx, ...)
+        if QuestStateManager.State.tracked ~= before then
+            QuestStateManager._trackedTouched = true
+        end
+        return r
+    end
+end
+do
+    local f = QuestStateManager.SetTrackedQuest
+    QuestStateManager.SetTrackedQuest = function(ndx, ...)
+        if QuestStateManager._loaded == false then
+            QuestStateManager._trackedTouched = true
+        end
+        return f(ndx, ...)
+    end
 end

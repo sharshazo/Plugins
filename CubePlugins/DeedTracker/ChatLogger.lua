@@ -42,19 +42,24 @@ function ChangeLocation(newLocation)
     local newLocationNum = DataFiles.GetChatRegionNumber(newLocation);
     if (oldLocationNum ~= newLocationNum) then
         LOCATION_NUMBER = newLocationNum;
-        if (SETTINGS.VERBOSE_OUTPUT) then
-            local instance = "";
-            if (newLocationNum == _LANG.LEAVE_CHANNEL.LEAVE_REGION_INDEX) then
-                local instanceName = _LANG.LEAVE_CHANNEL.LAST_KNOWN_INSTANCE_ENTERED_NAME;
-                if (instanceName ~= "") then
-                    instance = " (" .. instanceName .. ")";
+        -- 2026-10-18 (DT-01): the reset below is real logic, not debug output;
+        -- it used to run only with VERBOSE_OUTPUT on. Now it always runs and
+        -- only the messages depend on that setting.
+        local instance = "";
+        if (newLocationNum == _LANG.LEAVE_CHANNEL.LEAVE_REGION_INDEX) then
+            local instanceName = _LANG.LEAVE_CHANNEL.LAST_KNOWN_INSTANCE_ENTERED_NAME;
+            if (instanceName ~= "") then
+                instance = " (" .. instanceName .. ")";
 
-                    -- Reset the delayed skirmish completion text, if any:
+                -- Reset the delayed skirmish completion text, if any:
+                if (SETTINGS.VERBOSE_OUTPUT) then
                     Debug("Entering an instance, resetting delayed skirmish completion status.");
-
-                    DELAYED_SKIRMISH_COMPLETION_CHAT = nil;
                 end
+
+                DELAYED_SKIRMISH_COMPLETION_CHAT = nil;
             end
+        end
+        if (SETTINGS.VERBOSE_OUTPUT) then
             Debug("Deed Tracker thinks you moved from " .. DataFiles.GetRegionName(oldLocationNum) .. " to " .. DataFiles.GetRegionName(newLocationNum) .. instance);
         end
     end

@@ -390,19 +390,55 @@ function InventoryWindow:get_backpack_size()
     return size
 end
 
+-- 2026-10-18 (LUI-03): the backpack events are CHAINED (a handler that was
+-- already there keeps working) and released again by unhook_backpack_events
+-- when the inventory is turned off, so the old window stops reacting.
 function InventoryWindow:hook_backpack_events()
+    if self.backpack == nil or self._backpack_hooks ~= nil then
+        return
+    end
+    local win = self
+    local hooks = { alive = true, list = {} }
+    for _, ev in ipairs({ "ItemAdded", "ItemRemoved", "ItemMoved", "ItemChanged" }) do
+        local prev = self.backpack[ev]
+        local function handler(sender, args)
+            if hooks.alive then
+                win._filter_dirty = true
+                win._haystack_dirty = true
+                win._display_dirty = true
+            end
+            if type(prev) == "function" then
+                prev(sender, args)
+            elseif type(prev) == "table" then
+                for _, f in ipairs(prev) do
+                    if type(f) == "function" then
+                        f(sender, args)
+                    end
+                end
+            end
+        end
+        hooks.list[ev] = { handler = handler, prev = prev }
+        self.backpack[ev] = handler
+    end
+    self._backpack_hooks = hooks
+end
+
+function InventoryWindow:unhook_backpack_events()
+    local hooks = self._backpack_hooks
+    if hooks == nil then
+        return
+    end
+    self._backpack_hooks = nil
+    hooks.alive = false
     if self.backpack == nil then
         return
     end
-    local function dirty()
-        self._filter_dirty = true
-        self._haystack_dirty = true
-        self._display_dirty = true
+    for ev, h in pairs(hooks.list) do
+        -- only put the previous handler back if nobody chained after us
+        if self.backpack[ev] == h.handler then
+            self.backpack[ev] = h.prev
+        end
     end
-    self.backpack.ItemAdded = dirty
-    self.backpack.ItemRemoved = dirty
-    self.backpack.ItemMoved = dirty
-    self.backpack.ItemChanged = dirty
 end
 
 function InventoryWindow:update_filter()

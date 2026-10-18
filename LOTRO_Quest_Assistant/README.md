@@ -1,7 +1,5 @@
 # 📖 QuestSync (LOTRO Quest Assistant)
 
-Actualizado el **17 de octubre de 2026**. [Guía completa de funciones y conexiones](../GUIA_COMPLETA.md). Buscar grupo utiliza **LFF** y solo envía el mensaje al pulsar el botón.
-
 Asistente de misiones **en español** para **The Lord of the Rings Online**: traduce el nombre, el diálogo y los objetivos de **más de 14.000 misiones** a partir de una base de datos propia, extraída y verificada. **No es traducción automática en vivo.** Incluye tracker flotante, libro de misión estilo pergamino, buscador, mapa y rutas, ayudas de recolección y narración por voz.
 
 Nombre en el gestor de plugins: **QuestSync**
@@ -87,10 +85,10 @@ QuestSync lee el **chat de misiones** en tiempo real y detecta cuándo **aceptas
 
 ## 5. Misiones de grupo
 
-- Las **misiones de grupo identificadas en la base de datos** (mazmorras, incursiones, instancias) tienen **color propio**, **logo de grupo** y un cartel que dice **a qué mazmorra o incursión hay que ir** y el tamaño oficial (grupo pequeño de 3, comunidad de 6, incursión de 12+).
+- Las **1.448 misiones de grupo** (mazmorras, incursiones, instancias) tienen **color propio**, **logo de grupo** y un cartel que dice **a qué mazmorra o incursión hay que ir** y el tamaño oficial (grupo pequeño de 3, comunidad de 6, incursión de 12+).
 - El nombre del lugar sale en **español y en inglés** (por ejemplo *La Decimosexta Sala (The Sixteenth Hall)*).
 - **Filtro de grupo** junto al buscador: muestra solo misiones de grupo.
-- Botón **Buscar grupo**: envía al canal **LFF** un mensaje en inglés con el lugar, el tipo de actividad y el tamaño del grupo, solicitando respuesta por privado. Solo se envía al hacer clic.
+- Botón **Buscar grupo**: escribe en el chat un mensaje para buscar grupo con el lugar, el tamaño y el nombre de la misión. Solo se envía al hacer clic.
 
 ---
 
@@ -193,3 +191,10 @@ Los botones de narrar y silenciar necesitan una pieza aparte corriendo en tu PC 
 - Integra datos de referencia de **Compendium**, **LotroCompanion / lotro-data** y **MoorMap / Waypoint** (addons de terceros que se instalan aparte).
 - Las colecciones salen de **LostLore** y los cofres de **WarbandsSlayer**.
 - El gancho de chat compartido y la ficha flotante siguen el diseño de **Deed Tracker** (de Cube).
+
+
+## Actualización del 18 de octubre de 2026
+
+Buscar grupo usa el nombre exacto en inglés de la instancia, mazmorra o raid, y emite el mensaje en inglés en LFF. Se añaden verificaciones de mapas y se conserva el historial durante cargas demoradas o fallidas.
+
+Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.

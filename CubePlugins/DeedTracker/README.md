@@ -2,8 +2,6 @@
 
 # 🏆 Deed Tracker (versión en español)
 
-Documentación revisada el **17 de octubre de 2026**. [Ver el catálogo de funciones, conexiones e instalación limpia](../../GUIA_COMPLETA.md).
-
 Seguimiento de **hazañas** para **The Lord of the Rings Online**, con la base de datos de hazañas **en español**.
 
 Es una **versión en español del addon original Deed Tracker de Cube** (v3.3.0, traducción de la interfaz de Heisenchad), con añadidos de esta colección: la página **«Por zona»** y la **conexión con el Mapa del Mundo**. Todo el mérito del addon original es de su autor (ver [Créditos](#requisitos-limitaciones-y-créditos)).
@@ -162,3 +160,10 @@ Icono pequeño en pantalla para abrir la ventana. Se puede mostrar u ocultar y e
 - **Deed Tracker** es obra de **Cube** (CubePlugins). Traducción de la interfaz al español: **Heisenchad**. Web: <https://deedtracker.lifebeyondtheshire.com/> · Discord de CubePlugins: <https://discord.gg/Vj2ERg3ZHJ>.
 - El autor original agradece a Galuhad y Hytbold Assistant, Berry's Completionist Tracker, Reminders, TitanBar, DailyTasks, Garan y MinstrelBuffs, Thurallor, Lyrical, Vindar, FowlMap, Damien y LotRO Companion, y Lunarwater, y a sus probadores (ver `readme.txt`).
 - Los añadidos de esta colección («Por zona», conexión con el Mapa del Mundo y `/dtmapa`) no cambian el funcionamiento original.
+
+
+## Actualización del 18 de octubre de 2026
+
+Los cambios recibidos desde el mapa mantienen su orden y solo se confirman tras aplicarlos y guardarlos; los fallos repetidos conservan el pedido pendiente con una pausa entre reintentos.
+
+Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.

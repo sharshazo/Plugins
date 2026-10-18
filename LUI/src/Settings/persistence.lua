@@ -25,6 +25,11 @@ local PLUGIN_DATA_SCHEMAS = {
     [CHARACTER_DATA_KEY] = PluginDataTypes.CHARACTER,
 }
 
+-- A failed read does not authorize replacing the unknown saved file later.
+-- Track each key; save profiles and character links only when both are known.
+local unread_keys = {}
+local blocked_notices = {}
+
 local function _copy_table(value)
     if type(value) ~= "table" then
         return value
@@ -62,32 +67,53 @@ local function _plugin_data_schema(key)
 end
 
 local function _save_plugin_data(scope, key, data)
+    if unread_keys[key] or unread_keys[ACCOUNT_DATA_KEY] or unread_keys[CHARACTER_DATA_KEY] then
+        if not blocked_notices[key] and Turbine.Shell ~= nil then
+            blocked_notices[key] = true
+            Turbine.Shell.WriteLine("LUI: saved settings could not be fully read. Changes stay in memory; saving " .. tostring(key) .. " is blocked to protect existing profiles and character links. Reload LUI to retry.")
+        end
+        return false
+    end
     Turbine.PluginData.Save(scope, key, PluginDataTypes.encode(data, _plugin_data_schema(key)))
+    return true
 end
 
 local function _write_plugin_data_load_error(key, err)
     if Turbine.Shell ~= nil and type(Turbine.Shell.WriteLine) == "function" then
-        Turbine.Shell.WriteLine("<rgb=#3399FA>LUI</rgb>: Corrupted PluginData file for " .. tostring(key) .. ". Replacing it with a clean file. " .. tostring(err))
+        Turbine.Shell.WriteLine("<rgb=#3399FA>LUI</rgb>: Could not read PluginData for " .. tostring(key) .. ". The saved file was left untouched; using defaults for this session. " .. tostring(err))
     end
 end
 
-local function _wipe_corrupted_plugin_data(scope, key, err)
+-- 2026-10-18 (LUI-01): un error de LECTURA no prueba que el archivo este
+-- corrupto (puede ser un fallo pasajero de la API). Antes se escribia una
+-- tabla vacia encima y se podian perder los perfiles: ahora solo se avisa
+-- y el archivo guardado queda intacto.
+local function _report_plugin_data_load_error(scope, key, err)
     _write_plugin_data_load_error(key, err)
-    _save_plugin_data(scope, key, {})
 end
 
 local function _load_plugin_data_raw(scope, key, callback)
     local ok, loaded = pcall(function()
         if callback ~= nil then
-            return Turbine.PluginData.Load(scope, key, callback)
+            return Turbine.PluginData.Load(scope, key, function(data)
+                unread_keys[key] = nil
+                blocked_notices[key] = nil
+                callback(data)
+            end)
         end
 
         return Turbine.PluginData.Load(scope, key)
     end)
 
     if ok ~= true then
-        _wipe_corrupted_plugin_data(scope, key, loaded)
+        unread_keys[key] = true
+        _report_plugin_data_load_error(scope, key, loaded)
         return nil
+    end
+
+    if callback == nil then
+        unread_keys[key] = nil
+        blocked_notices[key] = nil
     end
 
     return loaded

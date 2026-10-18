@@ -1,0 +1,1562 @@
+{
+  "date": "2026-10-18",
+  "files": [
+    "WorldMap_Addon/worldmap_zonemaps_data.lua",
+    "WorldMap_Addon/worldmap_deeds.lua",
+    "WorldMap_Addon/worldmap_layers_data.lua",
+    "LOTRO_Quest_Assistant/Data/QuestMapVerified.lua",
+    "LOTRO_Quest_Assistant/Main.lua",
+    "WorldMap_Addon/worldmap_quests.lua",
+    "WorldMap_Addon/worldmap_zonemap.lua",
+    "WorldMap_Addon/worldmap_instances_data.lua",
+    "LOTRO_Quest_Assistant/Legacy/LocationAdapter.lua",
+    "WorldMap_Addon/MapaDelMundo.plugin"
+  ],
+  "original_sha256": {
+    "WorldMap_Addon/worldmap_zonemaps_data.lua": "54e2c808481dc79616b669ab0bddb7e6b42f9a04fcdc6a107298d9249a4a37cf",
+    "WorldMap_Addon/worldmap_deeds.lua": "1d2537070e1aa0d8c0ba25d4dc5a092b98f7f73224e387ea9b0e06a91dde3c9c",
+    "WorldMap_Addon/worldmap_layers_data.lua": "ebe63955f933725f4efdc6ac70d79c62ce4eeee7ca7c5d01773a00f189aab3d8",
+    "LOTRO_Quest_Assistant/Main.lua": "312c0d42d93c9c74f52c6fec190c566820515eff4126cfd3085c065639806477",
+    "WorldMap_Addon/worldmap_quests.lua": "7a4b9d1f2a5276c9163030a4e2ced9b29787e65100bdac2b3bb31a6b5ba33411",
+    "WorldMap_Addon/worldmap_zonemap.lua": "d5d1094bdeba1585c4f5585af4d2d83bdea92a8364e26fa18e64fc4cdf452416",
+    "WorldMap_Addon/worldmap_instances_data.lua": "d38cf6b6ba6bafeb39e945fe216b365a4fb6fd7e77435d738f528186d945c8ff",
+    "LOTRO_Quest_Assistant/Legacy/LocationAdapter.lua": "647a908e8893a336a80762ddaaec43e82dca42ddb964e37c486fdb96ccd142f6",
+    "WorldMap_Addon/MapaDelMundo.plugin": "496e3f70df4593ff433f4d51a7b8e69b666e7bca014e539a0e89bbdad2d1de3d"
+  },
+  "expected_update_sha256": {
+    "WorldMap_Addon/worldmap_zonemaps_data.lua": "814b6f98da7a175142e428e78063a8750a240f6da5e116b4defcedfcefba5955",
+    "WorldMap_Addon/worldmap_deeds.lua": "5eb40568ecb698fc149eac39952a03218ed359600d3305efb2cc3ce2cf148ea4",
+    "WorldMap_Addon/worldmap_layers_data.lua": "e476dbd7e9cfd91dead8fe0b62abfdf523c43b3d0cbd652de78dc889b6fd6c72",
+    "LOTRO_Quest_Assistant/Data/QuestMapVerified.lua": "907f7e3fb88faa8d6b0d8ceaf4099c84b90657efb0181641fc8654d93e6b6e99",
+    "LOTRO_Quest_Assistant/Main.lua": "ed7212f4460a43514fbe532c6957e6c898e130200b8a3cc79a90f41377742a4d",
+    "WorldMap_Addon/worldmap_quests.lua": "5fdfa6fd12ba835e98845e8fa0a85f9c4dd372019703c95780c5c6a4da020154",
+    "WorldMap_Addon/worldmap_zonemap.lua": "8025a3ebb0de257727561ee450da01746c7d9d20f13fab5d5e9e1e303e6d4603",
+    "WorldMap_Addon/worldmap_instances_data.lua": "a746961bcd6b4ac4fd3f9fcd9b5f9cfb5e0050f51e007e81506fa1074fb0addd",
+    "LOTRO_Quest_Assistant/Legacy/LocationAdapter.lua": "c7c875d1edfa8d910d28b34f378f0ccacdf4113a2489b84b97e2259b80311c63",
+    "WorldMap_Addon/MapaDelMundo.plugin": "3150f2a963b4a2c8217d0dcb8b31442b450b7a8f0819352ed25fd761c99356c5"
+  },
+  "calibrations": [
+    {
+      "mapId": 1,
+      "name": "Ettenmoors",
+      "maxPixelDifference": 6.597,
+      "old": [
+        63.6,
+        1541.0,
+        -63.5,
+        -630.0,
+        -10.0,
+        -24.3,
+        -22.0,
+        -8.2,
+        625.0,
+        24.0,
+        987.0,
+        123.0
+      ],
+      "new": [
+        63.75,
+        1548.4999312500001,
+        -63.75,
+        -634.4998612500001,
+        -9.952939,
+        -24.290195,
+        -22.0,
+        -8.227449,
+        625.0,
+        24.0,
+        987.0,
+        123.0
+      ]
+    },
+    {
+      "mapId": 7,
+      "name": "Northern Barrow-downs",
+      "maxPixelDifference": 8.072,
+      "old": [
+        213.13,
+        12203.0,
+        -213.06,
+        -6370.0,
+        -29.9,
+        -57.3,
+        -33.5,
+        -52.5,
+        612.0,
+        190.0,
+        1012.0,
+        321.0
+      ],
+      "new": [
+        211.99998,
+        12143.79939035844,
+        -211.99998,
+        -6332.39997060372,
+        -29.869814,
+        -57.282078,
+        -33.492455,
+        -52.45189,
+        612.0,
+        190.0,
+        1012.0,
+        321.0
+      ]
+    },
+    {
+      "mapId": 8,
+      "name": "Southern Barrow-downs",
+      "maxPixelDifference": 18.05,
+      "old": [
+        173.38,
+        10012.0,
+        -174.32,
+        -5700.0,
+        -32.7,
+        -57.8,
+        -37.1,
+        -51.9,
+        625.0,
+        644.0,
+        980.0,
+        763.0
+      ],
+      "new": [
+        176.0,
+        10164.400224,
+        -176.0,
+        -5755.200000000001,
+        -32.7,
+        -57.752274,
+        -37.063637,
+        -51.93409,
+        625.0,
+        644.0,
+        980.0,
+        763.0
+      ]
+    },
+    {
+      "mapId": 10,
+      "name": "Bree-land Homesteads",
+      "maxPixelDifference": 12.265,
+      "old": [
+        189.44,
+        9468.0,
+        -191.75,
+        -6519.0,
+        -34.0,
+        -50.0,
+        -38.0,
+        -44.6,
+        11.0,
+        24.0,
+        334.0,
+        187.0
+      ],
+      "new": [
+        189.6774,
+        9487.1282783772,
+        -189.6774,
+        -6439.740252561,
+        -33.951015,
+        -50.017178,
+        -37.999996,
+        -44.618538,
+        11.0,
+        24.0,
+        334.0,
+        187.0
+      ]
+    },
+    {
+      "mapId": 12,
+      "name": "Enedwaith",
+      "maxPixelDifference": 22.0,
+      "old": [
+        30.0,
+        1077.0,
+        -30.0,
+        -1618.0,
+        -53.7,
+        -31.6,
+        -77.0,
+        -0.6,
+        24.0,
+        56.0,
+        276.0,
+        187.0
+      ],
+      "new": [
+        30.000002,
+        1077.000011799996,
+        -30.000002,
+        -1596.000016399994,
+        -53.199997,
+        -35.899998,
+        -78.799995,
+        -1.7666664,
+        24.0,
+        56.0,
+        276.0,
+        187.0
+      ]
+    },
+    {
+      "mapId": 14,
+      "name": "Falathlorn Homesteads",
+      "maxPixelDifference": 18.792,
+      "old": [
+        182.78,
+        17099.0,
+        -182.72,
+        -4437.0,
+        -24.93,
+        -91.47,
+        -27.76,
+        -88.93,
+        24.0,
+        11.0,
+        353.0,
+        174.0
+      ],
+      "new": [
+        185.0,
+        17309.00034,
+        -185.0,
+        -4504.000195,
+        -24.345947,
+        -93.562164,
+        -28.4973,
+        -88.02703,
+        24.0,
+        11.0,
+        353.0,
+        174.0
+      ]
+    },
+    {
+      "mapId": 15,
+      "name": "Thorin's Gate",
+      "maxPixelDifference": 8.799,
+      "old": [
+        128.7,
+        13735.0,
+        -128.75,
+        -1442.0,
+        -11.2,
+        -106.8,
+        -17.2,
+        -98.8,
+        81.0,
+        81.0,
+        545.0,
+        200.0
+      ],
+      "new": [
+        128.75,
+        13747.49948125,
+        -128.75,
+        -1446.4999412500001,
+        -11.234951,
+        -106.776695,
+        -17.2,
+        -98.823296,
+        81.0,
+        81.0,
+        545.0,
+        200.0
+      ]
+    },
+    {
+      "mapId": 16,
+      "name": "Thorin's Hall Homesteads",
+      "maxPixelDifference": 29.834,
+      "old": [
+        192.45,
+        21143.0,
+        -192.65,
+        -2531.0,
+        -13.2,
+        -109.9,
+        -17.2,
+        -104.6,
+        644.0,
+        11.0,
+        968.0,
+        155.0
+      ],
+      "new": [
+        192.0,
+        21076.40064,
+        -192.0,
+        -2542.40064,
+        -13.24167,
+        -109.77292,
+        -17.241669,
+        -104.43958,
+        644.0,
+        11.0,
+        968.0,
+        155.0
+      ]
+    },
+    {
+      "mapId": 18,
+      "name": "The Walls of Moria",
+      "maxPixelDifference": 10.664,
+      "old": [
+        138.8,
+        1237.0,
+        -139.5,
+        -6765.0,
+        -48.5,
+        -9.0,
+        -54.0,
+        -1.6,
+        702.0,
+        612.0,
+        987.0,
+        744.0
+      ],
+      "new": [
+        139.34,
+        1248.45637223,
+        -139.34,
+        -6756.359722,
+        -48.4883,
+        -8.9597845,
+        -54.0,
+        -1.6108537,
+        702.0,
+        612.0,
+        987.0,
+        744.0
+      ]
+    },
+    {
+      "mapId": 22,
+      "name": "Frostbluff",
+      "maxPixelDifference": 7.144,
+      "old": [
+        213.13,
+        20545.0,
+        -213.06,
+        3069.0,
+        14.4,
+        -96.4,
+        10.8,
+        -91.6,
+        568.0,
+        593.0,
+        968.0,
+        724.0
+      ],
+      "new": [
+        214.2,
+        20648.88,
+        -214.2,
+        3081.3588918,
+        14.385429,
+        -96.4,
+        10.799995,
+        -91.61942,
+        568.0,
+        593.0,
+        968.0,
+        724.0
+      ]
+    },
+    {
+      "mapId": 27,
+      "name": "Shire Homesteads",
+      "maxPixelDifference": 16.789,
+      "old": [
+        182.68,
+        14130.0,
+        -178.37,
+        -6171.0,
+        -34.6,
+        -77.4,
+        -38.9,
+        -71.8,
+        -8.0,
+        17.0,
+        276.0,
+        155.0
+      ],
+      "new": [
+        181.0,
+        14015.40015,
+        -181.0,
+        -6268.80106,
+        -34.63426,
+        -77.43315,
+        -38.877354,
+        -71.775696,
+        -8.0,
+        17.0,
+        276.0,
+        155.0
+      ]
+    },
+    {
+      "mapId": 29,
+      "name": "Rivendell",
+      "maxPixelDifference": 5.348,
+      "old": [
+        95.6719817768,
+        1024.0,
+        -95.5882352941,
+        -2377.0,
+        -25.5,
+        -7.93,
+        -32.59,
+        -1.61,
+        24.0,
+        24.0,
+        289.0,
+        155.0
+      ],
+      "new": [
+        96.25,
+        1027.4997425,
+        -96.25,
+        -2397.500105,
+        -24.909092,
+        -10.675322,
+        -32.888313,
+        -0.03636074,
+        24.0,
+        24.0,
+        289.0,
+        155.0
+      ]
+    },
+    {
+      "mapId": 32,
+      "name": "Caras Galadhon",
+      "maxPixelDifference": 8.655,
+      "old": [
+        179.47,
+        12568.0,
+        -178.37,
+        -2300.0,
+        -12.9,
+        -70.0,
+        -17.2,
+        -64.3,
+        657.0,
+        625.0,
+        1032.0,
+        750.0
+      ],
+      "new": [
+        180.0,
+        12600.0,
+        -180.0,
+        -2327.9994,
+        -12.93333,
+        -70.0,
+        -17.199997,
+        -64.31111,
+        657.0,
+        625.0,
+        1032.0,
+        750.0
+      ]
+    },
+    {
+      "mapId": 36,
+      "name": "The Flaming Deeps",
+      "maxPixelDifference": 11.33,
+      "old": [
+        136.4,
+        15286.0,
+        -136.96,
+        -1698.0,
+        -12.4,
+        -112.1,
+        -18.0,
+        -104.6,
+        36.0,
+        81.0,
+        353.0,
+        187.0
+      ],
+      "new": [
+        136.25,
+        15279.5001,
+        -136.25,
+        -1684.4996250000002,
+        -12.3633,
+        -112.14312,
+        -17.999998,
+        -104.627525,
+        36.0,
+        81.0,
+        353.0,
+        187.0
+      ]
+    },
+    {
+      "mapId": 39,
+      "name": "Redhorn Lodes",
+      "maxPixelDifference": 10.267,
+      "old": [
+        106.56,
+        11632.0,
+        -108.03,
+        -1004.0,
+        -9.3,
+        -109.2,
+        -16.4,
+        -99.6,
+        593.0,
+        593.0,
+        980.0,
+        763.0
+      ],
+      "new": [
+        107.50001,
+        11735.0010166279,
+        -107.50001,
+        -994.99977505811,
+        -9.255811,
+        -109.16279,
+        -16.399996,
+        -99.63721,
+        593.0,
+        593.0,
+        980.0,
+        763.0
+      ]
+    },
+    {
+      "mapId": 40,
+      "name": "The Grand Stair",
+      "maxPixelDifference": 9.648,
+      "old": [
+        162.38,
+        22967.0,
+        -163.19,
+        12060.0,
+        73.9,
+        -141.5,
+        69.2,
+        -135.2,
+        11.0,
+        56.0,
+        500.0,
+        212.0
+      ],
+      "new": [
+        162.5,
+        22991.999874999998,
+        -162.5,
+        12012.999375000001,
+        73.92615,
+        -141.48923,
+        69.2,
+        -135.18768,
+        11.0,
+        56.0,
+        500.0,
+        212.0
+      ]
+    },
+    {
+      "mapId": 42,
+      "name": "Silvertine Lodes",
+      "maxPixelDifference": 5.919,
+      "old": [
+        142.08,
+        16486.0,
+        -142.04,
+        -1221.0,
+        -8.6,
+        -116.1,
+        -14.0,
+        -108.9,
+        36.0,
+        548.0,
+        430.0,
+        699.0
+      ],
+      "new": [
+        142.0,
+        16482.599732,
+        -142.0,
+        -1220.0005259999998,
+        -8.591553,
+        -116.074646,
+        -14.000004,
+        -108.86338,
+        36.0,
+        548.0,
+        430.0,
+        699.0
+      ]
+    },
+    {
+      "mapId": 64,
+      "name": "Galtrev",
+      "maxPixelDifference": 6.576,
+      "old": [
+        284.1667,
+        5229.0,
+        -284.074,
+        -22413.0,
+        -78.9,
+        -18.4,
+        -81.8,
+        -14.8,
+        612.0,
+        568.0,
+        987.0,
+        699.0
+      ],
+      "new": [
+        285.1612,
+        5243.9025932284,
+        -285.1612,
+        -22496.087610024002,
+        -78.88902,
+        -18.389257,
+        -81.58224,
+        -14.7983055,
+        612.0,
+        568.0,
+        987.0,
+        699.0
+      ]
+    },
+    {
+      "mapId": 65,
+      "name": "Isengard",
+      "maxPixelDifference": 6.623,
+      "old": [
+        132.8571,
+        838.0,
+        -132.241,
+        -10090.0,
+        -76.3,
+        -6.3,
+        -82.1,
+        1.4,
+        324.0,
+        36.0,
+        686.0,
+        174.0
+      ],
+      "new": [
+        133.01999,
+        836.7035320714141,
+        -133.01999,
+        -10155.6386007329,
+        -76.34671,
+        -6.2900586,
+        -82.12028,
+        1.4080324,
+        324.0,
+        36.0,
+        686.0,
+        174.0
+      ]
+    },
+    {
+      "mapId": 68,
+      "name": "Stangard",
+      "maxPixelDifference": 8.176,
+      "old": [
+        352.7586,
+        22965.0,
+        -348.636,
+        -8681.0,
+        -24.9,
+        -65.1,
+        -27.1,
+        -62.2,
+        24.0,
+        81.0,
+        353.0,
+        212.0
+      ],
+      "new": [
+        350.0,
+        22790.999000000003,
+        -350.0,
+        -8711.999099999999,
+        -24.891426,
+        -65.11714,
+        -27.079998,
+        -62.19143,
+        24.0,
+        81.0,
+        353.0,
+        212.0
+      ]
+    },
+    {
+      "mapId": 78,
+      "name": "East Rohan: Harwick",
+      "maxPixelDifference": 53.123,
+      "old": [
+        249.1525,
+        13594.0,
+        -250.185,
+        -9457.0,
+        -37.9,
+        -54.6,
+        -40.9,
+        -50.5,
+        56.0,
+        593.0,
+        456.0,
+        744.0
+      ],
+      "new": [
+        250.32259,
+        13606.41880268083,
+        -250.32259,
+        -9449.29102409845,
+        -37.748455,
+        -54.355537,
+        -40.816498,
+        -50.264816,
+        56.0,
+        593.0,
+        456.0,
+        744.0
+      ]
+    },
+    {
+      "mapId": 79,
+      "name": "East Rohan: Snowbourn",
+      "maxPixelDifference": 152.316,
+      "old": [
+        249.1409,
+        15938.0,
+        -249.791,
+        -14803.0,
+        -59.3,
+        -64.0,
+        -62.4,
+        -59.9,
+        36.0,
+        593.0,
+        353.0,
+        731.0
+      ],
+      "new": [
+        299.35483,
+        19073.9647611753,
+        -299.35483,
+        -17819.482423480702,
+        -59.52629,
+        -63.71691,
+        -62.09181,
+        -60.296223,
+        36.0,
+        593.0,
+        353.0,
+        731.0
+      ]
+    },
+    {
+      "mapId": 120,
+      "name": "West Rohan: Westfold",
+      "maxPixelDifference": 25.208,
+      "old": [
+        45.26823,
+        4306.0,
+        -45.1091,
+        -2366.0,
+        -52.5,
+        -95.2,
+        -69.4,
+        -72.5,
+        11.0,
+        612.0,
+        411.0,
+        763.0
+      ],
+      "new": [
+        43.75,
+        4178.50015625,
+        -43.75,
+        -2276.5000125,
+        -52.034286,
+        -95.508575,
+        -69.58857,
+        -72.10286,
+        11.0,
+        612.0,
+        411.0,
+        763.0
+      ]
+    },
+    {
+      "mapId": 126,
+      "name": "Blackroot Vale",
+      "maxPixelDifference": 5.073,
+      "old": [
+        37.6321353066,
+        3128.0,
+        -37.5598086124,
+        -1916.0,
+        -51.1,
+        -83.2,
+        -71.1,
+        -56.2,
+        11.0,
+        81.0,
+        443.0,
+        289.0
+      ],
+      "new": [
+        37.5,
+        3122.0002499999996,
+        -37.5,
+        -1911.9998999999998,
+        -50.986664,
+        -83.25334,
+        -71.46666,
+        -55.946674,
+        11.0,
+        81.0,
+        443.0,
+        289.0
+      ]
+    },
+    {
+      "mapId": 173,
+      "name": "Hall Under the Mountain",
+      "maxPixelDifference": 30.379,
+      "old": [
+        609.5238095238,
+        -30997.0,
+        -601.7857142857,
+        9109.0,
+        15.1,
+        50.8,
+        11.1,
+        56.0,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "new": [
+        600.0,
+        -30483.996,
+        -600.0,
+        9091.998,
+        15.15333,
+        50.80666,
+        11.15333,
+        56.13999,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ]
+    },
+    {
+      "mapId": 174,
+      "name": "Dol Guldur (razed)",
+      "maxPixelDifference": 6.414,
+      "old": [
+        142.0833333333,
+        2898.0,
+        -142.037037037,
+        -1648.0,
+        -11.6,
+        -20.4,
+        -17.0,
+        -13.2,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "new": [
+        141.25,
+        2883.5000999999997,
+        -141.25,
+        -1633.4996087499999,
+        -11.564599,
+        -20.41416,
+        -17.001766,
+        -13.164602,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ]
+    },
+    {
+      "mapId": 178,
+      "name": "Iron Hills",
+      "maxPixelDifference": 15.562,
+      "old": [
+        46.2332301342,
+        1090.0,
+        -46.3096960926,
+        1545.0,
+        32.5,
+        -23.1,
+        17.4,
+        -2.1,
+        24.0,
+        24.0,
+        411.0,
+        200.0
+      ],
+      "new": [
+        45.625,
+        1078.750063125,
+        -45.625,
+        1533.7498925,
+        33.616436,
+        -23.643837,
+        16.783558,
+        -1.2000008,
+        24.0,
+        24.0,
+        411.0,
+        200.0
+      ]
+    },
+    {
+      "mapId": 235,
+      "name": "Cirith Ungol",
+      "maxPixelDifference": 11.955,
+      "old": [
+        798.9130434783,
+        -42985.0,
+        -804.8076923077,
+        60752.0,
+        74.58,
+        54.04,
+        73.49,
+        55.05,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ],
+      "new": [
+        800.0,
+        -43040.0,
+        -800.0,
+        60400.0,
+        75.5,
+        53.8,
+        72.5,
+        55.8,
+        -1.0,
+        -1.0,
+        -1.0,
+        -1.0
+      ]
+    },
+    {
+      "mapId": 242,
+      "name": "Wells of Langflood",
+      "maxPixelDifference": 17.586,
+      "old": [
+        37.5126390293,
+        2819.0,
+        -37.3921867073,
+        1278.0,
+        33.1,
+        -70.2,
+        15.1,
+        -50.0,
+        24.0,
+        24.0,
+        353.0,
+        232.0
+      ],
+      "new": [
+        36.875,
+        2777.74986875,
+        -36.875,
+        1274.2498081249998,
+        34.555927,
+        -75.32881,
+        13.728809,
+        -47.55932,
+        24.0,
+        24.0,
+        353.0,
+        232.0
+      ]
+    },
+    {
+      "mapId": 293,
+      "name": "Máttugard",
+      "maxPixelDifference": 10.649,
+      "old": [
+        85.2686308492,
+        10038.0,
+        -87.0041039672,
+        -3792.0,
+        -44.5,
+        -116.8,
+        -50.8,
+        -111.0,
+        670.0,
+        113.0,
+        968.0,
+        276.0
+      ],
+      "new": [
+        86.875,
+        10218.2496625,
+        -86.875,
+        -3784.2498062500003,
+        -43.55971,
+        -117.62014,
+        -52.4,
+        -105.83309,
+        670.0,
+        113.0,
+        968.0,
+        276.0
+      ]
+    },
+    {
+      "mapId": 295,
+      "name": "Deepscrave",
+      "maxPixelDifference": 5.06,
+      "old": [
+        120.4887218045,
+        14789.0,
+        -119.1335740072,
+        -5573.0,
+        -47.2,
+        -121.2,
+        -52.3,
+        -115.5,
+        11.0,
+        36.0,
+        321.0,
+        200.0
+      ],
+      "new": [
+        120.00001,
+        14733.00050774994,
+        -120.00001,
+        -5616.000468,
+        -46.8,
+        -122.774994,
+        -53.199997,
+        -114.24166,
+        11.0,
+        36.0,
+        321.0,
+        200.0
+      ]
+    },
+    {
+      "mapId": 440,
+      "name": "Mûr Ghala (The Ridge of Plenty)",
+      "maxPixelDifference": 169.887,
+      "old": [
+        14.4229059221,
+        1433.0,
+        -14.3792325056,
+        -290.0,
+        -37.5,
+        -97.4,
+        -69.8,
+        -30.2,
+        145.0,
+        11.0,
+        456.0,
+        174.0
+      ],
+      "new": [
+        14.687499,
+        1462.8749004,
+        -14.687499,
+        -464.624974928457,
+        -31.634043,
+        -99.6,
+        -83.92341,
+        -29.880844,
+        145.0,
+        11.0,
+        456.0,
+        174.0
+      ]
+    }
+  ],
+  "interior_maps": [
+    {
+      "mapId": 1879523368,
+      "imageId": 1093080589,
+      "name": "Mut-hûru",
+      "width": 1600,
+      "height": 1200
+    },
+    {
+      "mapId": 1879523369,
+      "imageId": 1093080590,
+      "name": "Mut-hûru",
+      "width": 1600,
+      "height": 1200
+    },
+    {
+      "mapId": 1879523636,
+      "imageId": 1093080713,
+      "name": "Mizâdi's Compound",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "mapId": 1879523607,
+      "imageId": 1093080712,
+      "name": "Sakhar Kishâsya",
+      "width": 800,
+      "height": 600
+    },
+    {
+      "mapId": 1879523682,
+      "imageId": 1093080769,
+      "name": "Kishâsu's Labyrinth",
+      "width": 2400,
+      "height": 1800
+    },
+    {
+      "mapId": 268455160,
+      "imageId": 1093135355,
+      "name": "Hatokáli Fells - Crypt",
+      "width": 1024,
+      "height": 768
+    }
+  ],
+  "quests": [
+    {
+      "ndx": 2975,
+      "name": "Chapter 16.11: A Journey Into Danger",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14848,
+      "name": "Passage of the Armies",
+      "points": 12,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14849,
+      "name": "The Cravens Exposed!",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14850,
+      "name": "Finishing Touches",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14851,
+      "name": "Stories For My Supper",
+      "points": 23,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14852,
+      "name": "The Sound of Scorpions",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14853,
+      "name": "Instance: A Nose For Adventure",
+      "points": 3,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14854,
+      "name": "A Nose For Adventure",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14855,
+      "name": "The Toy-maker's Lament",
+      "points": 14,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14856,
+      "name": "What You Outgrow",
+      "points": 8,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14857,
+      "name": "The Lure of Excitement",
+      "points": 18,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14858,
+      "name": "Instance: The Soldier Returns",
+      "points": 5,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14859,
+      "name": "The Soldier Returns",
+      "points": 10,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14860,
+      "name": "Instance: The Things That Stay With You",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14861,
+      "name": "The Things That Stay With You",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14862,
+      "name": "Burning and Ruination",
+      "points": 25,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14863,
+      "name": "Returning What Was Taken",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14864,
+      "name": "Dunaïl's Day",
+      "points": 25,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14865,
+      "name": "Dangers Overhead and Underfoot",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14866,
+      "name": "Property of Ordâkh",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14867,
+      "name": "Property of Hulûrmakh",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14868,
+      "name": "Property of Hulâda",
+      "points": 14,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14869,
+      "name": "Wear and Tear",
+      "points": 5,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14870,
+      "name": "A Martial Mix",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14871,
+      "name": "New Tricks",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14872,
+      "name": "A Run of Ill Fortune",
+      "points": 2,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14873,
+      "name": "Duties Still To Perform",
+      "points": 8,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14874,
+      "name": "The Man No One Knows",
+      "points": 8,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14875,
+      "name": "Ill-gotten Grains",
+      "points": 21,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14886,
+      "name": "The Plan Gone Wrong",
+      "points": 5,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14887,
+      "name": "The Bandage-maker Unûza",
+      "points": 26,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14888,
+      "name": "Thieving Orcs of Roz Káskrauz",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14889,
+      "name": "Eyes On Imizíla",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14890,
+      "name": "Stories Enough For Many Days!",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14929,
+      "name": "A Glorious Hunt",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14930,
+      "name": "A Fresh Lead",
+      "points": 15,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14931,
+      "name": "The Hospitality of Strangers",
+      "points": 38,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14932,
+      "name": "Instance: The Space Between Breaths",
+      "points": 16,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14933,
+      "name": "Ancient Doors and New Keys",
+      "points": 10,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14934,
+      "name": "Well Fed and Well Met",
+      "points": 25,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14935,
+      "name": "Instance: Black Tar and Fresh Dust",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14936,
+      "name": "A City on Fire, Part 1",
+      "points": 24,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14937,
+      "name": "A Matter of Lions",
+      "points": 12,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14938,
+      "name": "Vantage of the Eagle-eyed",
+      "points": 7,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14939,
+      "name": "Preparations for a Feast",
+      "points": 24,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14940,
+      "name": "Beneath the Tombs Something Rustles",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14941,
+      "name": "Numûru's Request",
+      "points": 23,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14942,
+      "name": "Battle for Mûr Ghala, Part 1",
+      "points": 28,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14943,
+      "name": "An Incursion of Orcs",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14944,
+      "name": "Battle for Mûr Ghala, Part 2",
+      "points": 10,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14945,
+      "name": "In the Wake",
+      "points": 30,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14946,
+      "name": "The Glint of Bronze and Iron",
+      "points": 11,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14947,
+      "name": "Instance: In Furious Pursuit",
+      "points": 5,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14948,
+      "name": "The Dragon and the Boxer",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14949,
+      "name": "Instance: A City on Fire, Part 2",
+      "points": 24,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14950,
+      "name": "Scouting Hatokáli",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14951,
+      "name": "Instance: Creating a New Camp",
+      "points": 17,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14952,
+      "name": "Instance: Blood for My Blood",
+      "points": 6,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14953,
+      "name": "Key to a Dead City",
+      "points": 16,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14954,
+      "name": "Instance: Beneath the Tombs Something Rustles",
+      "points": 4,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14955,
+      "name": "A Great Cairn",
+      "points": 15,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14956,
+      "name": "Black Tar and Fresh Dust",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14957,
+      "name": "The Space Between Breaths",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14958,
+      "name": "Blood for My Blood",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14959,
+      "name": "Creating a New Camp",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14960,
+      "name": "A City on Fire, Part 2",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    },
+    {
+      "ndx": 14961,
+      "name": "In Furious Pursuit",
+      "points": 1,
+      "unmappedInteriorPoints": 0
+    }
+  ],
+  "sources": [
+    {
+      "url": "https://github.com/LotroCompanion/lotro-data/blob/master/lore/quests.xml",
+      "sha256": "55ed70c51063d4589c75cce5fb55e44830841608a853d2cb6ad2522a38fbff68"
+    },
+    {
+      "url": "https://github.com/LotroCompanion/lotro-maps-db/blob/master/maps/maps.xml",
+      "sha256": "1e0bd22d35636a38dbb59a83242607dec57be77a3e8a3e0214d15d3413758b4a"
+    },
+    {
+      "url": "https://github.com/LotroCompanion/lotro-data/blob/master/lore/deeds.xml"
+    },
+    {
+      "url": "https://www.lotro-wiki.fr/index.php/Le_Grand_Escalier",
+      "image": "https://www.lotro-wiki.fr/images/6/6a/Grand_escalier.jpg",
+      "confidence": "approximate room-level; identical plan and scale"
+    }
+  ]
+}

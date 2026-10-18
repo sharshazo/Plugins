@@ -262,6 +262,11 @@ function LQA.UI.GatherWindow:Constructor()
         LQA.Core.EventBus:Subscribe("LANGUAGE_CHANGED", function()
             self:RefreshZoneList()
         end)
+        -- 2026-10-18 (QS-03): el guardado de puntos llega con demora; si la
+        -- ventana ya existe se refresca al terminar la carga.
+        LQA.Core.EventBus:Subscribe("GATHER_POINTS_LOADED", function()
+            self:RefreshZoneList()
+        end)
     end
 
     -- SizeChanged: mismo patron real de QuestSyncWindow.lua (definir la

@@ -73,30 +73,91 @@ function GatherPointsStore.RelocatePoints(points)
     return moved
 end
 
-function GatherPointsStore.Initialize()
-    GatherPointsStore.Points = {}
-
-    Turbine.PluginData.Load(Turbine.DataScope.Character, SAVE_KEY, function(loadedData)
-        if loadedData and type(loadedData) == "table" then
-            GatherPointsStore.Points = loadedData
-            local okMove, moved = pcall(GatherPointsStore.RelocatePoints, loadedData)
-            if okMove == true and type(moved) == "number" and moved > 0 then
-                GatherPointsStore.Save()
-            end
-            if LQA and LQA.Core and LQA.Core.EventBus then
-                LQA.Core.EventBus:Publish("GATHER_POINTS_LOADED", {})
-            end
-        end
-    end)
-end
-
-function GatherPointsStore.Save()
-    Turbine.PluginData.Save(Turbine.DataScope.Character, SAVE_KEY, GatherPointsStore.Points)
-end
-
 local function Distance(ns1, ew1, ns2, ew2)
     local dNS, dEW = ns1 - ns2, ew1 - ew2
     return math.sqrt(dNS * dNS + dEW * dEW)
+end
+
+-- 2026-10-18 (QS-02): hasta que llegue el guardado anterior NO se guarda
+-- nada (se guardaria una lista a medias encima del historial) y los puntos
+-- capturados en ese rato se conservan y se mezclan con los guardados.
+GatherPointsStore._loaded = false
+GatherPointsStore._saveWanted = false
+
+-- Mezcla los puntos de esta sesion (aun sin guardar) dentro de los
+-- guardados, con la misma regla de duplicado que AddPoint (mismo nodo y a
+-- menos de DEDUP_DISTANCE): un punto repetido suma sus vistas, no se duplica.
+local function MergeSessionPoints(saved, session)
+    for prof, zones in pairs(session) do
+        if type(zones) == "table" then
+            saved[prof] = type(saved[prof]) == "table" and saved[prof] or {}
+            for idx, list in pairs(zones) do
+                if type(list) == "table" then
+                    saved[prof][idx] = type(saved[prof][idx]) == "table" and saved[prof][idx] or {}
+                    local dest = saved[prof][idx]
+                    for _, p in ipairs(list) do
+                        local hit = nil
+                        if type(p) == "table" and type(p.ns) == "number" and type(p.ew) == "number" then
+                            for _, e in ipairs(dest) do
+                                if type(e) == "table" and e.node == p.node and type(e.ns) == "number"
+                                    and type(e.ew) == "number" and Distance(e.ns, e.ew, p.ns, p.ew) < DEDUP_DISTANCE then
+                                    hit = e
+                                    break
+                                end
+                            end
+                        end
+                        if hit ~= nil then
+                            hit.timesSeen = (hit.timesSeen or 1) + (p.timesSeen or 1)
+                            if type(p.lastSeen) == "number" and (type(hit.lastSeen) ~= "number" or p.lastSeen > hit.lastSeen) then
+                                hit.lastSeen = p.lastSeen
+                            end
+                        else
+                            table.insert(dest, p)
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return saved
+end
+
+function GatherPointsStore.Initialize()
+    -- (no se vacia Points: un punto capturado antes de inicializar se conserva)
+    local token = {}
+    GatherPointsStore._loadToken = token
+    local ok = pcall(Turbine.PluginData.Load, Turbine.DataScope.Character, SAVE_KEY, function(loadedData)
+        if GatherPointsStore._loadToken ~= token or GatherPointsStore._loaded then
+            return
+        end
+        GatherPointsStore._loaded = true
+        local session = GatherPointsStore.Points
+        local hadSession = next(session) ~= nil
+        if type(loadedData) == "table" then
+            GatherPointsStore.Points = MergeSessionPoints(loadedData, session)
+        end
+        local okMove, moved = pcall(GatherPointsStore.RelocatePoints, GatherPointsStore.Points)
+        if GatherPointsStore._saveWanted or hadSession or (okMove == true and type(moved) == "number" and moved > 0) then
+            GatherPointsStore._saveWanted = false
+            GatherPointsStore.Save()
+        end
+        if LQA and LQA.Core and LQA.Core.EventBus then
+            LQA.Core.EventBus:Publish("GATHER_POINTS_LOADED", {})
+        end
+    end)
+    if not ok then
+        -- no se pudo pedir la carga: los puntos de esta sesion quedan en
+        -- memoria, pero no se escribe encima de un historial desconocido
+        Turbine.Shell.WriteLine("<rgb=#FF0000>GatherSync: no se pudo leer el guardado de puntos; no se guardara nada en esta sesion para no perderlo.</rgb>")
+    end
+end
+
+function GatherPointsStore.Save()
+    if not GatherPointsStore._loaded then
+        GatherPointsStore._saveWanted = true   -- se guarda al terminar la carga
+        return
+    end
+    Turbine.PluginData.Save(Turbine.DataScope.Character, SAVE_KEY, GatherPointsStore.Points)
 end
 
 -- entry = { profession=, node=, tier=, confidence= } (mismo objeto que

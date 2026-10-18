@@ -47,7 +47,8 @@ function TimerManager:RemoveTimer( timer )
 	end
 
 	self.timers[timer] = nil;
-	self.timerCount = self.timerCount - 1;
+	-- 2026-10-18 (TUR-01): "timerCount" was never set nor used; removing a
+	-- timer failed here halfway. The empty check below is enough.
 
 	if ( Table.IsEmpty( self.timers ) ) then
 		self.updateControl:SetWantsUpdates( false );
@@ -68,13 +69,31 @@ end
 function TimerManager:ProcessTimers()
 	local gameTime = Turbine.Engine.GetGameTime();
 
-	local timer;
-	local fireTime;
-
+	-- 2026-10-18 (TUR-02): the due timers are collected first (a Tick may
+	-- add or remove timers) and a timer is only rescheduled if it is still
+	-- managed here after its own Tick (it may have disabled itself).
+	local due = { };
 	for timer, fireTime in pairs( self.timers ) do
 		if ( fireTime < gameTime ) then
-			timer:OnTick( Table.Empty );
-			self:UpdateTimer( timer );
+			table.insert( due, timer );
+		end
+	end
+
+	for _, timer in ipairs( due ) do
+		if ( self.timers[timer] ~= nil ) then
+			local ok, err = pcall( function() timer:OnTick( Table.Empty ); end );
+			if ( not ok ) then
+				-- Disable only this timer; other due callbacks must still run.
+				if ( type( timer.SetEnabled ) == "function" ) then
+					pcall( timer.SetEnabled, timer, false );
+				end
+				self.timers[timer] = nil;
+				if ( Turbine.Shell ~= nil and type( Turbine.Shell.WriteLine ) == "function" ) then
+					Turbine.Shell.WriteLine( "Timer disabled after callback error: " .. tostring( err ) );
+				end
+			elseif ( self.timers[timer] ~= nil ) then
+				self:UpdateTimer( timer );
+			end
 		end
 	end
 

@@ -222,16 +222,17 @@ end
 --   /lff LFF Gramsfoot, The Ettenmoors (Raid, 12+) - send me a tell
 -- (2026-10-16, pedido del usuario: ya no lleva el nombre de la mision,
 -- solo el lugar y que le hablen por privado)
--- Devuelve nil si la mision no es de grupo.
+-- Devuelve nil si la mision no es de grupo o no tiene destino conocido.
 function GroupQuest.LffCommand(quest)
     local entry = GroupQuest.Get(quest)
     if not entry then return nil end
     local kindKey = entry.k
     if kindKey == "inst" and entry.s == "R" then kindKey = "raid" end
     local place = entry.p
-    if not place or place == "" then
-        place = KIND_EN[kindKey] or "group"
-    elseif kindKey ~= "open" and kindKey ~= "raid" and KIND_EN[kindKey] then
+    -- Never advertise a generic activity in place of an unknown destination.
+    -- Returning nil also hides the LFF button for an unresolved group quest.
+    if type(place) ~= "string" or not string.find(place, "%S") then return nil end
+    if kindKey ~= "open" and kindKey ~= "raid" and KIND_EN[kindKey] then
         -- 2026-10-17: que diga si es mazmorra, escaramuza... (la incursion
         -- ya lo dice el tamaño: "Raid, 12+")
         place = KIND_EN[kindKey] .. ": " .. place

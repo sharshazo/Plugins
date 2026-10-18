@@ -3081,7 +3081,8 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
 
     local canOpen = _G.MainWindow ~= nil and _G.MainWindow.FocusQuest ~= nil
     local canUnmark = _G.QuestStateManager ~= nil and type(_G.QuestStateManager.ResetQuest) == "function"
-    local hint = canOpen and "Clic en una misi\195\179n: abrirla en Quest Assistant" or ""
+    local hint = canOpen and "T\195\173tulo: Quest Assistant" or ""
+    hint = hint .. (hint ~= "" and "  \194\183  " or "") .. "Anillo: diario"
     if canUnmark then
         hint = hint .. (hint ~= "" and "  \194\183  " or "") .. "X: quitarla"
     end
@@ -3105,6 +3106,8 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
 
     for i = 1, shown do
         local row = rows[i]
+        local hasJournalRing = Quests.JournalLink(row.ndx) ~= nil
+        local rowH = hasJournalRing and math.max(QP_ROW_H, Quests.JournalRingSize) or QP_ROW_H
         -- v2.5: fila = iconos de grupo a la IZQUIERDA del titulo (pedido
         -- del usuario): logo de grupo de Quest Assistant (el mismo que usa
         -- en sus ventanas) si la mision es de grupo, y la calavera de
@@ -3131,20 +3134,20 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         -- de la instancia en español y en ingles (la fila crece)
         local instText = Quests.InstanceText and Quests.InstanceText(row.quest) or nil
         local item = Turbine.UI.Control()
-        item:SetSize(rowW, QP_ROW_H + 3)
+        item:SetSize(rowW, rowH + 3)
         item:SetMouseVisible(false)
         -- v3.11: fila como mini tarjeta (fondo, nivel en etiqueta azul)
         local rowBg = Turbine.UI.Control()
         rowBg:SetParent(item)
         rowBg:SetPosition(0, 0)
-        rowBg:SetSize(rowW, QP_ROW_H + 1)
+        rowBg:SetSize(rowW, rowH + 1)
         rowBg:SetBackColor(HexToColor((i % 2 == 1) and "#181B22" or "#1D2029"))
         rowBg:SetMouseVisible(false)
         item.rowBg = rowBg
         local lvPill = Turbine.UI.Label()
         lvPill:SetParent(item)
         lvPill:SetPosition(3, 2)
-        lvPill:SetSize(30, QP_ROW_H - 4)
+        lvPill:SetSize(30, rowH - 4)
         lvPill:SetBackColor(HexToColor("#1E2D46"))
         lvPill:SetFont(Turbine.UI.Lotro.Font.Verdana10)
         lvPill:SetForeColor(HexToColor("#A0C8FF"))
@@ -3156,7 +3159,7 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
             local ic = Turbine.UI.Control()
             ic:SetParent(item)
             ic:SetSize(icon.size, icon.size)
-            ic:SetPosition(iconsW, math.floor((QP_ROW_H - icon.size) / 2))
+            ic:SetPosition(iconsW, math.floor((rowH - icon.size) / 2))
             ic:SetBackground(icon.img)
             ic:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
             ic:SetMouseVisible(false)
@@ -3167,6 +3170,9 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         local lblW = rowW - iconsW
         if canUnmark then
             lblW = lblW - QP_X_W - 4
+        end
+        if hasJournalRing then
+            lblW = lblW - Quests.JournalRingSize - Quests.JournalRingGap
         end
         -- v3.11: progreso guardado de la mision ("3 / 8") a la derecha
         local progText = nil
@@ -3183,7 +3189,7 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
             local pr = Turbine.UI.Label()
             pr:SetParent(item)
             pr:SetPosition(iconsW + lblW - 46, 0)
-            pr:SetSize(44, QP_ROW_H)
+            pr:SetSize(44, rowH)
             pr:SetFont(Turbine.UI.Lotro.Font.Verdana10)
             pr:SetForeColor(HexToColor("#8CC8FF"))
             pr:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleRight)
@@ -3194,7 +3200,7 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         local lbl = Turbine.UI.Label()
         lbl:SetParent(item)
         lbl:SetPosition(iconsW, 0)
-        lbl:SetSize(lblW, QP_ROW_H)
+        lbl:SetSize(lblW, rowH)
         lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
         lbl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
         lbl:SetSelectable(false)
@@ -3215,11 +3221,11 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         self:_attachQuestInfo(lbl, row.ndx, row.quest)
         if instText then
             local subLines = InstLines(instText, lblW - 8)
-            item:SetSize(rowW, QP_ROW_H + (subLines * QP_SUB_H) + 4)
-            rowBg:SetSize(rowW, QP_ROW_H + (subLines * QP_SUB_H) + 2)
+            item:SetSize(rowW, rowH + (subLines * QP_SUB_H) + 4)
+            rowBg:SetSize(rowW, rowH + (subLines * QP_SUB_H) + 2)
             local sub = Turbine.UI.Label()
             sub:SetParent(item)
-            sub:SetPosition(iconsW + 8, QP_ROW_H - 3)
+            sub:SetPosition(iconsW + 8, rowH - 3)
             sub:SetSize(lblW - 8, subLines * QP_SUB_H + 2)
             sub:SetMultiline(subLines > 1)
             sub:SetFont(Turbine.UI.Lotro.Font.Verdana10)
@@ -3229,10 +3235,15 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
             sub:SetText(instText)
             item.instLbl = sub
         end
+        if hasJournalRing then
+            item.journalRing = Quests.CreateJournalRing(item, row.ndx)
+            local right = rowW - (canUnmark and (QP_X_W + 4) or 0)
+            item.journalRing:SetPosition(right - Quests.JournalRingSize, 0)
+        end
         item.lbl = lbl
         item.iconCount = #icons
         if canUnmark then
-            self:_addUnmarkButton(item, lbl, rowW, lblW, row.ndx)
+            self:_addUnmarkButton(item, lbl, rowW, lblW, row.ndx, rowH)
         end
         self.qpList:AddItem(item)
     end
@@ -3252,11 +3263,12 @@ end
 -- "Quitar" (confirmacion); segundo clic: la desmarca en Quest Assistant
 -- (QuestStateManager.ResetQuest, lo mismo que su boton Desmarcar) -- deja
 -- de estar activa en el mapa, el rastreador y el libro.
-function WorldMapAddon.UI.WorldMap:_addUnmarkButton(item, lbl, rowW, lblW, ndx)
+function WorldMapAddon.UI.WorldMap:_addUnmarkButton(item, lbl, rowW, lblW, ndx, rowH)
     local this = self
+    local top = 1 + math.floor(((rowH or QP_ROW_H) - QP_ROW_H) / 2)
     local x = Turbine.UI.Label()
     x:SetParent(item)
-    x:SetPosition(rowW - QP_X_W, 1)
+    x:SetPosition(rowW - QP_X_W, top)
     x:SetSize(QP_X_W, QP_ROW_H - 2)
     x:SetFont(Turbine.UI.Lotro.Font.Verdana12)
     x:SetForeColor(HexToColor("#D06050"))
@@ -3267,7 +3279,10 @@ function WorldMapAddon.UI.WorldMap:_addUnmarkButton(item, lbl, rowW, lblW, ndx)
     x.MouseClick = function()
         if not armed then
             armed = true
-            x:SetPosition(rowW - QP_CONFIRM_W, 1)
+            if item.journalRing ~= nil then
+                Quests.UpdateJournalRing(item.journalRing, nil)
+            end
+            x:SetPosition(rowW - QP_CONFIRM_W, top)
             x:SetSize(QP_CONFIRM_W, QP_ROW_H - 2)
             x:SetBackColor(HexToColor("#7A1E14"))
             x:SetForeColor(HexToColor("#FFFFFF"))

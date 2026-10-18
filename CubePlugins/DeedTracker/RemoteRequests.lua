@@ -122,6 +122,14 @@ local function OpenDeedFromMap(deed)
     target:Activate();
 end
 
+-- 2026-10-18 (DT-03): a "set" request that fails is NOT acknowledged; it is
+-- retried on the next pass (the queue stops there so a later success cannot
+-- swallow it). Repeated failures are backed off, never acknowledged as success.
+local MAX_TRIES = 3;
+local failCount = {};
+local retryAfter = {};
+local savePending = false;
+
 local function HandleRequests(req)
     if (type(req) ~= "table" or type(req.ops) ~= "table") then
         return;
@@ -139,16 +147,41 @@ local function HandleRequests(req)
     end
     table.sort(pending, function(a, b) return a.n < b.n; end);
 
-    local changed = false;
+    local changed = savePending;
+    local startDone = lastDone;
+    local nextDone = lastDone;
+    local now = Turbine.Engine.GetGameTime();
+    for n in pairs(failCount) do
+        if (n <= lastDone or (req.ops[tostring(n)] == nil and req.ops[n] == nil)) then
+            failCount[n] = nil;
+            retryAfter[n] = nil;
+        end
+    end
     for _, p in ipairs(pending) do
+        if (retryAfter[p.n] ~= nil and now < retryAfter[p.n]) then break; end
+        local retry = false;
         local deed = DataFiles._DEED_DATA[tonumber(p.op.id)];
         if (deed ~= nil and not IsCategory(deed)) then
             if (p.op.op == "set") then
                 local ok, didChange = pcall(SetDeedFromMap, deed, tonumber(p.op.done) == 1);
                 if (not ok) then
-                    Debug("Deed Tracker: pedido del mapa no aplicado: " .. tostring(didChange));
-                elseif (didChange) then
-                    changed = true;
+                    local tries = (failCount[p.n] or 0) + 1;
+                    failCount[p.n] = tries;
+                    if (tries < MAX_TRIES) then
+                        Debug("Deed Tracker: pedido del mapa no aplicado (se reintenta): " .. tostring(didChange));
+                    else
+                        if (tries == MAX_TRIES) then
+                            Info("Deed Tracker: cambio del mapa pendiente; no fue aplicado ni confirmado (" .. tostring(deed.NAME or p.op.id) .. "). Se reintentara con una pausa.");
+                        end
+                        retryAfter[p.n] = now + 30;
+                    end
+                    retry = true;
+                else
+                    failCount[p.n] = nil;
+                    retryAfter[p.n] = nil;
+                    if (didChange) then
+                        changed = true;
+                    end
                 end
             elseif (p.op.op == "open") then
                 local ok, err = pcall(OpenDeedFromMap, deed);
@@ -157,14 +190,26 @@ local function HandleRequests(req)
                 end
             end
         end
-        lastDone = p.n;
+        if (retry) then
+            break;   -- no confirmar este ni los siguientes todavia
+        end
+        nextDone = p.n;
     end
 
     if (changed) then
         -- guardar YA (no esperar los 5 s): el mapa lee este mismo archivo
-        SaveCurrentCharacterData();
+        savePending = true;
+        local ok, err = pcall(SaveCurrentCharacterData);
+        if (not ok) then
+            Debug("Deed Tracker: cambio pendiente de guardar; no se confirma al mapa: " .. tostring(err));
+            return;
+        end
+        savePending = false;
     end
-    PatchDataSave(Turbine.DataScope.Character, ACK_KEY, { ["last"] = lastDone });
+    if (nextDone ~= startDone) then
+        local ok = pcall(PatchDataSave, Turbine.DataScope.Character, ACK_KEY, { ["last"] = nextDone });
+        if (ok) then lastDone = nextDone; end
+    end
 end
 
 local function ProcessMapRequests()

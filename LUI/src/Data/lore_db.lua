@@ -660,6 +660,38 @@ end
 -- query per blob, refinement for extensions, session cache for
 -- repeats/backspace. Returns a set { ordinal = true } plus its size; nil
 -- means "no filter" (empty query).
+-- Bound both the number of cached queries and their retained result sets.
+-- Returned results remain complete even when a broad query is not cached.
+local SEARCH_CACHE_ENTRIES = 64
+local SEARCH_CACHE_MEMBERS = 100000
+local SEARCH_CACHE_SINGLE = 20000
+local function _cache_touch(domain, row)
+    domain._search_clock = (domain._search_clock or 0) + 1
+    row.used = domain._search_clock
+end
+
+local function _cache_put(domain, needle, set, count)
+    if count > SEARCH_CACHE_SINGLE or #needle > 256 then return end
+    local cache = domain._search_cache
+    local row = { set = set, count = count }
+    _cache_touch(domain, row)
+    cache[needle] = row
+    domain._search_entries = (domain._search_entries or 0) + 1
+    domain._search_members = (domain._search_members or 0) + count
+    while domain._search_entries > SEARCH_CACHE_ENTRIES or domain._search_members > SEARCH_CACHE_MEMBERS do
+        local oldest, stamp
+        for key, value in pairs(cache) do
+            if stamp == nil or (value.used or 0) < stamp then
+                oldest, stamp = key, value.used or 0
+            end
+        end
+        if oldest == nil then break end
+        domain._search_members = domain._search_members - cache[oldest].count
+        domain._search_entries = domain._search_entries - 1
+        cache[oldest] = nil
+    end
+end
+
 local function _domain_search(domain, query)
     local needle = _fold_needle(domain.FOLD, query)
     if needle == "" then
@@ -667,6 +699,7 @@ local function _domain_search(domain, query)
     end
     local cached = domain._search_cache[needle]
     if cached ~= nil then
+        _cache_touch(domain, cached)
         return cached.set, cached.count
     end
 
@@ -702,7 +735,7 @@ local function _domain_search(domain, query)
         end
     end
 
-    domain._search_cache[needle] = { set = set, count = count }
+    _cache_put(domain, needle, set, count)
     return set, count
 end
 
@@ -715,6 +748,7 @@ local function _domain_search_within(domain, query, candidates)
     local set, count = {}, 0
     local cached = domain._search_cache[needle]
     if cached ~= nil then
+        _cache_touch(domain, cached)
         for ordinal in pairs(candidates) do
             if cached.set[ordinal] == true then
                 set[ordinal] = true

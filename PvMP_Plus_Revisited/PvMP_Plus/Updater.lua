@@ -14,6 +14,90 @@ local oldResolution = nil
 
 local wallet_loaded = false
 local buffs_loaded = false
+local wallet_check_at = 0
+
+local task_bag, task_hooks
+local task_dirty, task_check_at = true, 0
+local task_present = false
+function PvMP_ReleaseBackpackWatch()
+	if task_hooks ~= nil then
+		task_hooks.alive = false
+		for event, hook in pairs(task_hooks.list) do
+			if task_bag[event] == hook.handler then task_bag[event] = hook.previous end
+		end
+	end
+	task_bag, task_hooks = nil, nil
+	task_dirty = true
+end
+
+local function CheckBattleTask(now)
+	if storage.battletask_warning_disabled then
+		PvMP_ReleaseBackpackWatch()
+		BattleTaskWindow.label_battle_task:SetVisible(false)
+		return
+	end
+	local bag = Local_Player:GetBackpack()
+	if bag == nil then return end
+	if bag ~= task_bag then
+		PvMP_ReleaseBackpackWatch()
+		task_bag = bag
+		local hooks = { alive = true, list = {} }
+		for _, event in ipairs({"ItemAdded", "ItemRemoved", "ItemMoved", "ItemChanged"}) do
+			local previous = bag[event]
+			local handler = function(sender, args)
+				if hooks.alive then task_dirty = true end
+				if type(previous) == "function" then
+					pcall(previous, sender, args)
+				elseif type(previous) == "table" then
+					for _, callback in ipairs(previous) do
+						if type(callback) == "function" then pcall(callback, sender, args) end
+					end
+				end
+			end
+			hooks.list[event] = { handler = handler, previous = previous }
+			bag[event] = handler
+		end
+		task_hooks = hooks
+	end
+	if not task_dirty and now < task_check_at then return end
+	local size = bag:GetSize()
+	if size == 0 then
+		-- Inventory is not ready; do not block the calendar or other windows.
+		BattleTaskWindow.label_battle_task:SetVisible(false)
+		return
+	end
+	task_dirty, task_check_at, task_present = false, now + 30, false
+	for i = 1, size do
+		local item = bag:GetItem(i)
+		if item ~= nil and item:GetName() == L.Battle_Task_Quest_Giver then
+			task_present = true
+			break
+		end
+	end
+	if not task_present then BattleTaskWindow:NewAlert(L.Battle_Task_Message, Aligned_Color) end
+	BattleTaskWindow.label_battle_task:SetVisible(not task_present)
+end
+
+local function CheckWallet(now)
+	if wallet_loaded then return end
+	if now < wallet_check_at then return end
+	wallet_check_at = now + 5
+	local wallet = Local_Player:GetWallet()
+	if wallet == nil then return end
+	for i = 1, wallet:GetSize() do
+		local item = wallet:GetItem(i)
+		if item ~= nil and item:GetName() == L.Wallet_Commendations then
+			commendations_in_wallet = item
+			Current_Commendations = item:GetQuantity()
+			wallet_loaded = true
+			break
+		end
+	end
+	if wallet_loaded and Last_Commendations ~= nil and Last_Commendations ~= Current_Commendations then
+		InitWindowPoints:DataOutOfSync()
+		InitWindowFrags:DataOutOfSync()
+	end
+end
 
 Updater.Update = function(sender, args)
 	currentsecond = Turbine.Engine.GetDate().Second
@@ -24,6 +108,17 @@ Updater.Update = function(sender, args)
 
 	if oldsecond ~= currentsecond then
 		oldsecond = currentsecond
+		FlushPvMPSave()
+		local now = Turbine.Engine.GetGameTime()
+		if not buffs_loaded then
+			Buff_List = Local_Player:GetEffects()
+			if Buff_List ~= nil then
+				buffs_loaded = true
+				InitializeBuffListener()
+			end
+		end
+		CheckWallet(now)
+		CheckBattleTask(now)
 
 		for player, control in pairs(MapWindow.enemy_position_list) do
 			control.Timer = control.Timer - 1
@@ -55,34 +150,7 @@ Updater.Update = function(sender, args)
 			end
 		end
 
-		if not storage.battletask_warning_disabled then
-			local has_battle_task_scroll = false
-			local player_bags = Local_Player:GetBackpack()
-			local player_bags_size = player_bags:GetSize()
-			if player_bags_size == 0 then
-				return
-			else
-				for i = 1, player_bags_size do
-					local bagitem = player_bags:GetItem(i)
-					if bagitem ~= nil then
-						local bagitem_name = player_bags:GetItem(i):GetName()
-						if bagitem_name == L.Battle_Task_Quest_Giver then
-							has_battle_task_scroll = true
-							BattleTaskWindow.label_battle_task:SetVisible(false)
-							break
-						end
-					end
-				end
-				if not has_battle_task_scroll then
-					BattleTaskWindow:NewAlert(L.Battle_Task_Message, Aligned_Color)
-					BattleTaskWindow.label_battle_task:SetVisible(true)
-				end
-			end
-		else
-			BattleTaskWindow.label_battle_task:SetVisible(false)
-		end
-
-		if (wallet_loaded and buffs_loaded) then
+		do  -- Calendar progression does not depend on a wallet currency.
 			local current_date = Turbine.Engine.GetDate()
 			local current_day = current_date.DayOfYear
 			local current_month = current_date.Month
@@ -122,6 +190,7 @@ Updater.Update = function(sender, args)
 					Plugins["PvMP+"].Unload(nil, nil, true)
 				end
 			end
+			if wallet_loaded then
 			local new_commendations = commendations_in_wallet:GetQuantity()
 			local commendations_changed = new_commendations ~= Current_Commendations
 			if commendations_changed then
@@ -134,35 +203,9 @@ Updater.Update = function(sender, args)
 					OverviewWindow.label_commendations:SetVisible(true)
 					OverviewWindow.commendations_icon:SetVisible(true)
 				end
-				Plugins["PvMP+"].Unload(nil, nil, false)
+				RequestPvMPSave()
 			end
-		elseif not buffs_loaded then
-			Buff_List = Local_Player:GetEffects()
-			if Buff_List == nil then
-				return
-			else
-				buffs_loaded = true
-				InitializeBuffListener()
 			end
-		elseif not wallet_loaded then
-			local player_wallet = Local_Player:GetWallet()
-			local player_wallet_size = player_wallet:GetSize()
-			for i = 1, player_wallet_size do
-				local walletitem = player_wallet:GetItem(i)
-				if walletitem:GetName() == L.Wallet_Commendations then
-					commendations_in_wallet = walletitem
-					Current_Commendations = commendations_in_wallet:GetQuantity()
-					break
-				end
-			end
-			if commendations_in_wallet == nil then
-				return
-			end
-			if Last_Commendations ~= nil and Last_Commendations ~= Current_Commendations then
-				InitWindowPoints:DataOutOfSync()
-				InitWindowFrags:DataOutOfSync()
-			end
-			wallet_loaded = true
 		end
 
 		currentResolution = Turbine.UI.Display.GetWidth()

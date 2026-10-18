@@ -51,7 +51,14 @@ function A.Norm(text)
 end
 local Norm = A.Norm
 
+-- 2026-10-18 (MAP-01): antes de que llegue el guardado anterior no se
+-- escribe nada (se guardaria un historial a medias); se anota y se guarda
+-- la mezcla completa al terminar la carga.
 local function Save()
+    if not A.loaded then
+        A.saveWanted = true
+        return
+    end
     pcall(function()
         Turbine.PluginData.Save(Turbine.DataScope.Character, SAVE_KEY, A.data)
     end)
@@ -62,16 +69,23 @@ local function Bump()
 end
 
 function A.Load()
-    if A.loadStarted then
+    if A.stopped or A.loaded or A.loadStarted then
         return
     end
     A.loadStarted = true
-    pcall(function()
+    local token = {}
+    A.loadToken = token
+    A.loadDeadline = Turbine.Engine.GetGameTime() + 15
+    local ok = pcall(function()
         Turbine.PluginData.Load(Turbine.DataScope.Character, SAVE_KEY, function(data)
+            if A.loadToken ~= token or A.loaded then return end
             pcall(function()
                 if type(data) == "table" then
                     for _, k in ipairs({ "a", "o", "d", "dt", "qf" }) do
-                        if type(data[k]) == "table" then
+                        -- dt/qf: si el otro addon ya respondio en vivo, su
+                        -- lista actual manda (no se reviven marcas viejas)
+                        local live = (k == "dt" and A.dtLive) or (k == "qf" and A.qfLive)
+                        if type(data[k]) == "table" and not live then
                             for key, v in pairs(data[k]) do
                                 if v == true or v == 1 or v == "true" then
                                     A.data[k][tostring(key)] = true
@@ -82,9 +96,43 @@ function A.Load()
                 end
             end)
             A.loaded = true
+            A.loadStarted = false
+            if A.loadDriver then
+                A.loadDriver:SetWantsUpdates(false)
+                A.loadDriver = nil
+            end
             Bump()
+            if A.saveWanted then
+                A.saveWanted = false
+                Save()
+            end
         end)
     end)
+    if not ok and not A.loaded then
+        A.loadStarted = false
+        A.loadToken = nil
+        A.retryAt = Turbine.Engine.GetGameTime() + 5
+        if not A.readErrorNoticed then
+            A.readErrorNoticed = true
+            Turbine.Shell.WriteLine("Mapa del Mundo: no se pudo leer el progreso; se reintentara sin sobrescribir el historial guardado.")
+        end
+    end
+    if not A.loaded and A.loadDriver == nil and Turbine.UI ~= nil then
+        local driver = Turbine.UI.Control()
+        A.loadDriver = driver
+        driver.Update = function()
+            if A.loaded or A.stopped then driver:SetWantsUpdates(false); return end
+            local now = Turbine.Engine.GetGameTime()
+            if A.loadStarted and now >= A.loadDeadline then
+                A.loadStarted = false
+                A.loadToken = nil
+                A.retryAt = now + 5
+            elseif not A.loadStarted and now >= (A.retryAt or 0) then
+                A.Load()
+            end
+        end
+        driver:SetWantsUpdates(true)
+    end
 end
 
 -- zona del mapa donde esta el jugador (la que ya sigue el mapa con Quest
@@ -432,6 +480,36 @@ pcall(function()
         _G.LQA_ChatListeners = {}
     end
     _G.LQA_ChatListeners["WorldMapDeeds"] = A.OnChat
+end)
+
+-- 2026-10-18 (R-CHAT): si Quest Assistant no esta (o aun no cargo), el mapa
+-- instala el MISMO repartidor compartido (mismo contrato que
+-- LOTRO_Quest_Assistant/Main.lua: encadena lo que ya hubiera y avisa a
+-- cada oyente de _G.LQA_ChatListeners una sola vez). Si Quest Assistant ya
+-- lo instalo, no se toca nada; si carga despues, ve que ya esta y lo usa.
+pcall(function()
+    if _G.LQA_ChatHookRef ~= nil and _G.LQA_ChatHookRef == Turbine.Chat.Received then
+        return
+    end
+    local current = Turbine.Chat.Received
+    local dispatcher = function(sender, args)
+        local outer = _G.LQA_ChatInDispatch ~= true
+        _G.LQA_ChatInDispatch = true
+        if type(current) == "function" then
+            pcall(current, sender, args)
+        elseif type(current) == "table" then
+            for _, fn in ipairs(current) do pcall(fn, sender, args) end
+        end
+        if outer then
+            for _, listener in pairs(_G.LQA_ChatListeners) do
+                pcall(listener, sender, args)
+            end
+            _G.LQA_ChatInDispatch = nil
+        end
+    end
+    Turbine.Chat.Received = dispatcher
+    _G.LQA_ChatHookRef = dispatcher
+    _G.LQA_ChatHookInstalled = true
 end)
 
 A.Load()

@@ -2108,7 +2108,8 @@ function B.Shutdown()
         RemoveCallback(B.player, "PartyChanged", B.hParty)
         RemoveCallback(B.effects, "EffectAdded", B.hEffect)
         B.UnhookParty()
-        if type(_G.LQA_ChatListeners) == "table" then
+        -- (solo si sigue siendo el nuestro: no borrar el de una carga nueva)
+        if type(_G.LQA_ChatListeners) == "table" and _G.LQA_ChatListeners["WorldMapBoss"] == B.hChat then
             _G.LQA_ChatListeners["WorldMapBoss"] = nil
         end
         if B.driver ~= nil then

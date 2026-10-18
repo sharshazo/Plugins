@@ -98,7 +98,9 @@ function D.ZoneData(zone)
     if zone == nil or not D.Available() then
         return nil
     end
-    return WorldMapAddon.DeedsData[zone.nombre_original]
+    local key = zone.nombre_original
+    if key == "Pahar Hatokali" then key = "The Hatokali Fells" end
+    return WorldMapAddon.DeedsData[key]
 end
 
 -- ¿Deed Tracker esta cargado ahora?

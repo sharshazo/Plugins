@@ -2,19 +2,9 @@
 
 # 🗺️ Mapa del Mundo (WorldMap_Addon)
 
-## Novedades y funciones actuales — 17 de octubre de 2026
-
-- **Mecánicas de jefe por rol** (tanque, DPS, sanador): esquivar, separarse, agruparse, interrumpir, curar, defensas y precauciones.
-- **Cuatro modelos**: Auras, Lista, Flotantes y Central. Opciones de tamaño, opacidad, máximo de iconos, aviso grande, aura anticipada, solo combate y bloqueo de posición.
-- **Alertas propias** a partir de frases, con sugerencias de frases oídas, acción asociada y guardado por cuenta. Las frases desconocidas no crean alertas automáticamente.
-- **Recolección integrada** por profesión y zona con los puntos guardados por QuestSync; al pulsar uno aparece la flecha en el mapa. Esta ventana no requiere MoorMap.
-- Abre la configuración de jefes con `/mapa jefe`. La cobertura depende de los datos del jefe y los eventos reconocidos; los tiempos anticipados son estimaciones. La lectura compartida del chat requiere QuestSync.
-
-[Guía completa y conexiones con los otros addons](../GUIA_COMPLETA.md).
-
 Mapa interactivo de la Tierra Media para **The Lord of the Rings Online**, en **español** (con nombres en inglés donde ayudan), que se conecta con **QuestSync (Quest Assistant)** y **Deed Tracker** para mostrar en vivo tus misiones activas, tus hazañas y los lugares importantes de cada zona.
 
-Versión actual: **3.20.0** · Nombre en el gestor de plugins: **Mapa del Mundo**
+Versión actual: **3.7.1** · Nombre en el gestor de plugins: **Mapa del Mundo**
 
 ![Captura real del Mapa del Mundo abierto en el juego](media/captura_juego.jpg)
 
@@ -303,3 +293,10 @@ Todo se guarda con el sistema de datos de plugins de LOTRO:
 - Las imágenes de los mapas de zona e interiores son las del propio cliente del juego; la navegación entre mapas sigue el mismo sistema que **MoorMap**.
 - Datos de misiones de **QuestSync** y de hazañas de **Deed Tracker** (de Cube).
 - Los iconos, auras y figuras son diseños del autor de esta colección.
+
+
+## Actualización del 18 de octubre de 2026
+
+Versión declarada 3.20.1. Misiones activas clicables en las fichas de instancias, seleccionando la misión correspondiente en QuestSync. Anillo original en las misiones de zona e instancia con enlace al diario nativo, pendiente de prueba dentro del cliente. Coordenadas, mapas interiores y marcadores contrastados en las correcciones recientes; algunas posiciones visuales siguen siendo aproximadas. Recuperación de cargas y progreso de hazañas.
+
+Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.

@@ -265,6 +265,9 @@ function Apply.inventory_settings()
     else
         if Windows.inventory ~= nil then
             Windows.inventory:SetVisible(false)
+            if Windows.inventory.unhook_backpack_events ~= nil then
+                Windows.inventory:unhook_backpack_events()
+            end
         end
         Windows.inventory = nil
     end

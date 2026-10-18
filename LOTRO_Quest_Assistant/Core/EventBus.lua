@@ -89,9 +89,22 @@ function LQA.Core.EventBus:Publish(eventName, data)
         Turbine.Shell.WriteLine(debugStr)
     end
 
+    -- 2026-10-18 (R-EVENTBUS): un suscriptor que falla ya no impide que
+    -- reciban el evento los que vienen despues. El error se avisa en el
+    -- chat, como mucho 3 veces por evento (para no inundarlo).
     if self.listeners[eventName] then
-        for _, callback in ipairs(self.listeners[eventName]) do
-            callback(data)
+        for i, callback in ipairs(self.listeners[eventName]) do
+            local ok, err = pcall(callback, data)
+            if not ok then
+                self.errorCount = self.errorCount or {}
+                local n = (self.errorCount[eventName] or 0) + 1
+                self.errorCount[eventName] = n
+                if n <= 3 then
+                    import "Turbine"
+                    Turbine.Shell.WriteLine("<rgb=#FF6060>QuestSync: error en un suscriptor de " .. tostring(eventName) ..
+                        " (#" .. tostring(i) .. "): " .. tostring(err) .. "</rgb>")
+                end
+            end
         end
     end
 end

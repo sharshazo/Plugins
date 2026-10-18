@@ -3295,3 +3295,33 @@ D.Pois[463] = {
     { "s", 614, 533, "", "", "far" },
     { "s", 806, 629, "Rivendell", "", "far" },
 }
+
+D.Maps[1879523368] = { img = 1093080589, w = 1600, h = 1200, inst = true, en = "Mut-hûru", es = "Mut-hûru" }
+D.MapZone[1879523368] = "The Hatokali Fells"
+D.Zones["The Hatokali Fells"][#D.Zones["The Hatokali Fells"] + 1] = 1879523368
+D.Zones["Pahar Hatokali"][#D.Zones["Pahar Hatokali"] + 1] = 1879523368
+
+D.Maps[1879523369] = { img = 1093080590, w = 1600, h = 1200, inst = true, en = "Mut-hûru", es = "Mut-hûru" }
+D.MapZone[1879523369] = "The Hatokali Fells"
+D.Zones["The Hatokali Fells"][#D.Zones["The Hatokali Fells"] + 1] = 1879523369
+D.Zones["Pahar Hatokali"][#D.Zones["Pahar Hatokali"] + 1] = 1879523369
+
+D.Maps[1879523636] = { img = 1093080713, w = 800, h = 600, inst = true, en = "Mizâdi's Compound", es = "Mizâdi's Compound" }
+D.MapZone[1879523636] = "The Hatokali Fells"
+D.Zones["The Hatokali Fells"][#D.Zones["The Hatokali Fells"] + 1] = 1879523636
+D.Zones["Pahar Hatokali"][#D.Zones["Pahar Hatokali"] + 1] = 1879523636
+
+D.Maps[1879523607] = { img = 1093080712, w = 800, h = 600, inst = true, en = "Sakhar Kishâsya", es = "Sakhar Kishâsya" }
+D.MapZone[1879523607] = "The Hatokali Fells"
+D.Zones["The Hatokali Fells"][#D.Zones["The Hatokali Fells"] + 1] = 1879523607
+D.Zones["Pahar Hatokali"][#D.Zones["Pahar Hatokali"] + 1] = 1879523607
+
+D.Maps[1879523682] = { img = 1093080769, w = 2400, h = 1800, inst = true, en = "Kishâsu's Labyrinth", es = "Kishâsu's Labyrinth" }
+D.MapZone[1879523682] = "The Hatokali Fells"
+D.Zones["The Hatokali Fells"][#D.Zones["The Hatokali Fells"] + 1] = 1879523682
+D.Zones["Pahar Hatokali"][#D.Zones["Pahar Hatokali"] + 1] = 1879523682
+
+D.Maps[268455160] = { img = 1093135355, w = 1024, h = 768, inst = true, en = "Hatokáli Fells - Crypt", es = "Hatokáli Fells - Crypt" }
+D.MapZone[268455160] = "The Hatokali Fells"
+D.Zones["The Hatokali Fells"][#D.Zones["The Hatokali Fells"] + 1] = 268455160
+D.Zones["Pahar Hatokali"][#D.Zones["Pahar Hatokali"] + 1] = 268455160

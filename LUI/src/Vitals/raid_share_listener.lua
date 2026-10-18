@@ -27,15 +27,38 @@ import "Turbine.Gameplay"
 local _fellowship_listener = nil
 local _raid_listener = nil
 
--- The chat line prefixes the payload with the speaker ("[Raid] Name: ...");
--- the exact shape is locale-dependent, so the check is simply "the leader's
--- name appears before the payload".
-local function _is_from_leader(message, share, leader_name)
-    if leader_name == nil then
+-- The chat line prefixes the payload with the speaker ("[Raid] Name: ...").
+-- 2026-10-18 (LUI-02): the speaker must BE the leader; a mention of the
+-- leader's name inside the text no longer counts. Order of trust:
+--   1. args.Sender, when the client provides it;
+--   2. the name inside the first <Select:IID:...>Name<\Select> link;
+--   3. the plain "[Channel] Name:" header.
+-- Unknown shape -> not accepted (leader-only shares are never applied blind).
+local function _is_from_leader(message, share, leader_name, sender)
+    if type(leader_name) ~= "string" or leader_name == "" then
         return false
     end
+    local function same(name)
+        if type(name) ~= "string" then
+            return false
+        end
+        name = string.gsub(name, "<[^>]*>", "")
+        name = string.gsub(string.gsub(name, "^%s+", ""), "%s+$", "")
+        return name == leader_name
+    end
+    if type(sender) == "string" and sender ~= "" then
+        return same(sender)
+    end
     local speaker_part = string.sub(message, 1, share.position - 1)
-    return string.find(speaker_part, leader_name, 1, true) ~= nil
+    local linked = string.match(speaker_part, "<Select:IID:[^>]*>([^<]+)<\\Select>")
+    if linked ~= nil then
+        return same(linked)
+    end
+    local header = string.match(speaker_part, "^%[[^%]]*%]%s*([^:%[%]<>]+):")
+    if header ~= nil then
+        return same(header)
+    end
+    return false
 end
 
 local function _on_chat(args)
@@ -56,7 +79,7 @@ local function _on_chat(args)
 
     local snapshot = GroupSnapshot.read(Turbine.Gameplay.LocalPlayer.GetInstance())
     if share_settings.leader_only == true
-        and _is_from_leader(message, share, snapshot.leader_name) ~= true then
+        and _is_from_leader(message, share, snapshot.leader_name, args.Sender) ~= true then
         return
     end
 

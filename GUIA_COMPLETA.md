@@ -1,6 +1,6 @@
 # Guía completa de los addons
 
-Actualizada el **17 de octubre de 2026**. Esta guía describe la colección publicada; cada addon tiene también su propia guía con capturas, comandos y opciones.
+Actualizada el **18 de octubre de 2026**. Esta guía describe la colección publicada; cada addon tiene también su propia guía con capturas, comandos y opciones.
 
 ## LUI: interfaz y efectos visuales
 
@@ -33,7 +33,7 @@ La versión limpia retiró las ventanas Viaje y Bienes y sus accesos guardados. 
 - Consulta por área y zona, buscador por nombre u objetivo, etiquetas de repetición y señalización por nivel.
 - Puntos de interés, cofres, tesoros, tropas, amenazas y colecciones.
 - Identificación de misiones de grupo, mazmorras e incursiones, lugar en español e inglés y tamaño de grupo.
-- **Buscar grupo** prepara un mensaje en el canal **LFF** con lugar, tipo y tamaño. Se envía únicamente al pulsar el botón; solicita respuesta por privado.
+- **Buscar grupo** prepara un mensaje en inglés en el canal **LFF**, con el nombre exacto en inglés de la instancia, mazmorra o raid, tipo y tamaño. Se envía únicamente al pulsar el botón; solicita respuesta por privado.
 - Botones de mapa y ruta para la integración con MoorMap y Waypoint cuando están instalados.
 - Recolección por profesión y zona; guardado de puntos mediante la acción del jugador.
 - Hazañas activas compartidas con Deed Tracker y marcadores compartidos con el Mapa del Mundo.
@@ -46,7 +46,7 @@ La detección depende del chat recibido y de los datos disponibles; no lee direc
 
 ## Mapa del Mundo: exploración, objetivos y jefes
 
-[Guía del mapa](WorldMap_Addon/README.md) · Versión declarada: **3.20.0**.
+[Guía del mapa](WorldMap_Addon/README.md) · Versión declarada: **3.20.1**.
 
 - Mapa general de la Tierra Media, búsqueda por zona o nivel, información regional, filtro de expansiones y resaltado por nivel.
 - Mapas de zona, navegación entre mapas y fichas de lugares e iconos.
@@ -55,6 +55,8 @@ La detección depende del chat recibido y de los datos disponibles; no lee direc
 - Capas para incursiones, mazmorras, jefes, exploración, hazañas, cofres, misiones, establos, campamentos, viajes, pesca, matanzas, historia, NPC, minería y fauna.
 - Filtros guardados, opción de mostrar completados y nombres en español e inglés donde hay traducción disponible.
 - Fichas de instancias y mapas interiores cuando están incluidos en los datos; no todas las salas y posiciones de jefes están confirmadas.
+- Las misiones activas de esas fichas se pueden pulsar para abrir y seleccionar la misión exacta en QuestSync.
+- Anillo original a la derecha de las misiones de zona y de instancia: enlace nativo al diario de LOTRO mediante el identificador real de la misión. Su activación debe comprobarse dentro del cliente y requiere que la misión esté aceptada.
 - Posición del personaje con los mecanismos disponibles del juego y marcadores propios.
 - Lanzador flotante para mapa, misiones y recolección.
 - Recolección integrada: profesión, zona y puntos guardados por QuestSync. Pulsar un punto lo señala en el mapa; esta ventana utiliza los mapas incluidos sin exigir MoorMap.
@@ -131,3 +133,7 @@ Con OneDrive, la ruta suele ser `OneDrive\Documentos\The Lord of the Rings Onlin
 LUI: Geldahr, MPL-2.0. Deed Tracker: Cube. PvMP+: Urundus; traducción alemana RenthoMar. Mecánicas de jefe: datos de BossCodex (Arebel) y PrimePlugins. Se conservan las licencias y atribuciones incluidas en cada carpeta.
 
 Esta documentación se contrastó con los archivos incluidos. La publicación verifica las copias y los paquetes; no sustituye una prueba dentro de LOTRO de cada función o jefe.
+
+## Comprobaciones del 18 de octubre de 2026
+
+[Resultados y problemas pendientes](COMPROBACIONES_2026-10-18.md). Las pruebas automatizadas cubren escenarios concretos y no sustituyen una sesión completa dentro del juego.

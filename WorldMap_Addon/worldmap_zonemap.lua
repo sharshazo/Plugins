@@ -1234,7 +1234,7 @@ function ZV:_questPinData()
     if Q == nil or Q.ActiveInZone == nil or cal == nil or zoneName == nil then
         return out, ""
     end
-    local ok, list = pcall(Q.ActiveInZone, zoneName)
+    local ok, list = pcall(Q.ActiveInZone, zoneName, self.mapId)
     if not ok or type(list) ~= "table" then
         return out, ""
     end
@@ -2582,6 +2582,25 @@ function ZV:_buildInstInfo()
     self.markupOk = pcall(function() body:SetMarkupEnabled(true) end)
     -- clic: plegar / desplegar (queda solo el titulo)
     box.MouseClick = function(sender, args)
+        -- Quest labels handle their own clicks; do not fold/back twice if
+        -- the client also propagates that click to the containing card.
+        local t = this.instBox
+        if t ~= nil and t.body:IsVisible() then
+            local mx, my = box:GetMousePosition()
+            local bx, by = t.body:GetPosition()
+            for _, row in ipairs(t.rows or {}) do
+                if row.questNdx ~= nil and row:IsVisible() then
+                    local rx, ry = row:GetPosition()
+                    local rw, rh = row:GetSize()
+                    if row.journalRing ~= nil and row.journalRing:IsVisible() then
+                        rw = rw + 36
+                    end
+                    if mx >= bx + rx and mx < bx + rx + rw and my >= by + ry and my < by + ry + rh then
+                        return
+                    end
+                end
+            end
+        end
         if IsRight(args) then
             this:Back()
         elseif this.instInfo ~= nil then
@@ -2589,14 +2608,14 @@ function ZV:_buildInstInfo()
             this:_refreshInstInfo()
         end
     end
-    self.instBox = { box = box, inner = inner, title = title, body = body }
+    self.instBox = { box = box, inner = inner, title = title, body = body, rows = {} }
 end
 
 function ZV:_instInfoLines()
     local D = InstData()
     local info = self.instInfo
     local es = self.lang
-    local title, lines = "", {}
+    local title, lines, questRows = "", {}, {}
     local function both(a, b)
         if a == nil or a == "" then return b or "" end
         if b == nil or b == "" or b == a then return a end
@@ -2652,6 +2671,7 @@ function ZV:_instInfoLines()
                 for i, q in ipairs(list) do
                     if i > 6 then break end
                     lines[#lines + 1] = C("#F0D060", "- " .. ((es and q.es or q.en) or q.es or q.en or ""))
+                    questRows[#lines] = q.ndx
                 end
             end
         end)
@@ -2684,7 +2704,7 @@ function ZV:_instInfoLines()
     else
         lines[#lines + 1] = C("#8C8C8C", es and "Clic derecho: volver a la zona" or "Right-click: back to the zone")
     end
-    return title, lines
+    return title, lines, questRows
 end
 
 function ZV:_refreshInstInfo()
@@ -2700,14 +2720,25 @@ function ZV:_refreshInstInfo()
         self:_buildInstInfo()
     end
     local t = self.instBox
-    local title, lines = self:_instInfoLines()
+    local title, lines, questRows = self:_instInfoLines()
+    local Q = WorldMapAddon.Quests
     local bodyW = INFO_W - 2 * INFO_PAD
+    local function lineSize(i, line)
+        local width = bodyW
+        local ring = questRows[i] ~= nil and Q ~= nil and Q.JournalLink ~= nil
+            and Q.JournalLink(questRows[i]) ~= nil
+        if ring then width = width - Q.JournalRingSize - Q.JournalRingGap end
+        local height = TipLines((line:gsub("<[^>]*>", "")), width) * TIP_LINE_H
+        if ring then height = math.max(height, Q.JournalRingSize) end
+        return width, height, ring
+    end
     local tl = TipLines(title, bodyW * 0.8)
     local titleH = tl * 18 + 2
     local bodyH = 0
     if info.open then
-        for _, l in ipairs(lines) do
-            bodyH = bodyH + TipLines((l:gsub("<[^>]*>", "")), bodyW) * TIP_LINE_H
+        for i, l in ipairs(lines) do
+            local _, lineH = lineSize(i, l)
+            bodyH = bodyH + lineH
         end
     end
     local vw, vh = self.viewport:GetSize()
@@ -2724,11 +2755,78 @@ function ZV:_refreshInstInfo()
     t.title:SetText(title)
     t.body:SetPosition(INFO_PAD, 6 + titleH + 4)
     t.body:SetSize(bodyW, math.max(1, bodyH))
-    local text = info.open and table.concat(lines, "\n") or ""
-    if not self.markupOk then
-        text = text:gsub("<[^>]*>", "")
+    -- Reuse one label per displayed line, so its click region is exactly
+    -- the same control that renders the quest, including wrapped names.
+    t.body:SetText("")
+    for _, row in ipairs(t.rows) do
+        row.questNdx = nil
+        row:SetMouseVisible(false)
+        row:SetVisible(false)
+        row:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+        if row.journalRing ~= nil then
+            row.journalRing.questNdx = nil
+            row.journalRing.hit:SetText("")
+            row.journalRing.hit:SetMouseVisible(false)
+            row.journalRing:SetVisible(false)
+        end
     end
-    t.body:SetText(text)
+    local y = 0
+    if info.open then
+        for i, line in ipairs(lines) do
+            local plain = line:gsub("<[^>]*>", "")
+            local lineW, lineH, hasRing = lineSize(i, line)
+            local visibleH = math.min(lineH, math.max(0, bodyH - y))
+            if visibleH > 0 then
+                local row = t.rows[i]
+                if row == nil then
+                    row = Turbine.UI.Label()
+                    row:SetParent(t.body)
+                    row:SetFont(Turbine.UI.Lotro.Font.Verdana12)
+                    row:SetForeColor(HexToColor("#C8CEDA"))
+                    row:SetMultiline(true)
+                    row:SetSelectable(false)
+                    if self.markupOk then pcall(function() row:SetMarkupEnabled(true) end) end
+                    local this = self
+                    row.MouseEnter = function()
+                        if row.questNdx ~= nil then
+                            row:SetBackColor(Turbine.UI.Color(0.18, 1, 0.82, 0.25))
+                        end
+                    end
+                    row.MouseLeave = function() row:SetBackColor(Turbine.UI.Color(0, 0, 0, 0)) end
+                    row.MouseClick = function(sender, args)
+                        if row.questNdx == nil then return end
+                        if IsRight(args) then this:Back(); return end
+                        if not IsLeft(args) then return end
+                        local Q = WorldMapAddon.Quests
+                        local ok, opened = pcall(function()
+                            return Q ~= nil and type(Q.OpenQuest) == "function" and Q.OpenQuest(row.questNdx)
+                        end)
+                        if not ok or not opened then
+                            Turbine.Shell.WriteLine(this.lang and "Carga Quest Assistant para abrir esta mision." or "Load Quest Assistant to open this quest.")
+                        end
+                    end
+                    t.rows[i] = row
+                end
+                row.questNdx = questRows and questRows[i] or nil
+                row:SetPosition(0, y)
+                row:SetSize(lineW, visibleH)
+                row:SetText(self.markupOk and line or plain)
+                row:SetMouseVisible(row.questNdx ~= nil)
+                row:SetVisible(true)
+                -- Sibling controls keep the journal ring outside the title's
+                -- Quest Assistant click area, including multi-line titles.
+                if hasRing and visibleH >= Q.JournalRingSize then
+                    if row.journalRing == nil then
+                        row.journalRing = Q.CreateJournalRing(t.body, questRows[i], function() self:Back() end)
+                    else
+                        Q.UpdateJournalRing(row.journalRing, questRows[i])
+                    end
+                    row.journalRing:SetPosition(lineW + Q.JournalRingGap, y)
+                end
+            end
+            y = y + lineH
+        end
+    end
     t.body:SetVisible(info.open)
     t.box:SetVisible(true)
 end

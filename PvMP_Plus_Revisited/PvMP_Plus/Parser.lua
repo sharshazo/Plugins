@@ -45,7 +45,7 @@ local function ParseChat(sender,args)
 
 		OverviewWindow:Update()
 
-		Plugins["PvMP+"].Unload(nil, nil, false)
+		RequestPvMPSave()
 
 	-- Parse Commendations
 	elseif args.ChatType == Turbine.ChatType.SelfLoot and string.find(args.Message, L.Chat_Earned_Commendations_Start) and string.find(args.Message, L.Chat_Earned_Commendations_End) then
@@ -78,7 +78,7 @@ local function ParseChat(sender,args)
 
 		OverviewWindow:Update()
 
-		Plugins["PvMP+"].Unload(nil, nil, false)
+		RequestPvMPSave()
 
 	elseif args.ChatType == Turbine.ChatType.Death then
 		-- Parse Frags
@@ -121,7 +121,7 @@ local function ParseChat(sender,args)
 
 			SecondaryWindow:NewRecentKill(victim)
 
-			Plugins["PvMP+"].Unload(nil, nil, false)
+			RequestPvMPSave()
 
 		-- Parse Deaths
 		elseif string.find(args.Message, L.Chat_Defeated) or string.find(args.Message, L.Chat_Environment_Death) then
@@ -140,7 +140,7 @@ local function ParseChat(sender,args)
 				data.numbers.most_deaths_a_month = { data.numbers.deaths_current_month, current_date.Month, current_date.Year }
 			end
 
-			Plugins["PvMP+"].Unload(nil, nil, false)
+			RequestPvMPSave()
 		end
 
 	-- Parse Lootboxes
@@ -207,7 +207,7 @@ local function ParseChat(sender,args)
 				data.numbers.most_tracks_a_month = { data.numbers.tracks_current_month, current_date.Month, current_date.Year }
 			end
 
-			Plugins["PvMP+"].Unload(nil, nil, false)
+			RequestPvMPSave()
 
 		-- Parse Own Map Position
 		elseif string.find(args.Message, L.Chat_Location_String) then

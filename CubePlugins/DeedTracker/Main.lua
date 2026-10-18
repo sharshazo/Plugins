@@ -269,12 +269,22 @@ function CheckForCompanionImport()
     if type(companionImport) == 'table' and companionImport["SKIP"] == nil then
         processCompanionImport(companionImport);
 
-        -- Now that the import is done, clear the file so we don't import it again:
-        local emptyCompanion = {};
-        emptyCompanion["SKIP"] = true;
-        PatchDataSave(Turbine.DataScope.Character, "DeedTracker_CompanionImport", emptyCompanion);
+        -- 2026-10-18 (DT-02): the import file is only marked as used once the
+        -- player actually presses Import (CompanionImportWindow:DoImport).
+        -- Closing the window or logging out keeps it for next time. If there
+        -- is nothing to import, it is marked right away (nothing to lose).
+        local win = CompanionImportWindow.instance;
+        if (win == nil or win.deedsToAdd == nil or #win.deedsToAdd == 0) then
+            ConsumeCompanionImport();
+        end
     end
 
+end
+
+function ConsumeCompanionImport()
+    local emptyCompanion = {};
+    emptyCompanion["SKIP"] = true;
+    PatchDataSave(Turbine.DataScope.Character, "DeedTracker_CompanionImport", emptyCompanion);
 end
 
 function processCompanionImport(companionImport)

@@ -2,8 +2,6 @@
 
 # ✨ LUI (en español)
 
-Documentación revisada el **17 de octubre de 2026**. La versión limpia retiró **Viaje** y **Bienes**; la enciclopedia disponible se centra en objetos. [Guía completa de funciones](../GUIA_COMPLETA.md).
-
 Interfaz personalizada para **The Lord of the Rings Online**: marcos de combate más limpios, texto y bordes nítidos y control total de posición, colores, fuentes, umbrales y escala. Esta versión está en español y añade **efectos visuales hechos a medida**: carteles animados de misión y de zona, aura del puntero, ventana de botín con cartel «LOOT», auras en los marcos de grupo e incursión y más.
 
 Versión: **2.3.0** · Basado en el [LUI original de Geldahr](https://github.com/Geldahr/LUI) (MPL-2.0).
@@ -334,3 +332,10 @@ LUI uses pixel-based scaling instead of LotRO UI scaling. That keeps borders and
 ## Support
 
 For bug reports, feature requests, or latest release downloads of the original LUI, use the [GitHub repository](https://github.com/Geldahr/LUI).
+
+
+## Actualización del 18 de octubre de 2026
+
+Protección de perfiles frente a lecturas fallidas y caché de búsquedas limitada. Se conservan los resultados en español e inglés y las funciones de la interfaz.
+
+Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.

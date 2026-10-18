@@ -78,6 +78,20 @@ function O.Set(key, v)
         v = tonumber(v)
     end
     O.values[key] = v
+    if O.loading then
+        -- 2026-10-18 (MAP-02): la lectura aun no llego; se recuerda que el
+        -- jugador eligio esto (gana sobre lo guardado) y se guarda todo al
+        -- terminar la lectura, para no perder las demas opciones
+        O.pendingKeys = O.pendingKeys or {}
+        O.pendingKeys[key] = true
+        Applied()
+        return
+    end
+    O.SaveAll()
+    Applied()
+end
+
+function O.SaveAll()
     local data = {}
     for k in pairs(DEFAULTS) do
         if O.values[k] ~= nil then
@@ -85,20 +99,26 @@ function O.Set(key, v)
         end
     end
     pcall(Turbine.PluginData.Save, Turbine.DataScope.Account, SAVE_KEY, data)
-    Applied()
 end
 
 -- lectura asincronica (con funcion de aviso, ver worldmap_deeds.lua)
 function O.Load()
     local answered = false
-    pcall(Turbine.PluginData.Load, Turbine.DataScope.Account, SAVE_KEY, function(data)
+    O.loading = true
+    local ok = pcall(Turbine.PluginData.Load, Turbine.DataScope.Account, SAVE_KEY, function(data)
         if answered then
             return
         end
         answered = true
+        O.loading = false
+        local pending = O.pendingKeys or {}
+        O.pendingKeys = nil
         if type(data) == "table" then
             for k in pairs(DEFAULTS) do
                 local v = data[k]
+                if pending[k] then
+                    v = nil   -- lo elegido durante la lectura manda
+                end
                 if type(DEFAULTS[k]) == "number" then
                     v = tonumber(v)
                 end
@@ -107,8 +127,15 @@ function O.Load()
                 end
             end
         end
+        if next(pending) ~= nil then
+            O.SaveAll()
+        end
         Applied()
     end)
+    if not ok and not answered then
+        O.loading = false
+        O.pendingKeys = nil
+    end
 end
 
 -- ---------------------------------------------------------------------

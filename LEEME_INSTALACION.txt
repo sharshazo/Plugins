@@ -1,0 +1,21 @@
+ADDONS LOTRO - ACTUALIZACION 18/10/2026
+
+1. Cierra LOTRO antes de actualizar.
+2. Extrae las carpetas del paquete en:
+   Documentos\The Lord of the Rings Online\Plugins\
+   Si Documentos usa OneDrive, utiliza la misma ruta dentro de OneDrive.
+3. Reemplaza completamente la carpeta anterior del addon elegido para no
+   conservar archivos retirados. Copia tambien la carpeta Turbine incluida.
+4. Conserva PluginData y los addons ajenos a esta coleccion.
+   Para Deed Tracker, sustituye solo CubePlugins\DeedTracker y sus descriptores;
+   conserva otros componentes de CubePlugins si los tienes instalados.
+5. Activa los addons desde el administrador de plugins del juego.
+
+Cada paquete individual contiene el addon, Turbine y esta documentacion.
+Todos_los_addons contiene las seis carpetas de la coleccion.
+No copies una carpeta contenedora adicional dentro de Plugins.
+
+Consulta GUIA_COMPLETA.md y COMPROBACIONES_2026-10-18.md para ver las
+funciones actualizadas y los problemas conocidos pendientes.
+El anillo del diario original requiere prueba dentro del juego con una
+mision aceptada. Los botones Narrar requieren Narrador_IA instalado aparte.

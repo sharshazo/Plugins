@@ -231,8 +231,35 @@ SetDefaults = function()
 	if data.numbers.mapWin_y == nil then data.numbers.mapWin_y = math.floor(display_height / 2 - 230) end
 end
 
+local saveDue = nil
+local dailyRetryAt = nil
+local saveErrorNoticed = false
+
+function RequestPvMPSave()
+	-- A short bounded window groups combat events, rather than postponing
+	-- forever while more events arrive. An actual unload still saves now.
+	if saveDue == nil then saveDue = Turbine.Engine.GetGameTime() + 1 end
+end
+
+function FlushPvMPSave()
+	local now = Turbine.Engine.GetGameTime()
+	if dailyRetryAt ~= nil and now >= dailyRetryAt then
+		Plugins["PvMP+"].Unload(nil, nil, true)
+	end
+	if saveDue ~= nil and now >= saveDue then
+		Plugins["PvMP+"].Unload(nil, nil, false)
+	end
+end
+
 Plugins["PvMP+"].Unload = function(self, args, isDailyBackup)
-	data.numbers.overview_width_ratio = data.numbers.overview_width_ratio * 1e+14
+	if isDailyBackup == nil and dailyRetryAt ~= nil then
+		Plugins["PvMP+"].Unload(nil, nil, true)
+	end
+	if isDailyBackup == nil and type(PvMP_ReleaseBackpackWatch) == "function" then
+		PvMP_ReleaseBackpackWatch()
+		if Updater ~= nil then Updater:SetWantsUpdates(false) end
+	end
+	local ok, err = pcall(function()
 	-- Only save points from the last 24 hours
 	data.numbers.recent_points = DeleteObsoleteData(data.numbers.recent_points)
 	data.numbers.recent_tracks = DeleteObsoleteData(data.numbers.recent_tracks)
@@ -247,6 +274,8 @@ Plugins["PvMP+"].Unload = function(self, args, isDailyBackup)
 	data.numbers.history.deaths = DeleteOldHistoryData(data.numbers.history.deaths, Days_To_Display)
 	-- Convert data into strings
 	storage.numbers = ConvertNumbersToStrings(data.numbers)
+	-- Scale only the serialized copy, never the live window geometry.
+	storage.numbers.overview_width_ratio = tostring(data.numbers.overview_width_ratio * 1e+14)
 	if isDailyBackup then
 		Turbine.PluginData.Save(Turbine.DataScope.Character, "PvMP_Plus_Daily_Backup", storage)
 	else
@@ -254,7 +283,19 @@ Plugins["PvMP+"].Unload = function(self, args, isDailyBackup)
 		Turbine.PluginData.Save(Turbine.DataScope.Character, "PvMP_Plus", storage)
 		Turbine.PluginData.Save(Turbine.DataScope.Character, "PvMP_Plus_Backup", storage)
 	end
-	data.numbers.overview_width_ratio = data.numbers.overview_width_ratio / 1e+14
+	end)
+	if ok then
+		if isDailyBackup then dailyRetryAt = nil else saveDue = nil end
+		saveErrorNoticed = false
+	else
+		if isDailyBackup then dailyRetryAt = Turbine.Engine.GetGameTime() + 5
+		else saveDue = Turbine.Engine.GetGameTime() + 5 end
+		if not saveErrorNoticed then
+			saveErrorNoticed = true
+			Turbine.Shell.WriteLine("PvMP+: save failed; live data is unchanged and saving will be retried. " .. tostring(err))
+		end
+	end
+	return ok
 end
 
 function ConvertStringsToNumbers(data)
@@ -290,7 +331,8 @@ function DeleteObsoleteData(input)
 	local important_data = {}
 	local now = GetSecondsOfYear()
 	for timestamp, value in pairs(input) do
-		if (now - timestamp <= 86400 and now - timestamp >= 0) then
+		local age = GetAgeSeconds(now, timestamp)
+		if (age <= 86400 and age >= 0) then
 			important_data[timestamp] = value
 		end
 	end

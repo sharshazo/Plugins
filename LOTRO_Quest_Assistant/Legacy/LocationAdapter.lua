@@ -46,8 +46,8 @@ _G.LocationAdapter = {}
 local PATTERNS = {
     -- Con "cInside" (interior) y con "i<N>" (instancia) -- mismo orden que
     -- MoorMap prueba (patternString4, 3, 2, 1 de mas especifico a menos).
-    "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) i(%d+) cInside ox(.-%d+%.?%d*) oy(.-%d+%.?%d*) oz(.-%d+%.?%d*)",
-    "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) i(%d+) ox(%d+%.?%d*) oy(%d+%.?%d*) oz(%d+%.?%d*)",
+    "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) i%d+ cInside ox(.-%d+%.?%d*) oy(.-%d+%.?%d*) oz(.-%d+%.?%d*)",
+    "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) i%d+ ox(%d+%.?%d*) oy(%d+%.?%d*) oz(%d+%.?%d*)",
     "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) cInside ox(.-%d+%.?%d*) oy(.-%d+%.?%d*) oz(.-%d+%.?%d*)",
     "Estás en el servidor .* en r(%d+) lx(%d+%.?%d*) ly(%d+%.?%d*) ox(.-%d+%.?%d*) oy(.-%d+%.?%d*) oz(.-%d+%.?%d*)",
 }

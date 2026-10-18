@@ -91,6 +91,20 @@ pcall(function()
 			if WorldMapAddon.Boss ~= nil and WorldMapAddon.Boss.Shutdown ~= nil then
 				pcall(WorldMapAddon.Boss.Shutdown)
 			end
+			-- 2026-10-18 (R-UNLOAD): tambien se suelta el oyente de hazañas
+			-- (solo si sigue siendo el nuestro)
+			pcall(function()
+				local A = WorldMapAddon.DeedActive
+				if A ~= nil then
+					A.stopped = true
+					A.loadToken = nil
+					if A.loadDriver ~= nil then A.loadDriver:SetWantsUpdates(false); A.loadDriver = nil end
+				end
+				if A ~= nil and type(_G.LQA_ChatListeners) == "table"
+					and _G.LQA_ChatListeners["WorldMapDeeds"] == A.OnChat then
+					_G.LQA_ChatListeners["WorldMapDeeds"] = nil
+				end
+			end)
 		end
 	end
 end)
