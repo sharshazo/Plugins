@@ -99,6 +99,14 @@ end
 function Utils.lui_vitals_layout_label(label, width, height, anchor, width_mode, text_alignment, x_offset, y_offset,
                                        font_name, font_size, text)
     local rendered_text = tostring(text or "")
+    local cache = label._lui_vitals_layout
+    local x, y = label:GetPosition()
+    local w, h = label:GetSize()
+    if cache ~= nil and cache.width == width and cache.height == height
+        and cache.anchor == anchor and cache.mode == width_mode and cache.align == text_alignment
+        and cache.xoff == x_offset and cache.yoff == y_offset
+        and cache.font == font_name and cache.size == font_size and cache.text == rendered_text
+        and cache.x == x and cache.y == y and cache.w == w and cache.h == h then return end
     local rect_width = width
     if width_mode == LUI_ENUMS.vitals_label_width_mode.AUTO then
         rect_width = math.min(width, _longest_line_width(rendered_text, font_name, font_size))
@@ -111,4 +119,11 @@ function Utils.lui_vitals_layout_label(label, width, height, anchor, width_mode,
     label:SetSize(math.max(1, rect_width), math.max(1, rect_height))
     label:SetTextAlignment(_text_alignment(text_alignment))
     label:SetMultiline(true)
+    cache = cache or {}
+    cache.width, cache.height = width, height
+    cache.anchor, cache.mode, cache.align = anchor, width_mode, text_alignment
+    cache.xoff, cache.yoff, cache.font, cache.size, cache.text = x_offset, y_offset, font_name, font_size, rendered_text
+    cache.x, cache.y = label:GetPosition()
+    cache.w, cache.h = label:GetSize()
+    label._lui_vitals_layout = cache
 end

@@ -1,14 +1,14 @@
 # Addons de LOTRO en español
 
-## Revisión 2 — rendimiento y paquetes actualizados (19 de octubre de 2026)
+## Revisión 3 — curas, habilidades y estabilidad (19 de octubre de 2026)
 
-- **LUI:** party desactivada sin seguimiento de efectos; menos repintados de buffs/debuffs, señales y barras; consultas de fabricación con caché. Se conservan marcos, temporizadores, animaciones, raid y botín ajustable.
-- **QuestSync / Quest Assistant:** progreso idéntico sin guardado repetido y refrescos de listas agrupados; las ventanas ocultas difieren su reconstrucción.
-- **Mapa del Mundo:** sincronización de hazañas sin notificaciones repetidas cuando no cambia el estado.
-- **PvMP+:** refresco visual agrupado durante combate y marcas caducadas sin repintado continuo; contadores conservados.
-- **Descargas:** RAR y ZIP regenerados desde cero y verificados; solo se conservan los RAR de la versión actual.
+- **LUI:** menos trabajo repetido al curar en party y raid; etiquetas y bordes se actualizan cuando cambian. El aviso animado de vida baja conserva su pulso durante las curas.
+- **Habilidades:** las reutilizaciones evitan limpiar casillas vacías en cada refresco y repetir tamaños o tiempos iguales. El seguimiento evita consultar buffs propios cuando no hay ninguno configurado para seguir.
+- **PvMP+:** el aviso de menciones se sincroniza con la primera lectura de la cartera; los observadores de mochila conservan callbacks anteriores con claves nominales, numéricas y de función.
+- **Turbine:** los temporizadores respetan la reprogramación propia o de otro temporizador y los cambios de gestor; se conserva el aislamiento de callbacks con errores.
+- Se mantienen los arreglos anteriores de misiones, LFF en inglés, anillos, recolección, botín ajustable, señales y guardados. RAR y ZIP regenerados y verificados.
 
-[Comprobaciones y límites de las pruebas](COMPROBACIONES_2026-10-19.md). Las reducciones de llamadas se comprobaron en simulaciones; no equivalen a una medición de FPS en combate real.
+[Comprobaciones y límites](COMPROBACIONES_2026-10-19.md). Las pruebas no sustituyen una medición de FPS o cierres dentro del juego.
 
 ## Guía de funciones actualizada — 19 de octubre de 2026
 

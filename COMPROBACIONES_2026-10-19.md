@@ -1,4 +1,4 @@
-# Comprobaciones del 19 de octubre de 2026 — revisión 2
+# Comprobaciones del 19 de octubre de 2026 — revisión 3
 
 Se reconstruyen las seis carpetas desde la instalación actual. Se excluyen copias de respaldo, temporales, guardados personales y exportaciones de desarrollo. Se conservan dependencias, recursos, licencias y guías. No se borran archivos del usuario en la instalación del juego.
 
@@ -30,6 +30,19 @@ No se midieron FPS o tiempos de cuadro durante combate real, memoria gráfica ni
 
 Las ventanas de efectos activas aún consultan, filtran y ordenan efectos al ritmo configurado. El sondeo de seguridad y las animaciones habilitadas se conservan para no perder comportamiento cuando faltan eventos del cliente. Los datos aislados medidos en una auditoría anterior (aproximadamente 57,8 MiB de QuestSync y 26,1 MiB de LUI, más caché de búsqueda limitada) no son memoria total del cliente ni demuestran por sí solos una fuga.
 
-Siguen pendientes las limitaciones anteriores de PvMP+ sobre el aviso inicial de moneda y cierto formato de callback de mochila, y el caso de reprogramación cruzada de temporizadores de Turbine. Las posiciones de mapa deducidas visualmente no se consideran coordenadas exactas confirmadas.
+El aviso inicial de menciones, las tablas de callbacks de mochila y la reprogramación cruzada/propia de temporizadores quedaron corregidos en esta revisión y pasaron sus reproducciones. Las posiciones de mapa deducidas visualmente no se consideran coordenadas exactas confirmadas.
 
 Para instalar: cierra el juego, sustituye la carpeta anterior del addon y copia Turbine. Conserva PluginData y los addons ajenos; si CubePlugins contiene otros componentes, consérvalos. No se alteran guardados personales.
+
+
+## Verificación conjunta de la revisión 3
+
+- 23 conjuntos de pruebas aprobados, cero fallidos; 43 archivos corregidos coinciden con sus últimas versiones. Los 714 archivos Lua instalados compilan.
+- Revisión estructural de 41 fuentes modificadas frente a respaldos anteriores: ninguna función con nombre eliminada. Las 600 fuentes de la distribución y los 2.836 recursos de ejecución revisados siguen presentes; siete entradas de carga válidas. Los siete cambios de parámetros conservan sus llamadas revisadas.
+- Integración adicional con Class, Type, Table, Event, Timer y TimerManager reales: constructores, eventos, cambios de gestor/intervalo, autoeliminación y aislamiento de errores comprobados. El reloj y los controles nativos se simulan.
+- Ocho pruebas de navegación mapa–Quest Assistant: misión exacta, ambos idiomas, clic derecho, destinos viejos, reutilización de filas, plegado, recorte y ausencia del addon de destino. Las filas permanecen opacas, como requiere la corrección de transparencia.
+- Curas y habilidades: 974.298 comprobaciones. Dos mil casos de cambio de etiquetas; 800 casos de selección/hover/tamaño; 14.400 pasos de reutilizaciones y 3.600 pasos por cada uno de los tres diseños con sus animaciones. Veinte mil cambios de etiquetas sin crecimiento de memoria Lua retenida entre lotes equivalentes de la simulación.
+- En 1.000 avisos con las mismas etiquetas, las escrituras de texto pasaron de 4.000 a 3 y las de colocación de 12.001 a 13. En 1.000 avisos de vida baja, las escrituras de geometría pasaron de 10.000 a 10. Son recuentos de llamadas simuladas, no porcentajes de mejora de FPS.
+- Reproducciones de PvMP+ y Turbine: cuatro escenarios adicionales aprobados, incluyendo cien ciclos de callbacks, doscientos de reprogramación y diez mil altas/bajas de temporizadores sin referencias residuales en la prueba.
+
+Los microcongelamientos y cierres nativos reales aún requieren validación en combate dentro de LOTRO. Tampoco se certifica la cobertura de cada misión o coordenada del mapa. Las pruebas conservan comportamientos concretos; no garantizan ausencia absoluta de errores.

@@ -74,10 +74,10 @@ local function _new_border(parent, z_order, alpha_blend)
 end
 
 local function _set_select_border_visible(border, visible)
-    border.top:SetVisible(visible)
-    border.bottom:SetVisible(visible)
-    border.left:SetVisible(visible)
-    border.right:SetVisible(visible)
+    if border.top:IsVisible() ~= visible then border.top:SetVisible(visible) end
+    if border.bottom:IsVisible() ~= visible then border.bottom:SetVisible(visible) end
+    if border.left:IsVisible() ~= visible then border.left:SetVisible(visible) end
+    if border.right:IsVisible() ~= visible then border.right:SetVisible(visible) end
 end
 
 local function _set_select_border_color(border, color)
@@ -405,9 +405,9 @@ function GroupMemberVitals:_set_member_state(text, color)
 end
 
 function GroupMemberVitals:_clear_member_state()
-    self.state_label:SetText("")
-    self.state_label:SetVisible(false)
-    self.state_overlay:SetVisible(false)
+    if self.state_label:GetText() ~= "" then self.state_label:SetText("") end
+    if self.state_label:IsVisible() then self.state_label:SetVisible(false) end
+    if self.state_overlay:IsVisible() then self.state_overlay:SetVisible(false) end
 end
 
 function GroupMemberVitals:_select_color()
@@ -529,7 +529,8 @@ function GroupMemberVitals:_update_low_health()
     local highlight = _highlight()
     if low ~= true then
         self.low_active = false
-        self.low_overlay:SetVisible(false)
+        self._low_layout = nil
+        if self.low_overlay:IsVisible() then self.low_overlay:SetVisible(false) end
         _set_select_border_visible(self.low_border, false)
         if highlight ~= nil then
             highlight.set_low(self, false)
@@ -539,14 +540,20 @@ function GroupMemberVitals:_update_low_health()
 
     local x, y = self.entity_control:GetPosition()
     local width, height = self.entity_control:GetSize()
-    self.low_overlay:SetPosition(x, y)
-    self.low_overlay:SetSize(width, height)
-    _apply_select_border(self.low_border, x, y, width, height, LOW_HEALTH_BORDER, LOW_BORDER_COLOR)
+    local layout = self._low_layout
+    if layout == nil or layout.x ~= x or layout.y ~= y or layout.w ~= width or layout.h ~= height then
+        self.low_overlay:SetPosition(x, y)
+        self.low_overlay:SetSize(width, height)
+        _apply_select_border(self.low_border, x, y, width, height, LOW_HEALTH_BORDER, LOW_BORDER_COLOR)
+        layout = layout or {}
+        layout.x, layout.y, layout.w, layout.h = x, y, width, height
+        self._low_layout = layout
+    end
     if self.low_active ~= true then
         self.low_active = true
         self:_paint_low_health(0.25, 0.8)
     end
-    self.low_overlay:SetVisible(true)
+    if self.low_overlay:IsVisible() ~= true then self.low_overlay:SetVisible(true) end
     if highlight ~= nil then
         highlight.set_low(self, true)
     end

@@ -49,7 +49,7 @@ local function CheckBattleTask(now)
 				if type(previous) == "function" then
 					pcall(previous, sender, args)
 				elseif type(previous) == "table" then
-					for _, callback in ipairs(previous) do
+					for _, callback in pairs(previous) do
 						if type(callback) == "function" then pcall(callback, sender, args) end
 					end
 				end
@@ -78,6 +78,17 @@ local function CheckBattleTask(now)
 	BattleTaskWindow.label_battle_task:SetVisible(not task_present)
 end
 
+local function SyncCommendationWarning()
+	Commendation_Warning = Current_Commendations >= Commendation_Limit
+	if Commendation_Warning and not storage.comms_warning_disabled then
+		OverviewWindow.label_commendations:SetForeColor(Turbine.UI.Color.Red)
+	else
+		OverviewWindow.label_commendations:SetForeColor(Default_Font_Color)
+		OverviewWindow.label_commendations:SetVisible(true)
+		OverviewWindow.commendations_icon:SetVisible(true)
+	end
+end
+
 local function CheckWallet(now)
 	if wallet_loaded then return end
 	if now < wallet_check_at then return end
@@ -89,6 +100,7 @@ local function CheckWallet(now)
 		if item ~= nil and item:GetName() == L.Wallet_Commendations then
 			commendations_in_wallet = item
 			Current_Commendations = item:GetQuantity()
+			SyncCommendationWarning()
 			wallet_loaded = true
 			break
 		end
@@ -197,14 +209,7 @@ Updater.Update = function(sender, args)
 			local commendations_changed = new_commendations ~= Current_Commendations
 			if commendations_changed then
 				Current_Commendations = new_commendations
-				Commendation_Warning = Current_Commendations >= Commendation_Limit
-				if Commendation_Warning and not storage.comms_warning_disabled then
-					OverviewWindow.label_commendations:SetForeColor(Turbine.UI.Color.Red)
-				elseif not Commendation_Warning then
-					OverviewWindow.label_commendations:SetForeColor(Default_Font_Color)
-					OverviewWindow.label_commendations:SetVisible(true)
-					OverviewWindow.commendations_icon:SetVisible(true)
-				end
+				SyncCommendationWarning()
 				RequestPvMPSave()
 			end
 			end

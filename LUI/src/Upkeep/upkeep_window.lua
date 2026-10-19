@@ -426,7 +426,7 @@ function UpkeepWindow:_poll_effects(now)
     local changed = false
 
     local player = Turbine.Gameplay.LocalPlayer.GetInstance()
-    if player ~= nil and player.GetEffects ~= nil then
+    if next(self._watch) ~= nil and player ~= nil and player.GetEffects ~= nil then
         if self:_sweep_effects(player:GetEffects(), self._watch, now, gen) then
             changed = true
         end

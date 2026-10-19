@@ -16,6 +16,9 @@ function TimerManager:Constructor()
 
 	self.timers = { };
 	Table.SetWeakKeys( self.timers );
+	self.timer_versions = { };
+	Table.SetWeakKeys( self.timer_versions );
+	self.schedule_revision = 0;
 end
 
 function TimerManager.GetInstance()
@@ -38,6 +41,8 @@ function TimerManager:AddTimer( timer )
 	-- Calculate when the timer needs to fire.
 	local nextFireTime = Turbine.Engine.GetGameTime() + ( timer:GetInterval() / 1000 );
 	self.timers[timer] = nextFireTime;
+	self.schedule_revision = self.schedule_revision + 1;
+	self.timer_versions[timer] = self.schedule_revision;
 	self.updateControl:SetWantsUpdates( true );
 end
 
@@ -47,6 +52,7 @@ function TimerManager:RemoveTimer( timer )
 	end
 
 	self.timers[timer] = nil;
+	self.timer_versions[timer] = nil;
 	-- 2026-10-18 (TUR-01): "timerCount" was never set nor used; removing a
 	-- timer failed here halfway. The empty check below is enough.
 
@@ -64,6 +70,8 @@ function TimerManager:UpdateTimer( timer )
 	-- state does not need to change.
 	local nextFireTime = Turbine.Engine.GetGameTime() + ( timer:GetInterval() / 1000 );
 	self.timers[timer] = nextFireTime;
+	self.schedule_revision = self.schedule_revision + 1;
+	self.timer_versions[timer] = self.schedule_revision;
 end
 
 function TimerManager:ProcessTimers()
@@ -75,12 +83,14 @@ function TimerManager:ProcessTimers()
 	local due = { };
 	for timer, fireTime in pairs( self.timers ) do
 		if ( fireTime < gameTime ) then
-			table.insert( due, timer );
+			table.insert( due, { timer = timer, fire_time = fireTime, version = self.timer_versions[timer] } );
 		end
 	end
 
-	for _, timer in ipairs( due ) do
-		if ( self.timers[timer] ~= nil ) then
+	for _, scheduled in ipairs( due ) do
+		local timer = scheduled.timer;
+		-- Another callback may explicitly move, disable or reschedule this timer.
+		if ( self.timers[timer] == scheduled.fire_time and self.timer_versions[timer] == scheduled.version ) then
 			local ok, err = pcall( function() timer:OnTick( Table.Empty ); end );
 			if ( not ok ) then
 				-- Disable only this timer; other due callbacks must still run.
@@ -88,10 +98,11 @@ function TimerManager:ProcessTimers()
 					pcall( timer.SetEnabled, timer, false );
 				end
 				self.timers[timer] = nil;
+				self.timer_versions[timer] = nil;
 				if ( Turbine.Shell ~= nil and type( Turbine.Shell.WriteLine ) == "function" ) then
 					Turbine.Shell.WriteLine( "Timer disabled after callback error: " .. tostring( err ) );
 				end
-			elseif ( self.timers[timer] ~= nil ) then
+			elseif ( self.timers[timer] == scheduled.fire_time and self.timer_versions[timer] == scheduled.version ) then
 				self:UpdateTimer( timer );
 			end
 		end

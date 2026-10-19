@@ -334,3 +334,8 @@ Se vuelve a empaquetar la versión local actual con Turbine, conservando los cam
 ## Revisión 2 del 19 de octubre de 2026
 
 Los eventos de combate agrupan la actualización visual de la ventana general en intervalos de 100 ms; los contadores se actualizan inmediatamente. Las marcas caducadas dejan de repintarse y se evita repetir texto o dimensiones sin cambios. No se modifican los canales de chat ni el registro de estadísticas.
+
+
+## Revisión 3 del 19 de octubre de 2026
+
+El aviso de menciones y su color se recalculan tras la primera lectura correcta de cartera y al cambiar la cantidad. Los eventos anteriores de mochila se conservan aunque sean tablas con claves nominales, numéricas o de función; se restauran al descargar. Se mantienen estadísticas, calendario, guardados agrupados, señales y refrescos visuales de combate.

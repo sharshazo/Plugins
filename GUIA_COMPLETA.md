@@ -180,3 +180,16 @@ Los eventos de combate agrupan la actualización visual de la ventana general en
 ### CubePlugins
 
 Versión local actual, conservando sincronización y recuperación de guardados. Se vuelve a distribuir con Turbine y sin temporales; esta revisión no añade funciones a Deed Tracker.
+
+
+## Revisión 3 — curas, habilidades y estabilidad (19 de octubre de 2026)
+
+- **LUI:** menos trabajo repetido al curar en party y raid; etiquetas y bordes se actualizan cuando cambian. El aviso animado de vida baja conserva su pulso durante las curas.
+- **Habilidades:** las reutilizaciones evitan limpiar casillas vacías en cada refresco y repetir tamaños o tiempos iguales. El seguimiento evita consultar buffs propios cuando no hay ninguno configurado para seguir.
+- **PvMP+:** el aviso de menciones se sincroniza con la primera lectura de la cartera; los observadores de mochila conservan callbacks anteriores con claves nominales, numéricas y de función.
+- **Turbine:** los temporizadores respetan la reprogramación propia o de otro temporizador y los cambios de gestor; se conserva el aislamiento de callbacks con errores.
+- Se mantienen los arreglos anteriores de misiones, LFF en inglés, anillos, recolección, botín ajustable, señales y guardados. RAR y ZIP regenerados y verificados.
+
+[Comprobaciones y límites](COMPROBACIONES_2026-10-19.md). Las pruebas no sustituyen una medición de FPS o cierres dentro del juego.
+
+Para instalar esta revisión, cierra LOTRO, sustituye la carpeta del addon y actualiza también Turbine, incluido en cada paquete. Conserva PluginData y los demás addons. El botín mantiene el tamaño inicial 100 % y la opción de ajuste 75–150 %. Las actualizaciones de vida y escudos siguen siendo inmediatas; el ahorro se aplica al trabajo repetido.

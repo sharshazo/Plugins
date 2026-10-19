@@ -349,3 +349,8 @@ El botín vuelve al 100 % del tamaño anterior. En Opciones → Botín → Dise�
 ## Revisión 2 del 19 de octubre de 2026
 
 Marcos de party desactivados: liberan jugadores y dejan de consultar efectos. Barras de buffs/debuffs propios y del objetivo: evitan repetir colores, tamaños y texto sin cambios; mantienen renovación de efectos, temporizadores y los tres diseños con animaciones. El inventario de fabricación utiliza eventos y caché; las señales de curación evitan repintados idénticos. Se conservan los ajustes de botín (100 % inicial, rango 75–150 %), historial y vistas de raid.
+
+
+## Revisión 3 del 19 de octubre de 2026
+
+Al curar, las etiquetas evitan reescribir texto y recalcular su colocación si no cambian. Los cambios reales de vida, poder, escudos, tamaño y fuente se conservan. Los bordes de vida baja no vuelven a colocarse en cada cura y mantienen el pulso animado. Las casillas de reutilización vacías se limpian una vez; las barras evitan escrituras de píxeles/tiempos iguales. El seguimiento Upkeep omite el barrido de efectos propios solo cuando no hay nombres propios configurados; conserva el seguimiento del objetivo y la retirada de efectos caducados. Se mantienen selección, hover, diseños, animaciones, botín, party y raid.

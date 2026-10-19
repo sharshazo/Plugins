@@ -618,13 +618,13 @@ function VitalsBase:_render_configurable_labels(context)
             end
             local width, height = frame:GetSize()
             local rendered_text = lui_format_tokenized(spec.tokens, context)
-            label:SetText(rendered_text)
+            if label:GetText() ~= rendered_text then label:SetText(rendered_text) end
             lui_vitals_layout_label(label, width, height, spec.anchor, spec.width_mode, spec.text_alignment,
                 spec.x_offset, spec.y_offset, spec.font.name, spec.font.size, rendered_text)
-            label:SetVisible(true)
+            if label:IsVisible() ~= true then label:SetVisible(true) end
         else
-            label:SetText("")
-            label:SetVisible(false)
+            if label:GetText() ~= "" then label:SetText("") end
+            if label:IsVisible() ~= false then label:SetVisible(false) end
         end
     end
 end
@@ -708,13 +708,13 @@ function VitalsBase:_set_primary_label_fallback(text)
                 label:SetParent(frame)
             end
             local width, height = frame:GetSize()
-            label:SetText(text)
+            if label:GetText() ~= text then label:SetText(text) end
             lui_vitals_layout_label(label, width, height, spec.anchor, spec.width_mode, spec.text_alignment,
                 spec.x_offset, spec.y_offset, spec.font.name, spec.font.size, text)
-            label:SetVisible(true)
+            if label:IsVisible() ~= true then label:SetVisible(true) end
         else
-            label:SetText("")
-            label:SetVisible(false)
+            if label:GetText() ~= "" then label:SetText("") end
+            if label:IsVisible() ~= false then label:SetVisible(false) end
         end
     end
 end
@@ -722,8 +722,8 @@ end
 function VitalsBase:_clear_labels(start_index, end_index)
     for i = start_index, end_index do
         local label = self.labels[i]
-        label:SetText("")
-        label:SetVisible(false)
+        if label:GetText() ~= "" then label:SetText("") end
+        if label:IsVisible() ~= false then label:SetVisible(false) end
     end
 end
 

@@ -146,6 +146,7 @@ end
 ---------------------------------------------------------------------
 
 function CooldownEntry:apply_settings()
+    self._empty_cleared = false
     local s = State.settings.self.cooldowns
     local bw = s.border_width
     local vertical = s.orientation == LUI_ENUMS.orientation.VERTICAL
@@ -335,6 +336,8 @@ end
 
 function CooldownEntry:set_skill(skill)
     if skill == nil then
+        if self.skill == nil and self._empty_cleared == true then return end
+        self._empty_cleared = true
         self.skill = nil
         self._expired_sent = false
         self._shown_icon = nil
@@ -355,6 +358,8 @@ function CooldownEntry:set_skill(skill)
         self:SetVisible(false)
         return
     end
+
+    self._empty_cleared = false
 
     -- A group record keeps its identity while its displayed member
     -- rotates, so the icon can change without the record changing.
@@ -390,16 +395,30 @@ function CooldownEntry:_apply_icon(icon)
     end
 end
 
+local function _set_fill_position(control, x, y)
+    local old_x, old_y = control:GetPosition()
+    if old_x ~= x or old_y ~= y then control:SetPosition(x, y) end
+end
+local function _set_fill_width(control, value)
+    if control:GetWidth() ~= value then control:SetWidth(value) end
+end
+local function _set_fill_height(control, value)
+    if control:GetHeight() ~= value then control:SetHeight(value) end
+end
+local function _set_timer_text(control, value)
+    if control:GetText() ~= value then control:SetText(value) end
+end
+
 function CooldownEntry:update_remaining(remaining_seconds, base_seconds)
     local s = State.settings.self.cooldowns
 
     if self.skill == nil then
         self.name_label:SetText("")
-        self.time_label:SetText("")
+        _set_timer_text(self.time_label, "")
         if self.vertical then
-            self.bar_fill:SetHeight(0)
+            _set_fill_height(self.bar_fill, 0)
         else
-            self.bar_fill:SetWidth(0)
+            _set_fill_width(self.bar_fill, 0)
         end
         return
     end
@@ -438,18 +457,18 @@ function CooldownEntry:update_remaining(remaining_seconds, base_seconds)
     -- The cross axis is fixed by apply_settings; only touch the fill axis.
     if self.vertical then
         if self.bar_anchor_far then
-            self.bar_fill:SetPosition(0, inner_len - fill_len)
+            _set_fill_position(self.bar_fill, 0, inner_len - fill_len)
         else
-            self.bar_fill:SetPosition(0, 0)
+            _set_fill_position(self.bar_fill, 0, 0)
         end
-        self.bar_fill:SetHeight(fill_len)
+        _set_fill_height(self.bar_fill, fill_len)
     else
         if self.bar_anchor_far then
-            self.bar_fill:SetPosition(inner_len - fill_len, 0)
+            _set_fill_position(self.bar_fill, inner_len - fill_len, 0)
         else
-            self.bar_fill:SetPosition(0, 0)
+            _set_fill_position(self.bar_fill, 0, 0)
         end
-        self.bar_fill:SetWidth(fill_len)
+        _set_fill_width(self.bar_fill, fill_len)
     end
 
     if self.vertical ~= true then
@@ -457,6 +476,6 @@ function CooldownEntry:update_remaining(remaining_seconds, base_seconds)
         self.name_label:SetText(name)
     end
     if self.show_time then
-        self.time_label:SetText(lui_format_cooldown_time(remaining_seconds, s.time_format))
+        _set_timer_text(self.time_label, lui_format_cooldown_time(remaining_seconds, s.time_format))
     end
 end
