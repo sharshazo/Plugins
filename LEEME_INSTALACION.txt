@@ -1,4 +1,4 @@
-ADDONS LOTRO - ACTUALIZACION 18/10/2026
+ADDONS LOTRO - ACTUALIZACION 19/10/2026
 
 1. Cierra LOTRO antes de actualizar.
 2. Extrae las carpetas del paquete en:
@@ -15,7 +15,7 @@ Cada paquete individual contiene el addon, Turbine y esta documentacion.
 Todos_los_addons contiene las seis carpetas de la coleccion.
 No copies una carpeta contenedora adicional dentro de Plugins.
 
-Consulta GUIA_COMPLETA.md y COMPROBACIONES_2026-10-18.md para ver las
+Consulta GUIA_COMPLETA.md y COMPROBACIONES_2026-10-19.md para ver las
 funciones actualizadas y los problemas conocidos pendientes.
-El anillo del diario original requiere prueba dentro del juego con una
-mision aceptada. Los botones Narrar requieren Narrador_IA instalado aparte.
+El anillo del diario original requiere una mision aceptada.
+LUI: Botin > Diseño > Tamaño del botin (%); 100 restaura el tamaño original. Los botones Narrar requieren Narrador_IA instalado aparte.

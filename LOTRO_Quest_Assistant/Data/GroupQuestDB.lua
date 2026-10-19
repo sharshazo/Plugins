@@ -43,6 +43,7 @@
 -- 2026-10-18: destinos concretos contrastados por questId con las entradas
 -- questToBestow/randomQuest/questId de privateEncounters.xml y con
 -- instancesTree.xml. Se conservan el tamaño oficial y los nombres EN.
+-- 2026-10-19: corrected four Moria instance quests classified as open world.
 _G.GroupQuestDB = {
     ["70017529"] = { s = "F", k = "inst", p = "Skûmfil" }, -- 39
     ["70002DF2"] = { s = "F", k = "open", p = "Giant Valley, The Trollshaws" }, -- 42
@@ -379,9 +380,9 @@ _G.GroupQuestDB = {
     ["7005B0D1"] = { s = "S", k = "inst", p = "Den of Pughlak" }, -- 4166
     ["7005B0D3"] = { s = "S", k = "inst", p = "Den of Pughlak" }, -- 4167
     ["700267F8"] = { s = "R", k = "inst", p = "Ost Dunhoth" }, -- 4169
-    ["700173B5"] = { s = "F", k = "open", p = "Silvertine Lodes, Moria" }, -- 4172
+    ["700173B5"] = { s = "F", k = "inst", p = "The Forgotten Treasury" }, -- 4172
     ["700442CE"] = { s = "S", k = "epic", p = "War for Gondor" }, -- 4187
-    ["700173B9"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 4264
+    ["700173B9"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 4264
     ["70000192"] = { s = "S", k = "open", p = "Imlad Balchorth, Angmar" }, -- 4279
     ["7001BE11"] = { s = "F", k = "open", p = "Vale of Thrain, Ered Luin" }, -- 4313
     ["70022B3A"] = { s = "F", k = "inst", p = "Great Barrow: Thadúr" }, -- 4333
@@ -979,7 +980,7 @@ _G.GroupQuestDB = {
     ["700082EC"] = { s = "F", k = "open", p = "Esteldín, The North Downs" }, -- 10134
     ["7000889D"] = { s = "F", k = "open", p = "Arador's End, The Ettenmoors" }, -- 10152
     ["70000623"] = { s = "F", k = "inst", p = "Garth Agarwen" }, -- 10164
-    ["700173D2"] = { s = "F", k = "open", p = "Silvertine Lodes, Moria" }, -- 10226
+    ["700173D2"] = { s = "F", k = "inst", p = "The Forgotten Treasury" }, -- 10226
     ["7003E2AF"] = { s = "S", k = "open", p = "Nan Wathren, The North Downs" }, -- 10232
     ["70000CA8"] = { s = "S", k = "inst", p = "Garth Agarwen" }, -- 10234
     ["70022728"] = { s = "S", k = "open", p = "Thrór's Coomb, Enedwaith" }, -- 10236
@@ -1364,7 +1365,7 @@ _G.GroupQuestDB = {
     ["700588A8"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 13541
     ["700588A6"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 13542
     ["700001EB"] = { s = "F", k = "open", p = "Giant Halls, The Misty Mountains" }, -- 13564
-    ["700173BD"] = { s = "F", k = "open", p = "The Flaming Deeps, Moria" }, -- 13573
+    ["700173BD"] = { s = "F", k = "inst", p = "Fil Gashan" }, -- 13573
     ["700173C2"] = { s = "F", k = "open", p = "Redhorn Lodes, Moria" }, -- 13574
     ["7003EE78"] = { s = "F", k = "open", p = "Nan Wathren, The North Downs" }, -- 13667
     ["70058BBD"] = { s = "S", k = "open", p = "The War of Three Peaks, Elderslade" }, -- 13681

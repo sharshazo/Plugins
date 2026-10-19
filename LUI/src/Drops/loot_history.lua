@@ -183,6 +183,10 @@ end
 -- llamado en cada Update de la ventana de Botin: fija el dinero inicial en
 -- cuanto el personaje lo tiene disponible (al cargar LUI puede faltar)
 function History.tick(now)
+    if History._refresh_pending == true and type(now) == "number"
+        and (History._next_list_refresh_at == nil or now >= History._next_list_refresh_at) then
+        History.refresh_window()
+    end
     if History.start_money == nil then
         History.start_money = _current_money()
     end
@@ -286,7 +290,7 @@ end
 ---------------------------------------------------------------------
 
 local WINDOW_W = 360
-local WINDOW_H = 480
+local WINDOW_H = 360
 local PAD = 18
 local TOP = 42
 local ROW_H = 24
@@ -499,6 +503,13 @@ function History.refresh_window(force)
     if window == nil or window:IsVisible() ~= true then
         return
     end
+    local now = _now()
+    if force ~= true and History._next_list_refresh_at ~= nil and now < History._next_list_refresh_at then
+        History._refresh_pending = true
+        return
+    end
+    History._next_list_refresh_at = now + 0.10
+    History._refresh_pending = false
     local ok, err = pcall(function()
         local text, color = _money_text(History.money_delta())
         window.lbl_money:SetText(text)

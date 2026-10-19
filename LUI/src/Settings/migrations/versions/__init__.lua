@@ -12,3 +12,5 @@ import "LUI.src.Settings.migrations.versions.v2_3_0_1_drops_es"
 import "LUI.src.Settings.migrations.versions.v2_3_0_2_group_select"
 import "LUI.src.Settings.migrations.versions.v2_3_0_3_launcher"
 import "LUI.src.Settings.migrations.versions.v2_3_0_4_quitar"
+
+import "LUI.src.Settings.migrations.versions.v2_3_0_5_drops_compact"

@@ -205,6 +205,20 @@ function RaidGroupVitalsWindow:update_members(slots, leader_name, active)
     self.current_leader_name = leader_name
     self.current_active = active == true
 
+    -- Retain the logical snapshot for settings/move-mode transitions, but
+    -- release entity callbacks and effect polling while this view is unused.
+    if _raid_group_windows_enabled() ~= true then
+        for i = 1, #self.members do
+            local member_window = self.members[i]
+            member_window.entity_control:SetMouseVisible(false)
+            member_window:set_entity(nil)
+            member_window:set_is_leader(false)
+            member_window:SetVisible(false)
+        end
+        self:SetVisible(false)
+        return
+    end
+
     local occupied = 0
     local last_slot = 0
     for i = 1, #slots do

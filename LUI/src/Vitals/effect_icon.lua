@@ -71,12 +71,21 @@ end
 -- Destructor
 ---------------------------------------------------------------------
 
+-- Timers frequently stay blank or keep the same rounded value between ticks.
+-- Preserve polling of mutable native effect wrappers, avoiding redundant UI writes.
+function EffectIcon:_set_timer_text(text)
+    if self._timer_text ~= text then
+        self.timer:SetText(text)
+        self._timer_text = text
+    end
+end
+
 function EffectIcon:destroy()
     self.icon:SetEffect(nil)
     self.effect = nil
     self.ending = 0
     self:SetWantsUpdates(false)
-    self.timer:SetText("")
+    self:_set_timer_text("")
     self.label_back:SetVisible(false)
     self:SetVisible(false)
 end
@@ -98,7 +107,7 @@ function EffectIcon:set_effect(effect)
 
     if effect == nil then
         self.icon:SetEffect(nil)
-        self.timer:SetText("")
+        self:_set_timer_text("")
         self:SetWantsUpdates(false)
         self.ending = 0
         return
@@ -127,7 +136,7 @@ function EffectIcon:Update()
     self.last_update_at = now
 
     if self.effect == nil then
-        self.timer:SetText("")
+        self:_set_timer_text("")
         self:SetWantsUpdates(false)
         return
     end
@@ -135,7 +144,7 @@ function EffectIcon:Update()
     local duration = (self.effect.GetDuration ~= nil and self.effect:GetDuration()) or 0
     if duration <= 0 or duration >= 9999 or self.effect.GetStartTime == nil then
         self.ending = 0
-        self.timer:SetText("")
+        self:_set_timer_text("")
         self:SetWantsUpdates(false)
         return
     end
@@ -144,10 +153,10 @@ function EffectIcon:Update()
     self.ending = start + duration
     local time_left = self.ending - Turbine.Engine.GetGameTime()
     if time_left < 0 then
-        self.timer:SetText("")
+        self:_set_timer_text("")
     elseif time_left < 10 then
-        self.timer:SetText(lui_format_icon_timeout(time_left))
+        self:_set_timer_text(lui_format_icon_timeout(time_left))
     else
-        self.timer:SetText("")
+        self:_set_timer_text("")
     end
 end

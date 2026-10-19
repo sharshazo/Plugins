@@ -1233,4 +1233,6 @@ LUI.src.Languages.es.ES = {
     ["Everyone"] = "Todos",
     ["No one"] = "Nadie",
     ["Healers: Minstrel, Rune-keeper and Beorning. The others show only the morale bar, which fills the space of the power bar."] = "Sanadores: Juglar, Guardián de las runas y Beórnida. Los demás muestran solo la barra de vida, que ocupa también el lugar de la de poder.",
+    ["Loot size (%)"] = "Tamaño del botín (%)",
+    ["100 restores the original size. Range: 75 to 150 percent."] = "100 restaura el tamaño original. Rango: 75 a 150 por ciento.",
 }

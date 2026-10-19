@@ -3204,6 +3204,7 @@ function WorldMapAddon.UI.WorldMap:_fillQuestRows(zone)
         lbl:SetFont(Turbine.UI.Lotro.Font.Verdana12)
         lbl:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleLeft)
         lbl:SetSelectable(false)
+        lbl:SetBackColor(HexToColor((i % 2 == 1) and "#181B22" or "#1D2029"))
         local text = Quests.QuestName(row.ndx, row.quest)
         -- v2.9: antigua (sin cambios hace dias, ver boton Actualizar) = gris
         lbl:SetForeColor(HexToColor(row.stale and "#7C8494" or "#E8ECF4"))

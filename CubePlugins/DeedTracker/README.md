@@ -167,3 +167,8 @@ Icono pequeño en pantalla para abrir la ventana. Se puede mostrar u ocultar y e
 Los cambios recibidos desde el mapa mantienen su orden y solo se confirman tras aplicarlos y guardarlos; los fallos repetidos conservan el pedido pendiente con una pausa entre reintentos.
 
 Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.
+
+
+## Actualización del 19 de octubre de 2026
+
+Se publica nuevamente la carpeta actual limpia con la biblioteca Turbine. Se conservan la sincronización con el mapa, el orden de los pedidos, la recuperación tras fallos y la confirmación tras el guardado. No se anuncian funciones nuevas en Deed Tracker en esta fecha.

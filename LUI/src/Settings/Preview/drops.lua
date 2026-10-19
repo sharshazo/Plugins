@@ -28,10 +28,10 @@ local function _drops_qty_width(font_size)
     return lui_timed_row_estimate_text_width("999", "Verdana", font_size)
 end
 
-local function _drops_min_width(icon_size, padding, gap, font_size)
+local function _drops_min_width(icon_size, padding, gap, font_size, window_scale)
     local qty_width = _drops_qty_width(font_size)
     local name_width = lui_timed_row_min_name_width("Verdana", font_size)
-    return math.max(140, (2 * padding) + icon_size + gap + qty_width + gap + name_width)
+    return math.max(140 * (window_scale or 1), (2 * padding) + icon_size + gap + qty_width + gap + name_width)
 end
 
 local function _with_alpha(color, alpha)
@@ -130,7 +130,9 @@ function ConfigWindow:update_drops_preview()
     end
 
     local p = self.drops_preview
-    local raw_scale = _require_positive_scale(self)
+    local window_scale = _require_control_number(self.controls, "drops_window_scale") / 100
+    window_scale = math.max(0.75, math.min(1.50, window_scale))
+    local raw_scale = _require_positive_scale(self) * window_scale
 
     local function scaled_int(raw_value)
         return math.floor((raw_value * raw_scale) + 0.5)
@@ -150,7 +152,7 @@ function ConfigWindow:update_drops_preview()
     local qty_w = _drops_qty_width(qty_font_size)
     local width = _require_control_number(self.controls, "drops_width")
     width = scaled_int(width)
-    local min_width = _drops_min_width(icon_pixels, row_pad, gap, qty_font_size)
+    local min_width = _drops_min_width(icon_pixels, row_pad, gap, qty_font_size, window_scale)
     if width < min_width then
         width = min_width
     end

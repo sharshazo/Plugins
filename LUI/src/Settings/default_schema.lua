@@ -2311,7 +2311,7 @@ _G.LUI.Settings.Defaults.Schema =
 	},
 	["drops"] = {
 		["enabled"] = true,
-		["width"] = 300.000000,
+		["width"] = 260.000000,
 		["align"] = 1.000000,
 		["animations_enabled"] = true,
 		["flow"] = 2.000000,
@@ -2324,7 +2324,7 @@ _G.LUI.Settings.Defaults.Schema =
 			},
 			["background_opacity"] = 0.000000,
 		},
-		["icon_size"] = 32.000000,
+		["icon_size"] = 24.000000,
 		["icon_side"] = 1.000000,
 		["item"] = {
 			["background_color"] = {
@@ -2336,10 +2336,12 @@ _G.LUI.Settings.Defaults.Schema =
 			["background_opacity"] = 0.550000,
 		},
 		["merge_similar"] = true,
+		["window_scale"] = 1.000000,
 		["move_duration"] = 250.000000,
-		["rows"] = 6.000000,
+		["rows"] = 4.000000,
 		["visible_duration"] = 1.500000,
 		["setup_es_loot_v1"] = false,
+		["setup_compact_loot_v2"] = false,
 		["show_banner"] = true,
 		["rare_alert"] = true,
 	},

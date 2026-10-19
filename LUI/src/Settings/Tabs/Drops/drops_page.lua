@@ -147,6 +147,17 @@ function DropsPage:Constructor(window)
     self:add_tab(TR["General"], "general", general)
 
     local layout = ConfigContent(window, 4, refresh_preview)
+    layout:add_line_edit("drops_window_scale", TR["Loot size (%)"],
+        function(value)
+            local percent = tonumber(value)
+            if percent ~= nil and percent == percent then
+                settings_getter().window_scale = math.max(75, math.min(150, percent)) / 100
+            end
+        end,
+        function()
+            return tostring(math.floor((tonumber(settings_getter().window_scale) or 1) * 100 + 0.5))
+        end, TR["100 restores the original size. Range: 75 to 150 percent."])
+    layout:add_row_break()
     layout:add_line_edit("drops_width", TR["Width"],
         function(value)
             local width = tonumber(value)

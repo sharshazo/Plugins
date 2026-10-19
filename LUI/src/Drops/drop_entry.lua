@@ -106,10 +106,16 @@ Drops.DropEntry = DropEntry
 -- cartel LOOT es de tamano fijo y, si el juego agrandaba las filas (escala
 -- de interfaz 1.20), sobresalian de los estandartes. Ver
 -- Drops/drop_window.lua (_never_native_scaling).
+local function _loot_scale()
+    local value = tonumber(State.settings.drops.window_scale) or 1
+    if value ~= value then return 1 end
+    return math.max(0.75, math.min(1.50, value))
+end
+
 function DropEntry:apply_native_scaling(target_window)
     local target = target_window or self
     if target ~= nil then
-        UI.NativeScaling.disable(target)
+        UI.NativeScaling.apply(target, false, _loot_scale(), 0, 0)
     end
 end
 
@@ -300,6 +306,8 @@ end
 
 function DropEntry:set_opacity(opacity)
     self._opacity = opacity
+    if self._applied_opacity == opacity then return end
+    self._applied_opacity = opacity
 
     self:SetOpacity(opacity)
     for i = 1, #self.gold_edges do

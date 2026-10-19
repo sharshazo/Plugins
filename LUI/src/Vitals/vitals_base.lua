@@ -770,7 +770,7 @@ function VitalsBase:self_combat_changed()
     end
 end
 
-function VitalsBase:self_bubble_changed()
+function VitalsBase:self_bubble_changed(labels_already_rendered)
     if self.entity == nil or self.entity.GetMaxMorale == nil or self.entity.GetMaxTemporaryMorale == nil then
         return
     end
@@ -782,21 +782,27 @@ function VitalsBase:self_bubble_changed()
 
     if b <= 0 then
         self.bubble_bar:SetVisible(false)
-        self:_render_configurable_labels(self:_build_vitals_label_context())
+        if labels_already_rendered ~= true then
+            self:_render_configurable_labels(self:_build_vitals_label_context())
+        end
         return
     end
 
     local maxm = self.entity:GetMaxMorale() or 0
     if maxm <= 0 then
         self.bubble_bar:SetVisible(false)
-        self:_render_configurable_labels(self:_build_vitals_label_context())
+        if labels_already_rendered ~= true then
+            self:_render_configurable_labels(self:_build_vitals_label_context())
+        end
         return
     end
 
     local bubble_w = math.floor(((b / maxm) * self.width) + 0.5)
     if bubble_w <= 0 then
         self.bubble_bar:SetVisible(false)
-        self:_render_configurable_labels(self:_build_vitals_label_context())
+        if labels_already_rendered ~= true then
+            self:_render_configurable_labels(self:_build_vitals_label_context())
+        end
         return
     end
     if bubble_w > self.width then bubble_w = self.width end
@@ -824,7 +830,9 @@ function VitalsBase:self_bubble_changed()
     self.bubble_bar:SetLeft(left_inner)
     self.bubble_bar:SetWidth(bubble_w)
     self.bubble_bar:SetVisible(true)
-    self:_render_configurable_labels(self:_build_vitals_label_context())
+    if labels_already_rendered ~= true then
+        self:_render_configurable_labels(self:_build_vitals_label_context())
+    end
 end
 
 function VitalsBase:self_morale_changed()
@@ -851,7 +859,8 @@ function VitalsBase:self_morale_changed()
         if fill_w > self.width then fill_w = self.width end
         self.morale_bar:SetWidth(fill_w)
         self.morale_background:SetBackColor(self:morale_background_color(fill_color))
-        self:self_bubble_changed()
+        -- Labels already include temporary morale; update only the bubble geometry.
+        self:self_bubble_changed(true)
     else
         self._no_morale = true
         local name = ""

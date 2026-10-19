@@ -293,9 +293,16 @@ end
 -- siempre, y se dibujan con el tamano de LUI (Opciones > Global > Escala y
 -- Opciones > Botin): las filas, el fondo y el cartel salen del mismo calculo
 -- y calzan exactos, con o sin "Use native LotRO UI scaling".
+-- Local loot scale; independent of the game-wide UI scale.
+local function _loot_scale()
+    local value = tonumber(State.settings.drops.window_scale) or 1
+    if value ~= value then return 1 end
+    return math.max(0.75, math.min(1.50, value))
+end
+
 local function _never_native_scaling(window)
     if window ~= nil then
-        UI.NativeScaling.disable(window)
+        UI.NativeScaling.apply(window, false, _loot_scale(), 0, 0)
     end
 end
 
@@ -444,7 +451,7 @@ end
 function DropBannerWindow:apply_settings(width)
     _never_native_scaling(self)
     self.fit_width = width
-    local key = _banner_key_for(width)
+    local key = _banner_key_for(math.floor((width / _loot_scale()) + 0.5))
     local fx = BANNER_FX[key]
     local w, h = fx.w, fx.h
     if key ~= self.banner_key then
@@ -462,7 +469,7 @@ function DropBannerWindow:apply_settings(width)
     self.pad = fx.pad
     self.rail = fx.rail
     -- centrado sobre la ventana: los estandartes quedan a los costados
-    self.offset_x = math.floor(((tonumber(width) or key) - w) / 2)
+    self.offset_x = math.floor(((tonumber(width) or (key * _loot_scale())) - (w * _loot_scale())) / 2)
 
     local pad = fx.pad
     self:SetSize(w + (2 * pad), h + (2 * pad))
@@ -484,6 +491,11 @@ end
 -- opacity: desvanecido general (la ultima fila que se va); animate: si hay
 -- que animar (Animaciones prendido)
 function DropBannerWindow:update_fx(opacity, now, animate)
+    if self._fx_opacity == opacity and self._fx_animate == animate then
+        if animate ~= true or (self._fx_next_at ~= nil and now < self._fx_next_at) then return end
+    end
+    self._fx_opacity, self._fx_animate = opacity, animate
+    self._fx_next_at = now + (1 / 30)
     self.image:SetOpacity(opacity)
 
     if animate ~= true then
@@ -678,10 +690,9 @@ function DropsWindow:_rows_width()
     return width
 end
 
--- factor pantalla / unidades de LUI de las filas: siempre 1, porque ninguna
--- ventana del botin usa el escalado del juego (ver _never_native_scaling)
+-- Convert logical row offsets to screen pixels for the local loot scale.
 function DropsWindow:_screen_scale()
-    return 1
+    return _loot_scale()
 end
 
 -- ancho de las filas tal como se ven en pantalla
@@ -715,7 +726,11 @@ end
 
 function DropsWindow:Update()
     local now = Turbine.Engine.GetGameTime()
-    if (now - self.last_update_at) < self.update_every then
+    local move_mode = self:is_move_mode() == true
+    local idle = not move_mode and #self._active_drops == 0
+        and #self._pending_chat_drops == 0 and #self._pending_item_events == 0
+    local interval = idle and math.max(1, self.update_every) or self.update_every
+    if (now - self.last_update_at) < interval then
         return
     end
     self.last_update_at = now
@@ -724,7 +739,9 @@ function DropsWindow:Update()
         pcall(Drops.History.tick, now)
     end
 
-    if self:is_move_mode() == true then
+    -- Keep the money/history heartbeat; no native repaint work while empty.
+    if idle then return end
+    if move_mode then
         self:_refresh_background(true)
         self:refresh_visibility()
         return
@@ -1068,19 +1085,38 @@ end
 function DropsWindow:_promote_pending_chat_drops(now)
     local duration = _visible_duration()
 
+    -- Bound native window creation per update. Compact the queue once instead
+    -- of shifting it for every promoted item; keep every pending notification.
+    local capacity = self:_rows_capacity()
+    local budget = math.min(capacity, 4)
     local matured = {}
-    for i = #self._pending_chat_drops, 1, -1 do
-        local record = self._pending_chat_drops[i]
-        if record ~= nil and now >= (record.display_after or 0) then
-            table.remove(self._pending_chat_drops, i)
+    local pending = self._pending_chat_drops
+    local count = #pending
+    local write = 1
+    for read = 1, count do
+        local record = pending[read]
+        if #matured < budget and now >= (record.display_after or 0) then
             matured[#matured + 1] = record
+        else
+            pending[write] = record
+            write = write + 1
         end
     end
+    for i = write, count do
+        pending[i] = nil
+    end
 
-    for i = #matured, 1, -1 do
+    for i = 1, #matured do
         local record = matured[i]
         while self:_layout_record_count() >= self:_rows_capacity() do
             self:_remove_oldest_visible_for_overflow(now)
+        end
+
+        -- Include fading windows in the limit. Finish the oldest overflow
+        -- fade early under pressure; never reuse a native loot window.
+        while #self._active_drops >= capacity * 2 do
+            local oldest = table.remove(self._active_drops, 1)
+            self:_recycle_entry(oldest)
         end
 
         record.shown_at = now
@@ -1100,6 +1136,8 @@ function DropsWindow:_promote_pending_chat_drops(now)
         record.entry:set_record(record)
         record.entry:SetVisible(true)
         self._active_drops[#self._active_drops + 1] = record
+    end
+    if #matured > 0 then
         self:_layout_active_drops(now, false)
     end
 end
@@ -1309,11 +1347,13 @@ function DropsWindow:_clear_move_state(record)
     record.move_to_y = nil
 end
 
--- y en unidades de LUI; s = factor de pantalla (siempre 1, ver _screen_scale)
+-- y in logical units; s converts the offset to screen pixels.
 function DropsWindow:_set_entry_y(record, anchor_x, anchor_y, y, s)
     record.current_y = y
     if record.entry ~= nil then
-        record.entry:SetPosition(anchor_x, anchor_y + math.floor((y * (s or 1)) + 0.5))
+        local target_y = anchor_y + math.floor((y * (s or 1)) + 0.5)
+        record.entry:SetPosition(anchor_x, target_y)
+        record._screen_x, record._screen_y = anchor_x, target_y
     end
 end
 
@@ -1473,7 +1513,11 @@ function DropsWindow:_update_entry_positions(now)
             end
 
             entry:set_opacity(opacity)
-            entry:SetPosition(anchor_x, anchor_y + math.floor((y * s) + 0.5))
+            local target_y = anchor_y + math.floor((y * s) + 0.5)
+            if record._screen_x ~= anchor_x or record._screen_y ~= target_y then
+                entry:SetPosition(anchor_x, target_y)
+                record._screen_x, record._screen_y = anchor_x, target_y
+            end
         end
     end
 end
@@ -1521,8 +1565,8 @@ function DropsWindow:_refresh_banner(move_mode, active_count, base_y)
         banner:apply_settings(screen_w)
     end
     local anchor_x, anchor_y = self:GetPosition()
-    banner:SetPosition(anchor_x + banner.offset_x - banner.pad,
-        anchor_y + math.floor(((base_y or 0) * s) + 0.5) - banner.rail - banner.pad)
+    banner:SetPosition(anchor_x + banner.offset_x - math.floor(banner.pad * s + 0.5),
+        anchor_y + math.floor(((base_y or 0) * s) + 0.5) - math.floor((banner.rail + banner.pad) * s + 0.5))
     banner:update_fx(opacity, Turbine.Engine.GetGameTime(),
         State.settings.drops.animations_enabled == true)
     banner:SetVisible(true)

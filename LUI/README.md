@@ -339,3 +339,8 @@ For bug reports, feature requests, or latest release downloads of the original L
 Protección de perfiles frente a lecturas fallidas y caché de búsquedas limitada. Se conservan los resultados en español e inglés y las funciones de la interfaz.
 
 Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.
+
+
+## Actualización del 19 de octubre de 2026
+
+El botín vuelve al 100 % del tamaño anterior. En Opciones → Botín → Diseño → Tamaño del botín (%) puedes elegir entre 75 % y 150 %. El ajuste se guarda en el perfil y mueve juntos texto, iconos, fondo y cartel. Se mantienen las cuatro filas predeterminadas y el historial compacto. Se limita la creación de ventanas de botín por actualización, se limita la coexistencia de ventanas que se desvanecen y se liberan los marcos de raid que pertenecen a vistas ocultas. Se reducen escrituras repetidas de texto, opacidad y posición.

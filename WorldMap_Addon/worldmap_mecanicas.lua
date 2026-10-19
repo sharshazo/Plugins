@@ -717,10 +717,15 @@ local function Describe(tag, name, tip, who)
     local c = CAT[t.c]
     local word = L(c.es, c.en)
     local line = Clean(name)
+    local recipient = nil
     if who ~= nil and who ~= "" then
-        line = line .. "  \226\134\146 " .. who
+        if t.c == "c" then
+            recipient = tostring(who)
+        else
+            line = line .. "  | " .. tostring(who)
+        end
     end
-    return word, c.color, line, tip
+    return word, c.color, line, tip, recipient
 end
 
 local function AnchorXY(w, h)
@@ -747,26 +752,33 @@ local function NewFloat()
     f.icon = NewImg(w)
     f.word = NewLabel(w, F("TrajanProBold16", "Verdana16", "Verdana14"))
     f.line = NewLabel(w, F("Verdana12", "Verdana10"))
+    f.recipient = NewLabel(w, F("VerdanaBold16", "Verdana16", "Verdana14"))
+    f.recipient:SetForeColor(Turbine.UI.Color(1, 0.35, 0.90, 1.00))
+    f.recipient:SetVisible(false)
     return f
 end
 
-local function PlaceFloat(f, sz)
-    if f.sz == sz then
+local function PlaceFloat(f, sz, recipient)
+    local targeted = recipient ~= nil
+    if f.sz == sz and f.targeted == targeted then
         return
     end
-    f.sz = sz
+    f.sz, f.targeted = sz, targeted
     local p = AuraPad(sz)
     local full = sz + 2 * p
     f.full = full
-    f.win:SetSize(full + 260, full)
+    f.height = targeted and math.max(full, 60) or full
+    f.win:SetSize(full + 260, f.height)
     f.aura:SetPosition(0, 0)
     f.aura:SetSize(full, full)
     f.icon:SetPosition(p, p)
     f.icon:SetSize(sz, sz)
     local half = math.floor(full / 2)
-    f.word:SetPosition(full + 4, half - 18)
+    f.word:SetPosition(full + 4, targeted and 0 or (half - 18))
     f.word:SetSize(256, 18)
-    f.line:SetPosition(full + 4, half)
+    f.line:SetPosition(full + 4, targeted and 42 or half)
+    f.recipient:SetPosition(full + 4, 19)
+    f.recipient:SetSize(256, 22)
     f.line:SetSize(256, 16)
 end
 
@@ -775,7 +787,7 @@ function B.ShowFloat(key, tag, name, tip, who)
     local sz = math.max(24, B.Get("size"))
     -- el mismo aviso seguido se agrupa
     for _, f in ipairs(B.floats) do
-        if f.t0 ~= nil and f.key == key and now - f.t0 < REPEAT_WINDOW then
+        if f.t0 ~= nil and f.key == key and f.who == who and f.tag == tag and now - f.t0 < REPEAT_WINDOW then
             f.count = f.count + 1
             f.line:SetText(f.text .. "  (x" .. f.count .. ")")
             f.t0 = now
@@ -801,8 +813,10 @@ function B.ShowFloat(key, tag, name, tip, who)
         end
     end
     local t = TAG[tag] or TAG.Q
-    local word, color, line = Describe(tag, name, tip, who)
-    PlaceFloat(slot, sz)
+    local word, color, line, _, recipient = Describe(tag, name, tip, who)
+    PlaceFloat(slot, sz, recipient)
+    slot.recipient:SetText(recipient or "")
+    slot.recipient:SetVisible(recipient ~= nil)
     slot.frames = AuraFrames(t.c, sz)
     slot.frame = nil
     slot.icon:SetBackground(GlyphImg(t.g, sz))
@@ -810,18 +824,18 @@ function B.ShowFloat(key, tag, name, tip, who)
     slot.word:SetForeColor(color)
     slot.text = line
     slot.line:SetText(line)
-    slot.key = key
+    slot.key, slot.who, slot.tag = key, who, tag
     slot.count = 1
     -- se apilan hacia abajo si salen varios a la vez
     local busy = 0
     for _, f in ipairs(B.floats) do
         if f ~= slot and f.t0 ~= nil and now - f.t0 < 0.9 then
-            busy = busy + 1
+            busy = busy + (f.height or f.full) + 4
         end
     end
-    local ax, ay = AnchorXY(slot.full + 260, slot.full)
+    local ax, ay = AnchorXY(slot.full + 260, slot.height)
     slot.x0 = ax
-    slot.y0 = ay + busy * (slot.full + 4)
+    slot.y0 = ay + busy
     slot.t0 = now
     slot.op = nil
     slot.win:SetPosition(slot.x0, slot.y0)
@@ -850,6 +864,12 @@ local function BuildAlert()
     a.word = NewLabel(w, F("TrajanProBold22", "TrajanProBold16", "Verdana18", "Verdana16"))
     a.word:SetPosition(x, 4)
     a.word:SetSize(420 - x - 6, 26)
+    a.text_x = x
+    a.recipient = NewLabel(w, F("VerdanaBold16", "Verdana16", "Verdana14"))
+    a.recipient:SetPosition(x, 30)
+    a.recipient:SetSize(420 - x - 6, 22)
+    a.recipient:SetForeColor(Turbine.UI.Color(1, 0.35, 0.90, 1.00))
+    a.recipient:SetVisible(false)
     a.line = NewLabel(w, F("Verdana14", "Verdana12"))
     a.line:SetPosition(x, 30)
     a.line:SetSize(420 - x - 6, 18)
@@ -864,14 +884,20 @@ end
 function B.ShowAlert(key, tag, name, tip, who)
     local a = B.alert or BuildAlert()
     local now = Now()
-    if a.t0 ~= nil and a.key == key and now - a.t0 < REPEAT_WINDOW then
+    if a.t0 ~= nil and a.key == key and a.who == who and a.tag == tag and now - a.t0 < REPEAT_WINDOW then
         a.count = a.count + 1
         a.line:SetText(a.text .. "  (x" .. a.count .. ")")
         a.t0 = now
         return
     end
     local t = TAG[tag] or TAG.Q
-    local word, color, line = Describe(tag, name, tip, who)
+    local word, color, line, _, recipient = Describe(tag, name, tip, who)
+    a.recipient:SetText(recipient or "")
+    a.recipient:SetVisible(recipient ~= nil)
+    local height = recipient ~= nil and 96 or 72
+    a.win:SetSize(420, height)
+    a.line:SetPosition(a.text_x, recipient ~= nil and 54 or 30)
+    a.tip:SetPosition(a.text_x, recipient ~= nil and 74 or 49)
     a.frames = AuraFrames(t.c, 48)
     a.frame = nil
     a.icon:SetBackground(GlyphImg(t.g, 48))
@@ -880,9 +906,9 @@ function B.ShowAlert(key, tag, name, tip, who)
     a.text = line
     a.line:SetText(line)
     a.tip:SetText(tip or "")
-    a.key = key
+    a.key, a.who, a.tag = key, who, tag
     a.count = 1
-    local x, y = AnchorXY(420, 72)
+    local x, y = AnchorXY(420, height)
     a.x0, a.y0 = x, y
     a.t0 = now
     a.op = nil
@@ -895,18 +921,28 @@ end
 local ANN_GAP = 6        -- s: el mismo aviso no se repite antes (el icono si se enciende)
 local ANN_GAP_GROUP = 2.5 -- s: avisos sobre companeros (curar a otro)
 B.annFree = {}
+-- Per-recipient throttling is event-driven and released with the encounter.
+local recipientAnn = setmetatable({}, { __mode = "k" })
 local function Announce(key, tag, name, tip, who, gap, force)
     local cur = B.cur
     local ann = cur ~= nil and cur.ann or B.annFree
     if ann ~= nil then
         local now = Now()
-        local last = ann[key]
+        local throttleKey = key
+        if who ~= nil and who ~= "" then
+            local byKey = recipientAnn[ann]
+            if byKey == nil then byKey = {}; recipientAnn[ann] = byKey end
+            if byKey[key] == nil then byKey[key] = {} end
+            ann = byKey[key]
+            throttleKey = tostring(tag) .. ":" .. tostring(who)
+        end
+        local last = ann[throttleKey]
         -- dentro de la ventana corta se agrupa (x2); despues, pausa
         if last ~= nil and now - last >= REPEAT_WINDOW and now - last < (gap or ANN_GAP) then
             return
         end
         if last == nil or now - last >= REPEAT_WINDOW then
-            ann[key] = now
+            ann[throttleKey] = now
         end
     end
     local model = B.Get("model")
@@ -1092,7 +1128,9 @@ function Panel.New()
     self.head:SetParent(w)
     self.head:SetBackColor(HEAD_BG)
     self.head:SetMouseVisible(true)
-    self.title = NewLabel(self.head, F("Verdana10", "Verdana12"))
+    self.title = NewLabel(self.head, F("Verdana12", "Verdana10"))
+    self.instance = NewLabel(self.head, F("Verdana10", "Verdana12"))
+    self.instance:SetForeColor(SUBTLE)
     self.title:SetForeColor(GOLD)
     self.head.MouseDown = function(_, args)
         if B.Get("locked") then
@@ -1150,7 +1188,7 @@ function Panel:Layout(count)
     local size = B.Get("size")
     local p = AuraPad(size)
     local full = size + 2 * p
-    local headH = 14
+    local headH = 36
     local textW = math.max(150, size * 7)
     local W, H
     self.model, self.size, self.pad = model, size, p
@@ -1161,10 +1199,13 @@ function Panel:Layout(count)
         W = math.max(110, count * full)
         H = headH + 2 + full
     end
+    W = math.max(240, W)
     self.head:SetPosition(0, 0)
     self.head:SetSize(W, headH)
     self.title:SetPosition(4, 0)
-    self.title:SetSize(W - 8, headH)
+    self.title:SetSize(W - 8, 19)
+    self.instance:SetPosition(4, 19)
+    self.instance:SetSize(W - 8, 16)
     self.win:SetSize(W, H)
     local font = FontFor(size)
     for i = 1, MAX_SLOTS do
@@ -1429,8 +1470,9 @@ function B.Refresh()
         if show then
             local count = math.min(#cur.rel, B.Get("maxIcons"), MAX_SLOTS)
             p:Layout(math.max(1, count))
-            local inst = cur.inst ~= nil and cur.inst.s or ""
-            p.title:SetText(cur.name .. (inst ~= "" and ("  \194\183  " .. inst) or ""))
+            local inst = cur.inst ~= nil and (cur.inst.n or cur.inst.s) or ""
+            p.title:SetText(cur.name or "")
+            p.instance:SetText(inst)
             for k = 1, MAX_SLOTS do
                 local s = p.slots[k]
                 local i = cur.rel[k]

@@ -324,3 +324,8 @@ Los datos de versiones anteriores de PvMP+ se siguen leyendo: los nombres de gua
 El guardado no modifica temporalmente la geometría viva; se agrupan las solicitudes próximas y se conservan respaldos. Calendario y resumen independientes de la disponibilidad de la moneda, y consulta de mochila con caché. Persisten tres condiciones pendientes descritas en la comprobación general.
 
 Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.
+
+
+## Actualización del 19 de octubre de 2026
+
+Se vuelve a empaquetar la versión local actual con Turbine, conservando los cambios anteriores de guardado, calendario y consulta de mochila. Sigue pendiente evitar las actualizaciones de fondo de las marcas de enemigos caducadas; el conjunto está limitado a doce marcas. Las demás limitaciones conocidas están documentadas en las comprobaciones generales.

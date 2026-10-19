@@ -367,7 +367,7 @@ function RaidVitals:hide_combined_members()
 end
 
 function RaidVitals:update_combined_members(active, slots, occupied, last_slot, leader_name)
-    if _raid_split_enabled() == true then
+    if _raid_vitals_enabled() ~= true or _raid_split_enabled() == true then
         self:hide_combined_members()
         return
     end

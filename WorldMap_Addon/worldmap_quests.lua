@@ -339,6 +339,7 @@ function Q.GroupKind(quest)
     if not ok or type(g) ~= "table" then
         return nil
     end
+    if g.k ~= "inst" and g.k ~= "pe" then return nil end
     if g.s == "R" then
         return "raid"
     end
@@ -568,6 +569,7 @@ function Q.UpdateJournalRing(ring, ndx)
     local link = Q.JournalLink(ndx)
     ring.questNdx = link and ndx or nil
     -- Clear hidden links as well, so pooled controls cannot retain an old DID.
+    ring.plate:SetBackColor(Turbine.UI.Color(1, 24 / 255, 27 / 255, 34 / 255))
     ring.hit:SetText(link or "")
     ring.hit:SetMouseVisible(link ~= nil)
     ring:SetVisible(link ~= nil)
@@ -579,8 +581,18 @@ function Q.CreateJournalRing(parent, ndx, onBack)
     ring:SetParent(parent)
     ring:SetSize(Q.JournalRingSize, Q.JournalRingSize)
     ring:SetMouseVisible(false)
+    -- Keep the working native link at full opacity. An opaque, mouse-transparent
+    -- plate above it hides native text/selection without fading the ring art.
+    local plate = Turbine.UI.Control()
+    plate:SetParent(ring)
+    plate:SetSize(Q.JournalRingSize, Q.JournalRingSize)
+    plate:SetZOrder(2)
+    plate:SetBackColor(Turbine.UI.Color(1, 24 / 255, 27 / 255, 34 / 255))
+    plate:SetMouseVisible(false)
+    ring.plate = plate
     local image = Turbine.UI.Control()
     image:SetParent(ring)
+    image:SetZOrder(3)
     image:SetSize(Q.JournalRingSize, Q.JournalRingSize)
     image:SetBackground("WorldMap_Addon/assets/worldmap/icon/quest_journal_ring.tga")
     image:SetBlendMode(Turbine.UI.BlendMode.AlphaBlend)
@@ -594,11 +606,10 @@ function Q.CreateJournalRing(parent, ndx, onBack)
     hit:SetTextAlignment(Turbine.UI.ContentAlignment.MiddleCenter)
     hit:SetMultiline(false)
     hit:SetSelectable(true)
-    -- Keep the native text link clickable while showing the existing ring art
-    -- beneath it. Opacity applies only to this label, not its sibling image.
-    hit:SetOpacity(0.01)
-    hit.MouseEnter = function() image:SetBackColor(Turbine.UI.Color(0.18, 1, 0.82, 0.25)) end
-    hit.MouseLeave = function() image:SetBackColor(Turbine.UI.Color(0, 0, 0, 0)) end
+    hit:SetZOrder(1)
+    hit:SetOpacity(1)
+    hit.MouseEnter = function() plate:SetBackColor(Turbine.UI.Color(1, 0.22, 0.20, 0.12)) end
+    hit.MouseLeave = function() plate:SetBackColor(Turbine.UI.Color(1, 24 / 255, 27 / 255, 34 / 255)) end
     if type(onBack) == "function" then
         hit.MouseClick = function(sender, args)
             if args and args.Button == Turbine.UI.MouseButton.Right then onBack() end
@@ -1032,6 +1043,60 @@ local function PlaceMatches(a, b)
 end
 Q.PlaceMatches = PlaceMatches
 
+-- Resolve the map's explicit aliases and wings before comparing names. This
+-- keeps "Great Barrow: The Maze" without treating sibling wings as the same.
+local instanceAliasData, instanceAliases = nil, {}
+local INSTANCE_FAMILIES = {
+    ["great barrow"] = true, ["great barrows"] = true, ["helegrod"] = true,
+    ["annuminas"] = true, ["fornost"] = true, ["garth agarwen"] = true,
+}
+local function InstanceIds(place)
+    local data = WorldMapAddon.InstanceData
+    if type(data) ~= "table" or type(data.Inst) ~= "table" then return nil end
+    if instanceAliasData ~= data then
+        instanceAliases = {}
+        local function add(name, id)
+            local key = PlaceKey(name)
+            if key == nil then return end
+            instanceAliases[key] = instanceAliases[key] or {}
+            instanceAliases[key][id] = true
+        end
+        for id, inst in ipairs(data.Inst) do add(inst.en, id) end
+        for name, ids in pairs(data.ByName or {}) do
+            for _, id in ipairs(ids) do
+                if data.Inst[id] ~= nil then add(name, id) end
+            end
+        end
+        instanceAliasData = data
+    end
+    local key = PlaceKey(place)
+    if key == nil then return nil end
+    local ids = instanceAliases[key]
+    if ids ~= nil then return ids end
+    local family, wing = tostring(place):match("^([^:]+):%s*(.+)$")
+    if family ~= nil and INSTANCE_FAMILIES[PlaceKey(family)] then
+        return instanceAliases[PlaceKey(wing)]
+    end
+    return nil
+end
+
+function Q.InstancePlaceMatches(place, name)
+    local a, b = InstanceIds(place), InstanceIds(name)
+    if a ~= nil and b ~= nil then
+        local countA, countB = 0, 0
+        for _ in pairs(a) do countA = countA + 1 end
+        for _ in pairs(b) do countB = countB + 1 end
+        -- A family destination is not proof of a particular wing. Preserve
+        -- legacy matching for unresolved families instead of adding every wing.
+        if countA > 1 and countB == 1 then
+            return PlaceMatches(PlaceKey(place), PlaceKey(name))
+        end
+        for id in pairs(a) do if b[id] then return true end end
+        return false
+    end
+    return PlaceMatches(PlaceKey(place), PlaceKey(name))
+end
+
 -- v3.1.3 (reporte del jugador, Moria: "Profanadores Sombrios", "Cristales
 -- agotados", "Reliquias y monedas" y "Skum y Urauth" se hacen DENTRO del
 -- Tesoro Olvidado, pero el icono decia "Sin misiones activas aqui"). Quest
@@ -1096,10 +1161,15 @@ function Q.ActiveSig()
     return table.concat(t, ",")
 end
 
-function Q.QuestsNaming(names)
+function Q.QuestsNaming(names, instanceNames, instanceNamesES)
     local out = {}
     if type(names) ~= "table" or not Q.Available() then
         return out
+    end
+    local allowed = nil
+    if type(instanceNames) == "table" and #instanceNames > 0 then
+        allowed = {}
+        for _, q in ipairs(Q.InstanceQuests(instanceNames, instanceNamesES)) do allowed[q.ndx] = true end
     end
     local keys = {}
     for _, n in ipairs(names) do
@@ -1121,7 +1191,9 @@ function Q.QuestsNaming(names)
     end
     for _, ndx in ipairs(ActiveNdxList()) do
         local quest = QuestByNdx(ndx)
-        if quest ~= nil then
+        local g = quest and _G.GroupQuest and type(GroupQuest.Get) == "function" and GroupQuest.Get(quest) or nil
+        local belongs = allowed == nil or type(g) ~= "table" or g.k == "open" or allowed[ndx] == true
+        if quest ~= nil and belongs then
             local okT, text = pcall(QuestTextKey, ndx)
             text = (okT and type(text) == "string") and text or " "
             text = text .. (PlaceKey(Q.QuestName(ndx, quest)) or "") .. " " .. (PlaceKey(quest.nameEN) or "") .. " "
@@ -1151,7 +1223,7 @@ function Q.InstanceQuests(names, namesES)
     for _, n in ipairs(names) do
         local k = PlaceKey(n)
         if k ~= nil then
-            keys[#keys + 1] = k
+            keys[#keys + 1] = n
         end
         local tk = TextPlaceKey(n)
         if tk ~= nil then
@@ -1176,15 +1248,30 @@ function Q.InstanceQuests(names, namesES)
             if ok and type(g) == "table" then
                 local hit = false
                 if g.k ~= "open" and type(g.p) == "string" then
-                    local pk = PlaceKey(g.p)
                     for _, k in ipairs(keys) do
-                        if PlaceMatches(pk, k) then
+                        if Q.InstancePlaceMatches(g.p, k) then
                             hit = true
                             break
                         end
                     end
                 end
-                if not hit and #textKeys > 0 then
+                -- An explicit destination wins over incidental lore such as
+                -- "Fil Gashan is adjacent to the Forges of Khazad-dum".
+                -- Open-world records and unresolved multi-wing families still
+                -- need the legacy fallback; do not broaden families to every wing.
+                local ids = InstanceIds(g.p)
+                local familyCount = 0
+                for _ in pairs(ids or {}) do familyCount = familyCount + 1 end
+                local sameFamily = false
+                if familyCount > 1 then
+                    for _, name in ipairs(keys) do
+                        for id in pairs(InstanceIds(name) or {}) do
+                            if ids[id] then sameFamily = true; break end
+                        end
+                        if sameFamily then break end
+                    end
+                end
+                if not hit and (g.k == "open" or sameFamily) and #textKeys > 0 then
                     local okT, text = pcall(QuestTextKey, ndx)
                     if okT and type(text) == "string" then
                         for _, tk in ipairs(textKeys) do

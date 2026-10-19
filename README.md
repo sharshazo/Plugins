@@ -1,16 +1,16 @@
 # Addons de LOTRO en español
 
-## Guía de funciones actualizada — 18 de octubre de 2026
+## Guía de funciones actualizada — 19 de octubre de 2026
 
-**[Ver la guía completa de todos los addons](GUIA_COMPLETA.md)**: interfaz, misiones, mapas, mecánicas de jefe, alertas propias, recolección, hazañas, JcJ, comandos, conexiones e instalación limpia.
+**[Ver la guía completa de todos los addons](GUIA_COMPLETA.md)**: instalación, interfaz, misiones, mapas, señales, recolección, hazañas y JcJ.
 
-- **QuestSync:** Buscar grupo usa **LFF** con el nombre exacto en inglés de la instancia, mazmorra o raid; también el mensaje es en inglés.
-- **Mapa del Mundo:** las misiones activas de las fichas de instancias se pueden pulsar para seleccionarlas en QuestSync. El anillo original a la derecha prepara un enlace al diario del juego, pendiente de confirmación dentro del cliente.
-- **Mapa del Mundo 3.20.1:** mecánicas por rol, cuatro modelos de aviso, alertas propias y recolección integrada.
-- **LUI:** versión limpia, con interfaz, objetos, artesanía y efectos; Viaje y Bienes se retiraron.
-- Mejoras de protección de guardados, recuperación de cargas, sincronización de hazañas y límites de caché.
-- Descargas individuales y colección completa en **RAR y ZIP**, siempre con Turbine.
-- [Comprobaciones y problemas pendientes de esta publicación](COMPROBACIONES_2026-10-18.md).
+- **LUI:** botín restaurado al tamaño original (100 %), ajustable entre 75 % y 150 % en **Opciones → Botín → Diseño → Tamaño del botín (%)**. Cartel, texto e iconos se ajustan juntos.
+- **Rendimiento de LUI:** creación de avisos de botín limitada por actualización; límite para ventanas que se desvanecen; los marcos de raid ocultos liberan sus conexiones y dejan de actualizarse.
+- **Mapa del Mundo:** asociaciones de misiones e instancias corregidas, incluido «Cortar la mano derecha» en **Fil Gashan**; títulos clicables para QuestSync y anillo original para el diario del juego. Correcciones visuales del anillo y de los listados.
+- **Señales:** destinatario de cura destacado, nombres de jefe e instancia en líneas separadas y agrupación de avisos por destinatario.
+- **QuestSync:** mensaje LFF y nombre exacto de instancia, mazmorra o raid en inglés; correcciones visuales del listado de zonas de recolección.
+- Paquetes **RAR y ZIP nuevos**, individuales y completos, con Turbine incluido y sin respaldos o temporales.
+- [Comprobaciones y limitaciones conocidas de esta publicación](COMPROBACIONES_2026-10-19.md).
 
 Para actualizar, reemplaza la carpeta anterior de cada addon con el juego cerrado; combinar archivos puede conservar componentes retirados. Conserva PluginData y los demás addons.
 
@@ -84,7 +84,7 @@ Basado en PvMP+ 4.3.2 de Urundus: seguimiento de tu progreso en JcJ en las Landa
 
 ## Descarga por separado
 
-¿Solo quieres un addon? Descarga su RAR actualizado del **18 de octubre de 2026**. Los enlaces de esta tabla llevan siempre a la publicación más reciente. **Cada RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
+¿Solo quieres un addon? Descarga su RAR actualizado del **19 de octubre de 2026**. Los enlaces de esta tabla llevan siempre a la publicación más reciente. **Cada RAR ya incluye la carpeta `Turbine`**, que es necesaria para que funcionen.
 
 | Addon | Descarga |
 |---|---|

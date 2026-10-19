@@ -2762,7 +2762,7 @@ function ZV:_refreshInstInfo()
         row.questNdx = nil
         row:SetMouseVisible(false)
         row:SetVisible(false)
-        row:SetBackColor(Turbine.UI.Color(0, 0, 0, 0))
+        row:SetBackColor(Turbine.UI.Color(1, 16 / 255, 18 / 255, 24 / 255))
         if row.journalRing ~= nil then
             row.journalRing.questNdx = nil
             row.journalRing.hit:SetText("")
@@ -2785,14 +2785,15 @@ function ZV:_refreshInstInfo()
                     row:SetForeColor(HexToColor("#C8CEDA"))
                     row:SetMultiline(true)
                     row:SetSelectable(false)
+                    row:SetBackColor(Turbine.UI.Color(1, 16 / 255, 18 / 255, 24 / 255))
                     if self.markupOk then pcall(function() row:SetMarkupEnabled(true) end) end
                     local this = self
                     row.MouseEnter = function()
                         if row.questNdx ~= nil then
-                            row:SetBackColor(Turbine.UI.Color(0.18, 1, 0.82, 0.25))
+                            row:SetBackColor(Turbine.UI.Color(1, 0.22, 0.20, 0.12))
                         end
                     end
-                    row.MouseLeave = function() row:SetBackColor(Turbine.UI.Color(0, 0, 0, 0)) end
+                    row.MouseLeave = function() row:SetBackColor(Turbine.UI.Color(1, 16 / 255, 18 / 255, 24 / 255)) end
                     row.MouseClick = function(sender, args)
                         if row.questNdx == nil then return end
                         if IsRight(args) then this:Back(); return end
@@ -2945,7 +2946,7 @@ end
 -- cuantas misiones activas nombran a este jefe (cache por recuento)
 function ZV:_bossQuests(en, es)
     self.bossQCache = self.bossQCache or {}
-    local key = tostring(en) .. "|" .. tostring(es)
+    local key = tostring(self.mapId) .. "|" .. tostring(en) .. "|" .. tostring(es)
     local c = self.bossQCache[key]
     if c ~= nil then
         return #c, c
@@ -2956,7 +2957,19 @@ function ZV:_bossQuests(en, es)
         local names = {}
         for _, n in ipairs(Split(en)) do names[#names + 1] = n end
         for _, n in ipairs(Split(es)) do names[#names + 1] = n end
-        local ok, list = pcall(Q.QuestsNaming, names)
+        -- A boss name alone cannot identify its dungeon (names recur).
+        local places, placesES, seen = {}, {}, {}
+        local data = WorldMapAddon.InstanceData
+        for _, inst in ipairs(data and data.Inst or {}) do
+            for _, mid in ipairs(inst.maps or {}) do
+                if mid == self.mapId and not seen[inst.en] then
+                    seen[inst.en] = true
+                    places[#places + 1] = inst.en
+                    placesES[#placesES + 1] = inst.es or inst.en
+                end
+            end
+        end
+        local ok, list = pcall(Q.QuestsNaming, names, places, placesES)
         if ok and type(list) == "table" then c = list end
     end
     self.bossQCache[key] = c

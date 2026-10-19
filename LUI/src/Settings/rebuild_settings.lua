@@ -981,6 +981,9 @@ function Settings.rebuild()
 
     local raw_drops = raw.drops
     local drops = State.settings.drops
+    local window_scale = tonumber(raw_drops.window_scale) or 1
+    if window_scale ~= window_scale then window_scale = 1 end
+    drops.window_scale = math.max(0.75, math.min(1.50, window_scale))
     drops.enabled = raw_drops.enabled
     drops.visible_duration = raw_drops.visible_duration
     drops.rows = raw_drops.rows

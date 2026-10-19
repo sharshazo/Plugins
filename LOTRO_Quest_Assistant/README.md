@@ -198,3 +198,8 @@ Los botones de narrar y silenciar necesitan una pieza aparte corriendo en tu PC 
 Buscar grupo usa el nombre exacto en inglés de la instancia, mazmorra o raid, y emite el mensaje en inglés en LFF. Se añaden verificaciones de mapas y se conserva el historial durante cargas demoradas o fallidas.
 
 Las comprobaciones automatizadas no certifican ausencia total de errores ni todas las interacciones dentro de LOTRO.
+
+
+## Actualización del 19 de octubre de 2026
+
+Se mantienen los nombres exactos de instancias, mazmorras y raids en inglés para LFF. Se corrige la apariencia del listado de zonas de recolección. El mapa integra los títulos de misión con QuestSync y los anillos con el diario nativo del juego. La auditoría detecta guardados y refrescos redundantes al recibir progreso idéntico; esta optimización sigue pendiente.

@@ -137,3 +137,14 @@ Esta documentación se contrastó con los archivos incluidos. La publicación ve
 ## Comprobaciones del 18 de octubre de 2026
 
 [Resultados y problemas pendientes](COMPROBACIONES_2026-10-18.md). Las pruebas automatizadas cubren escenarios concretos y no sustituyen una sesión completa dentro del juego.
+
+
+## Actualización del 19 de octubre de 2026
+
+El tamaño del botín de LUI vuelve al 100 %. Para cambiarlo: Opciones de LUI → Botín → Diseño → Tamaño del botín (%). Rango: 75–150; escribe 100 para restaurar el tamaño original. Guarda o aplica los cambios desde la ventana de opciones. La escala del botín es independiente del escalado global del juego. Se mantienen el historial y los avisos; durante ráfagas grandes se distribuye su creación entre varias actualizaciones.
+
+Los marcos de raid que no corresponden a la vista elegida liberan sus conexiones y no siguen consultando efectos. El modo de movimiento y la alternancia entre ventanas combinadas y separadas se conservan.
+
+El mapa incluye las correcciones recientes de asociaciones de misiones/instancias, apariencia de anillos y títulos, y avisos por destinatario. El usuario confirmó que el anillo abre la misión en el diario; la corrección visual requiere comprobarse en las distintas ventanas del cliente. QuestSync conserva el mensaje LFF con destino exacto en inglés.
+
+[Comprobaciones, memoria medida y limitaciones conocidas](COMPROBACIONES_2026-10-19.md).
