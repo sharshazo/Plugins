@@ -158,7 +158,16 @@ local function SetStatusFrom(data)
             end
         end
     end
+    local previous = D.status
+    local changed = previous == nil
+    if previous ~= nil then
+        for id in pairs(status) do if previous[id] ~= true then changed = true; break end end
+        if not changed then
+            for id in pairs(previous) do if status[id] ~= true then changed = true; break end end
+        end
+    end
     D.status = status
+    return changed
 end
 
 local function SetAckFrom(ack)
@@ -179,6 +188,7 @@ end
 
 -- limpia las marcas pendientes que Deed Tracker ya confirmo
 local function CleanPending()
+    local changed = false
     local status = D.status or {}
     local now = Now()
     for id, p in pairs(D.pending) do
@@ -189,8 +199,10 @@ local function CleanPending()
         if (status[id] == true) == p.done
             or (n ~= nil and n <= D.lastAck and (now - p.at) > PENDING_GRACE) then
             D.pending[id] = nil
+            changed = true
         end
     end
+    return changed
 end
 
 -- relee (asincronico) el guardado de Deed Tracker y su confirmacion, como
@@ -207,21 +219,26 @@ function D.RefreshStatus(force)
     D.statusAt = now
     D.loading = true
     D.loadingAt = now
+    local statusChanged = false
     local function loadAck()
         LoadAsync(Turbine.DataScope.Character, ACK_KEY, function(ack)
+            local previousAck = D.lastAck
             SetAckFrom(ack)
-            CleanPending()
+            local pendingChanged = CleanPending()
             D.loading = false
-            Changed()
+            if statusChanged or previousAck ~= D.lastAck or pendingChanged or D.toastPending ~= nil then
+                Changed()
+            end
         end)
     end
     local key = CharDataKey()
     if key ~= nil then
         LoadAsync(Turbine.DataScope.Server, key, function(data)
-            SetStatusFrom(data)
+            statusChanged = SetStatusFrom(data)
             loadAck()
         end)
     else
+        statusChanged = D.status == nil
         D.status = D.status or {}
         loadAck()
     end

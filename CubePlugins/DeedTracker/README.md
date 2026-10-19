@@ -172,3 +172,8 @@ Las comprobaciones automatizadas no certifican ausencia total de errores ni toda
 ## Actualización del 19 de octubre de 2026
 
 Se publica nuevamente la carpeta actual limpia con la biblioteca Turbine. Se conservan la sincronización con el mapa, el orden de los pedidos, la recuperación tras fallos y la confirmación tras el guardado. No se anuncian funciones nuevas en Deed Tracker en esta fecha.
+
+
+## Revisión 2 del 19 de octubre de 2026
+
+Versión local actual, conservando sincronización y recuperación de guardados. Se vuelve a distribuir con Turbine y sin temporales; esta revisión no añade funciones a Deed Tracker.

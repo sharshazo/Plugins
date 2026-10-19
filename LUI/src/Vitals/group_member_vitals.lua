@@ -739,6 +739,7 @@ function GroupMemberVitals:_scan_cure_ranks()
 end
 
 function GroupMemberVitals:_hide_cure_state()
+    self._cure_render = nil
     self.cure_shown = false
     if self.cure_overlay == nil then
         return
@@ -764,12 +765,19 @@ function GroupMemberVitals:_update_cure_state()
 
     local x, y = self.entity_control:GetPosition()
     local width, height = self.entity_control:GetSize()
+    local first, second = ranks[1], ranks[2] or ranks[1]
+    local rendered = self._cure_render
+    if self.cure_shown == true and rendered ~= nil and rendered.first == first and rendered.second == second
+        and rendered.x == x and rendered.y == y and rendered.width == width and rendered.height == height then
+        return
+    end
     self.cure_overlay:SetPosition(x, y)
     self.cure_overlay:SetSize(width, height)
     self.cure_overlay:SetBackColor(_cure_color(ranks[1], 1))
     self.cure_overlay:SetVisible(true)
     _apply_select_border(self.cure_border, x, y, width, height, CURE_BORDER,
         _cure_color(ranks[2] or ranks[1], 2))
+    self._cure_render = { first = first, second = second, x = x, y = y, width = width, height = height }
     self.cure_shown = true
 end
 

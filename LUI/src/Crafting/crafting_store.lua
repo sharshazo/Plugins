@@ -6,6 +6,8 @@ local TR = _G.LUI.Locale.TR
 local State = _G.LUI.Settings.State
 local Lore = _G.LUI.Data.Lore
 local class = _G.LUI.Core.class
+import "LUI.src.Utils.callbacks"
+local add_callback = _G.LUI.Utils.add_callback
 import "Turbine.Gameplay"
 import "Turbine.UI"
 
@@ -497,6 +499,7 @@ function CraftingStore:Constructor()
 end
 
 function CraftingStore:destroy()
+    self:_release_backpack_watch()
     self:SetWantsUpdates(false)
     self:SetVisible(false)
 end
@@ -630,8 +633,15 @@ end
 
 function CraftingStore:refresh(force, recipe_batch_size)
     local current_character = _current_character_name()
-    local live_inventory_counts = self:_capture_live_backpack_counts(current_character)
-    local live_inventory_token = _count_map_signature(live_inventory_counts)
+    local live_inventory_counts = self:_capture_live_backpack_counts(current_character, force)
+    -- Cached counts are immutable until replaced by an event/forced scan.
+    -- Reuse their fingerprint too: sorting 500 names five times a second
+    -- otherwise keeps allocating even when the backpack scan is skipped.
+    if self._backpack_signature_source ~= live_inventory_counts then
+        self._backpack_signature = _count_map_signature(live_inventory_counts)
+        self._backpack_signature_source = live_inventory_counts
+    end
+    local live_inventory_token = self._backpack_signature
     local changed = false
     local recipe_refresh_needed = force == true or self._recipes_initialized ~= true or self.current_character_name ~= current_character
 
@@ -1255,22 +1265,79 @@ function CraftingStore:recipe_uses_item_key(recipe, key_set)
     return false
 end
 
-function CraftingStore:_capture_live_backpack_counts(current_character)
+local BACKPACK_EVENTS = { "ItemAdded", "ItemRemoved", "ItemMoved", "ItemChanged" }
+
+function CraftingStore:_release_backpack_watch()
+    local watch = self._backpack_watch
+    if watch ~= nil then
+        watch.owner = nil -- captured wrappers must not retain this store
+        for _, event in ipairs(BACKPACK_EVENTS) do
+            local callbacks = watch.bag[event]
+            if callbacks == watch.handler then
+                watch.bag[event] = nil
+            elseif type(callbacks) == "table" then
+                for i = #callbacks, 1, -1 do
+                    if callbacks[i] == watch.handler then table.remove(callbacks, i) end
+                end
+                if next(callbacks) == nil then watch.bag[event] = nil end
+            end
+        end
+    end
+    self._backpack_watch = nil
+    self._backpack_counts_cache = nil
+    self._backpack_signature_source = nil
+    self._backpack_signature = nil
+    self._backpack_counts_dirty = true
+end
+
+function CraftingStore:_watch_backpack(backpack)
+    local watch = self._backpack_watch
+    if watch == nil or watch.bag ~= backpack then
+        self:_release_backpack_watch()
+        watch = { bag = backpack, owner = self }
+        watch.handler = function()
+            if watch.owner ~= nil then watch.owner._backpack_counts_dirty = true end
+        end
+        self._backpack_watch = watch
+    end
+    -- Other addons can replace a callback; reattach without duplicating it.
+    for _, event in ipairs(BACKPACK_EVENTS) do
+        local callbacks = backpack[event]
+        local found = callbacks == watch.handler
+        if type(callbacks) == "table" then
+            for _, fn in pairs(callbacks) do if fn == watch.handler then found = true; break end end
+        end
+        if not found then add_callback(backpack, event, watch.handler) end
+    end
+end
+
+function CraftingStore:_capture_live_backpack_counts(current_character, force)
     local counts = {}
     local player = Turbine.Gameplay.LocalPlayer.GetInstance()
     local backpack = player ~= nil and player.GetBackpack ~= nil and player:GetBackpack() or nil
     if backpack == nil or backpack.GetSize == nil or backpack.GetItem == nil then
+        self:_release_backpack_watch()
         return counts
     end
-
+    self:_watch_backpack(backpack)
+    local now = Turbine.Engine.GetGameTime()
     local size = tonumber(backpack:GetSize()) or 0
+    if force ~= true and self._backpack_counts_dirty ~= true
+        and self._backpack_counts_cache ~= nil
+        and self._backpack_counts_character == current_character
+        and self._backpack_counts_size == size
+        and self._backpack_counts_foreground == (self._foreground_loading == true)
+        and now < (self._backpack_counts_check_at or 0) then
+        return self._backpack_counts_cache
+    end
+    self._backpack_counts_dirty = false
     for index = 1, size do
         local item = backpack:GetItem(index)
         if item ~= nil then
-            local item_info = item.GetItemInfo ~= nil and item:GetItemInfo() or nil
             local name = item.GetName ~= nil and item:GetName() or nil
-            if (name == nil or name == "") and item_info ~= nil and item_info.GetName ~= nil then
-                name = item_info:GetName()
+            if name == nil or name == "" then
+                local item_info = item.GetItemInfo ~= nil and item:GetItemInfo() or nil
+                if item_info ~= nil and item_info.GetName ~= nil then name = item_info:GetName() end
             end
 
             local key = _normalize_name(name)
@@ -1284,6 +1351,13 @@ function CraftingStore:_capture_live_backpack_counts(current_character)
         end
     end
 
+    self._backpack_counts_cache = counts
+    self._backpack_counts_character = current_character
+    self._backpack_counts_size = size
+    self._backpack_counts_foreground = self._foreground_loading == true
+    -- Events retain the 0.2-second reaction time. Poll as a safety net for
+    -- silent stack changes; keep foreground crafting at its existing rate.
+    self._backpack_counts_check_at = now + (self._foreground_loading == true and 0.20 or 2.0)
     return counts
 end
 

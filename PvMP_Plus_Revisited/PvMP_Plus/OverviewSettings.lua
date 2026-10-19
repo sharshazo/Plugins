@@ -172,7 +172,7 @@ function Overview_Settings:UpdateChatData()
 	local beige_chat_color = "#FFFF99"
 
 	local chat_message = self.chat_send_quickslot:GetShortcut()
-	chat_message:SetData(
+	local text = (
 		"/" .. L.Chat_Channels[data.numbers.selectedChannel][1] .. " " .. "<rgb=" .. gold_chat_color .. ">" .. L.Stats_Points_Type .. "</rgb>" ..
 		(storage.chat_total		  and "<rgb=" .. red_chat_color .. ">" .. L.Stats_Total					.. "</rgb>" .. "<rgb=" .. beige_chat_color .. ">" .. FormatPoints(data.numbers.points_total)			.. "</rgb> " or "") ..
 		(storage.chat_rankup	  and "<rgb=" .. red_chat_color .. ">" .. L.Stats_To_RankUp				.. "</rgb>" .. "<rgb=" .. beige_chat_color .. ">" .. FormatPoints(GetRemainingPoints())					.. "</rgb> " or "") ..
@@ -182,6 +182,8 @@ function Overview_Settings:UpdateChatData()
 		(storage.chat_tenmin	  and "<rgb=" .. red_chat_color .. ">" .. L.Stats_Last_10min			.. "</rgb>" .. "<rgb=" .. beige_chat_color .. ">" .. points_last_10_minutes								.. "</rgb> " or "") ..
 		(storage.chat_fight		  and "<rgb=" .. red_chat_color .. ">" .. L.Stats_Last_Fight			.. "</rgb>" .. "<rgb=" .. beige_chat_color .. ">" .. FormatPoints(Points_Last_Fight)					.. "</rgb> " or "")
 	)
+	if chat_message:GetData() == text then return end
+	chat_message:SetData(text)
 	self.chat_send_quickslot:SetShortcut(chat_message)
 	self.chat_send_quickslot:SetAllowDrop(false)
 end

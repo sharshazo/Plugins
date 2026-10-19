@@ -212,6 +212,17 @@ function FellowshipVitals:update_target_highlight()
 end
 
 function FellowshipVitals:update_members(snapshot)
+    if _fellowship_vitals_enabled() ~= true then
+        for i = 1, #self.members do
+            local member = self.members[i]
+            member.entity_control:SetMouseVisible(false)
+            member:set_entity(nil)
+            member:set_is_leader(false)
+            member:SetVisible(false)
+        end
+        self:SetVisible(false)
+        return
+    end
     local current_snapshot = snapshot or GroupSnapshot.read(self.lp)
     local active = _fellowship_active(current_snapshot)
     local ordered_members = {}

@@ -328,4 +328,9 @@ Las comprobaciones automatizadas no certifican ausencia total de errores ni toda
 
 ## Actualización del 19 de octubre de 2026
 
-Se vuelve a empaquetar la versión local actual con Turbine, conservando los cambios anteriores de guardado, calendario y consulta de mochila. Sigue pendiente evitar las actualizaciones de fondo de las marcas de enemigos caducadas; el conjunto está limitado a doce marcas. Las demás limitaciones conocidas están documentadas en las comprobaciones generales.
+Se vuelve a empaquetar la versión local actual con Turbine, conservando los cambios anteriores de guardado, calendario y consulta de mochila. Las marcas caducadas ya no actualizan su fondo; el conjunto conserva el límite de doce marcas. Las demás limitaciones conocidas están documentadas en las comprobaciones generales.
+
+
+## Revisión 2 del 19 de octubre de 2026
+
+Los eventos de combate agrupan la actualización visual de la ventana general en intervalos de 100 ms; los contadores se actualizan inmediatamente. Las marcas caducadas dejan de repintarse y se evita repetir texto o dimensiones sin cambios. No se modifican los canales de chat ni el registro de estadísticas.

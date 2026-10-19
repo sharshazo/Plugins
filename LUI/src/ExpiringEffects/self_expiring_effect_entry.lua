@@ -133,6 +133,7 @@ end
 ---------------------------------------------------------------------
 
 function SelfExpiringEffectEntry:apply_settings()
+    self._effect_color_ready = false
     local s = State.settings.self.expiring_effects
     local border = s.border_width
     local border_color = s.color.border
@@ -267,6 +268,37 @@ function SelfExpiringEffectEntry:apply_settings()
     end
 end
 
+-- Native wrappers can mutate without changing ID. Keep checking their
+-- category/curability; repaint only when those inputs or settings change.
+function SelfExpiringEffectEntry:_sync_effect_colors()
+    local effect = self.effect
+    local debuff = effect ~= nil and effect.IsDebuff ~= nil and not not effect:IsDebuff()
+    local curable = debuff and effect.IsCurable ~= nil and not not effect:IsCurable()
+    if self._effect_color_ready == true and self._effect_color_debuff == debuff
+        and self._effect_color_curable == curable then return end
+    self:_apply_bar_colors()
+    self._effect_color_debuff = debuff
+    self._effect_color_curable = curable
+    self._effect_color_ready = true
+end
+
+local function _set_fill_position(control, x, y)
+    local old_x, old_y = control:GetPosition()
+    if old_x ~= x or old_y ~= y then control:SetPosition(x, y) end
+end
+
+local function _set_fill_width(control, value)
+    if control:GetWidth() ~= value then control:SetWidth(value) end
+end
+
+local function _set_fill_height(control, value)
+    if control:GetHeight() ~= value then control:SetHeight(value) end
+end
+
+local function _set_time_text(control, text)
+    if control:GetText() ~= text then control:SetText(text) end
+end
+
 function SelfExpiringEffectEntry:set_effect(effect)
     if effect == nil then
         if self.effect == nil and (self.effect_key == nil or self.effect_key == 0) then
@@ -274,6 +306,7 @@ function SelfExpiringEffectEntry:set_effect(effect)
         end
         self.effect = nil
         self.effect_key = 0
+        self._effect_color_ready = false
         self:_apply_bar_colors()
         self.icon:SetEffect(nil)
         self.icon:SetVisible(false)
@@ -284,14 +317,14 @@ function SelfExpiringEffectEntry:set_effect(effect)
     if next_key ~= 0 and next_key == self.effect_key then
         -- Same underlying effect (possibly new wrapper) -> avoid EffectDisplay rebinding.
         self.effect = effect
-        self:_apply_bar_colors()
+        self:_sync_effect_colors()
         self.icon:SetVisible(true)
         return
     end
 
     self.effect = effect
     self.effect_key = next_key
-    self:_apply_bar_colors()
+    self:_sync_effect_colors()
     self.icon:SetVisible(true)
     self.icon:SetEffect(effect)
 end
@@ -299,12 +332,12 @@ end
 function SelfExpiringEffectEntry:update_remaining(remaining_seconds, initial_seconds)
     if self.effect == nil then
         self.name_label:SetText("")
-        self.time_label:SetText("")
+        _set_time_text(self.time_label, "")
         -- Zero only the fill axis so the cross size from apply_settings survives.
         if self.vertical then
-            self.bar_fill:SetHeight(0)
+            _set_fill_height(self.bar_fill, 0)
         else
-            self.bar_fill:SetWidth(0)
+            _set_fill_width(self.bar_fill, 0)
         end
         return
     end
@@ -331,18 +364,18 @@ function SelfExpiringEffectEntry:update_remaining(remaining_seconds, initial_sec
     -- The cross axis is fixed by apply_settings; only touch the fill axis.
     if self.vertical then
         if self.bar_anchor_far then
-            self.bar_fill:SetPosition(0, inner_len - fill_len)
+            _set_fill_position(self.bar_fill, 0, inner_len - fill_len)
         else
-            self.bar_fill:SetPosition(0, 0)
+            _set_fill_position(self.bar_fill, 0, 0)
         end
-        self.bar_fill:SetHeight(fill_len)
+        _set_fill_height(self.bar_fill, fill_len)
     else
         if self.bar_anchor_far then
-            self.bar_fill:SetPosition(inner_len - fill_len, 0)
+            _set_fill_position(self.bar_fill, inner_len - fill_len, 0)
         else
-            self.bar_fill:SetPosition(0, 0)
+            _set_fill_position(self.bar_fill, 0, 0)
         end
-        self.bar_fill:SetWidth(fill_len)
+        _set_fill_width(self.bar_fill, fill_len)
     end
 
     if self.vertical ~= true then
@@ -350,7 +383,7 @@ function SelfExpiringEffectEntry:update_remaining(remaining_seconds, initial_sec
         self.name_label:SetText(name)
     end
     if self.show_time then
-        self.time_label:SetText(lui_timed_row_format_time(remaining_seconds, EFFECT_TIME_FORMAT))
+        _set_time_text(self.time_label, lui_timed_row_format_time(remaining_seconds, EFFECT_TIME_FORMAT))
     end
 end
 

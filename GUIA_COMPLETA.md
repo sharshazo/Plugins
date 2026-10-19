@@ -148,3 +148,35 @@ Los marcos de raid que no corresponden a la vista elegida liberan sus conexiones
 El mapa incluye las correcciones recientes de asociaciones de misiones/instancias, apariencia de anillos y títulos, y avisos por destinatario. El usuario confirmó que el anillo abre la misión en el diario; la corrección visual requiere comprobarse en las distintas ventanas del cliente. QuestSync conserva el mensaje LFF con destino exacto en inglés.
 
 [Comprobaciones, memoria medida y limitaciones conocidas](COMPROBACIONES_2026-10-19.md).
+
+
+## Revisión 2 — rendimiento y paquetes actualizados (19 de octubre de 2026)
+
+- **LUI:** party desactivada sin seguimiento de efectos; menos repintados de buffs/debuffs, señales y barras; consultas de fabricación con caché. Se conservan marcos, temporizadores, animaciones, raid y botín ajustable.
+- **QuestSync / Quest Assistant:** progreso idéntico sin guardado repetido y refrescos de listas agrupados; las ventanas ocultas difieren su reconstrucción.
+- **Mapa del Mundo:** sincronización de hazañas sin notificaciones repetidas cuando no cambia el estado.
+- **PvMP+:** refresco visual agrupado durante combate y marcas caducadas sin repintado continuo; contadores conservados.
+- **Descargas:** RAR y ZIP regenerados desde cero y verificados; solo se conservan los RAR de la versión actual.
+
+[Comprobaciones y límites de las pruebas](COMPROBACIONES_2026-10-19.md). Las reducciones de llamadas se comprobaron en simulaciones; no equivalen a una medición de FPS en combate real.
+
+
+### LUI
+
+Marcos de party desactivados: liberan jugadores y dejan de consultar efectos. Barras de buffs/debuffs propios y del objetivo: evitan repetir colores, tamaños y texto sin cambios; mantienen renovación de efectos, temporizadores y los tres diseños con animaciones. El inventario de fabricación utiliza eventos y caché; las señales de curación evitan repintados idénticos. Se conservan los ajustes de botín (100 % inicial, rango 75–150 %), historial y vistas de raid.
+
+### LOTRO_Quest_Assistant
+
+El progreso idéntico ya no solicita guardado ni publicación repetidos. Los listados agrupan refrescos cercanos y difieren la reconstrucción mientras permanecen ocultos; los cambios de datos y su guardado se conservan. Se mantienen LFF en inglés con el destino exacto, enlaces de misiones y recolección.
+
+### WorldMap_Addon
+
+La consulta periódica de hazañas ya no vuelve a notificar el mismo estado sin cambios. Se mantienen confirmaciones, progreso, sincronización, señales, asociaciones verificadas de instancias y acceso a misiones. Las coordenadas aproximadas siguen marcadas como tales.
+
+### PvMP_Plus_Revisited
+
+Los eventos de combate agrupan la actualización visual de la ventana general en intervalos de 100 ms; los contadores se actualizan inmediatamente. Las marcas caducadas dejan de repintarse y se evita repetir texto o dimensiones sin cambios. No se modifican los canales de chat ni el registro de estadísticas.
+
+### CubePlugins
+
+Versión local actual, conservando sincronización y recuperación de guardados. Se vuelve a distribuir con Turbine y sin temporales; esta revisión no añade funciones a Deed Tracker.

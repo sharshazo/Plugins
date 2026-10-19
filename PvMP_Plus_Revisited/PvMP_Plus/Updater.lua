@@ -121,6 +121,7 @@ Updater.Update = function(sender, args)
 		CheckBattleTask(now)
 
 		for player, control in pairs(MapWindow.enemy_position_list) do
+			if (control.Timer or 0) > 0 then
 			control.Timer = control.Timer - 1
 			if control.Timer % 2 == 0 then
 				control:SetBackground("PvMP_Plus_Revisited/PvMP_Plus/Resources/MapIcons/enemy_position_overlay_empty.tga")
@@ -135,6 +136,7 @@ Updater.Update = function(sender, args)
 			end
 
 			if control.Timer == 0 then control:SetVisible(false) end
+			end
 		end
 
 		if Current_Position_Counter > 0 then
@@ -213,7 +215,9 @@ Updater.Update = function(sender, args)
 			oldResolution = currentResolution
 			OverviewWindow:UpdatePosition()
 		end
-		OverviewWindow:Update()
+		OverviewWindow:Update(true)
+	elseif OverviewWindow ~= nil and OverviewWindow.FlushUpdate ~= nil then
+		OverviewWindow:FlushUpdate()
 	end
 end
 

@@ -205,6 +205,10 @@ end
 
 function QuestStateManager.UpdateProgress(ndx, progressText)
     if QuestStateManager.State.active[ndx] then
+        if QuestStateManager.State.active[ndx].progress == progressText then
+            QuestStateManager.State.active[ndx].lastUpdate = Turbine.Engine.GetGameTime()
+            return
+        end
         QuestStateManager.State.active[ndx].progress = progressText
         QuestStateManager.State.active[ndx].lastUpdate = Turbine.Engine.GetGameTime()
         QuestStateManager.Save()

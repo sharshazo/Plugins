@@ -781,7 +781,31 @@ function OverviewWindow:Constructor()
 	end
 end
 
-function OverviewWindow:Update()
+-- Coalesce combat notifications; counters are recorded immediately by the
+-- parser. Rendering never advances the independent one-second buff clock.
+function OverviewWindow:RequestUpdate()
+    if self._refresh_due_at == nil then
+        self._refresh_due_at = Turbine.Engine.GetGameTime() + 0.10
+    end
+end
+
+function OverviewWindow:FlushUpdate()
+    if self._refresh_due_at ~= nil and Turbine.Engine.GetGameTime() >= self._refresh_due_at then
+        self:Update()
+    end
+end
+
+local function _set_text_if_changed(control, text)
+    if control:GetText() ~= text then control:SetText(text) end
+end
+
+local function _set_icon_size(control)
+    local w, h = control:GetSize()
+    if w ~= 15 or h ~= 15 then control:SetSize(15, 15) end
+end
+
+function OverviewWindow:Update(advance_timers)
+    self._refresh_due_at = nil
 	local text			= ""
 	local hours			= 0
 	local minutes		= 0
@@ -791,87 +815,87 @@ function OverviewWindow:Update()
 	local comms_last_24_hours, comms_last_hour, comms_last_10_minutes		= GetRecentData(data.numbers.recent_comms)
 	local frags_last_24_hours, frags_last_hour, frags_last_10_minutes		= GetRecentData(data.numbers.recent_frags)
 
-	self.label_commendations:SetText(FormatPoints(Current_Commendations))
+	_set_text_if_changed(self.label_commendations, FormatPoints(Current_Commendations))
 
 	if self:GetWidth() < 490 then
 		if storage.show_remaining_points then
-			self.label_points:SetText(L.Stats_Remaining_Points_Short .. FormatPoints(GetRemainingPoints()))
+			_set_text_if_changed(self.label_points, L.Stats_Remaining_Points_Short .. FormatPoints(GetRemainingPoints()))
 		else
-			self.label_points:SetText(L.Stats_Total_Points_Short .. FormatPoints(data.numbers.points_total))
+			_set_text_if_changed(self.label_points, L.Stats_Total_Points_Short .. FormatPoints(data.numbers.points_total))
 		end
 		self:SetStatsVisibility(false)
 	elseif self:GetWidth() < 900 then
 		if storage.show_remaining_points then
-			self.label_points:SetText(L.Stats_Remaining_Points .. FormatPoints(GetRemainingPoints()))
+			_set_text_if_changed(self.label_points, L.Stats_Remaining_Points .. FormatPoints(GetRemainingPoints()))
 		else
-			self.label_points:SetText(L.Stats_Total_Points .. FormatPoints(data.numbers.points_total))
+			_set_text_if_changed(self.label_points, L.Stats_Total_Points .. FormatPoints(data.numbers.points_total))
 		end
 		if not self.separator:IsVisible() then
 			self:SetStatsVisibility(not storage.stats_hidden)
 		end
-		self.label_month:SetText(L.Stats_Current_Month_Short .. FormatPoints(data.numbers.points_current_month))
-		self.label_day:SetText(L.Stats_Current_Day_Short .. FormatPoints(data.numbers.points_current_day))
-		self.label_last_hour:SetText(L.Stats_Last_Hour_Short .. points_last_hour)
-		self.label_10min:SetText(L.Stats_Last_10min_Short .. points_last_10_minutes)
-		self.label_last_fight:SetText(L.Stats_Last_Fight_Short .. FormatPoints(Points_Last_Fight))
+		_set_text_if_changed(self.label_month, L.Stats_Current_Month_Short .. FormatPoints(data.numbers.points_current_month))
+		_set_text_if_changed(self.label_day, L.Stats_Current_Day_Short .. FormatPoints(data.numbers.points_current_day))
+		_set_text_if_changed(self.label_last_hour, L.Stats_Last_Hour_Short .. points_last_hour)
+		_set_text_if_changed(self.label_10min, L.Stats_Last_10min_Short .. points_last_10_minutes)
+		_set_text_if_changed(self.label_last_fight, L.Stats_Last_Fight_Short .. FormatPoints(Points_Last_Fight))
 
-		self.label_month_comms:SetText(L.Stats_Current_Month_Short .. FormatPoints(data.numbers.comms_current_month))
-		self.label_day_comms:SetText(L.Stats_Current_Day_Short .. FormatPoints(data.numbers.comms_current_day))
-		self.label_last_hour_comms:SetText(L.Stats_Last_Hour_Short .. comms_last_hour)
-		self.label_10min_comms:SetText(L.Stats_Last_10min_Short .. comms_last_10_minutes)
-		self.label_last_fight_comms:SetText(L.Stats_Last_Fight_Short .. FormatPoints(Comms_Last_Fight))
+		_set_text_if_changed(self.label_month_comms, L.Stats_Current_Month_Short .. FormatPoints(data.numbers.comms_current_month))
+		_set_text_if_changed(self.label_day_comms, L.Stats_Current_Day_Short .. FormatPoints(data.numbers.comms_current_day))
+		_set_text_if_changed(self.label_last_hour_comms, L.Stats_Last_Hour_Short .. comms_last_hour)
+		_set_text_if_changed(self.label_10min_comms, L.Stats_Last_10min_Short .. comms_last_10_minutes)
+		_set_text_if_changed(self.label_last_fight_comms, L.Stats_Last_Fight_Short .. FormatPoints(Comms_Last_Fight))
 
-		self.label_month_frags:SetText(L.Stats_Current_Month_Short .. FormatPoints(data.numbers.frags_current_month))
-		self.label_day_frags:SetText(L.Stats_Current_Day_Short .. FormatPoints(data.numbers.frags_current_day))
-		self.label_last_hour_frags:SetText(L.Stats_Last_Hour_Short .. frags_last_hour)
-		self.label_10min_frags:SetText(L.Stats_Last_10min_Short .. frags_last_10_minutes)
-		self.label_last_fight_frags:SetText(L.Stats_Last_Fight_Short .. FormatPoints(Frags_Last_Fight))
+		_set_text_if_changed(self.label_month_frags, L.Stats_Current_Month_Short .. FormatPoints(data.numbers.frags_current_month))
+		_set_text_if_changed(self.label_day_frags, L.Stats_Current_Day_Short .. FormatPoints(data.numbers.frags_current_day))
+		_set_text_if_changed(self.label_last_hour_frags, L.Stats_Last_Hour_Short .. frags_last_hour)
+		_set_text_if_changed(self.label_10min_frags, L.Stats_Last_10min_Short .. frags_last_10_minutes)
+		_set_text_if_changed(self.label_last_fight_frags, L.Stats_Last_Fight_Short .. FormatPoints(Frags_Last_Fight))
 	else
 		if storage.show_remaining_points then
-			self.label_points:SetText(L.Stats_Remaining_Points .. FormatPoints(GetRemainingPoints()))
+			_set_text_if_changed(self.label_points, L.Stats_Remaining_Points .. FormatPoints(GetRemainingPoints()))
 		else
-			self.label_points:SetText(L.Stats_Total_Points .. FormatPoints(data.numbers.points_total))
+			_set_text_if_changed(self.label_points, L.Stats_Total_Points .. FormatPoints(data.numbers.points_total))
 		end
 		if not self.separator:IsVisible() then
 			self:SetStatsVisibility(not storage.stats_hidden)
 		end
-		self.label_month:SetText(L.Stats_Current_Month .. FormatPoints(data.numbers.points_current_month))
-		self.label_day:SetText(L.Stats_Current_Day .. FormatPoints(data.numbers.points_current_day))
-		self.label_last_hour:SetText(L.Stats_Last_Hour .. points_last_hour)
-		self.label_10min:SetText(L.Stats_Last_10min .. points_last_10_minutes)
-		self.label_last_fight:SetText(L.Stats_Last_Fight .. FormatPoints(Points_Last_Fight))
+		_set_text_if_changed(self.label_month, L.Stats_Current_Month .. FormatPoints(data.numbers.points_current_month))
+		_set_text_if_changed(self.label_day, L.Stats_Current_Day .. FormatPoints(data.numbers.points_current_day))
+		_set_text_if_changed(self.label_last_hour, L.Stats_Last_Hour .. points_last_hour)
+		_set_text_if_changed(self.label_10min, L.Stats_Last_10min .. points_last_10_minutes)
+		_set_text_if_changed(self.label_last_fight, L.Stats_Last_Fight .. FormatPoints(Points_Last_Fight))
 
-		self.label_month_comms:SetText(L.Stats_Current_Month .. FormatPoints(data.numbers.comms_current_month))
-		self.label_day_comms:SetText(L.Stats_Current_Day .. FormatPoints(data.numbers.comms_current_day))
-		self.label_last_hour_comms:SetText(L.Stats_Last_Hour ..comms_last_hour)
-		self.label_10min_comms:SetText(L.Stats_Last_10min .. comms_last_10_minutes)
-		self.label_last_fight_comms:SetText(L.Stats_Last_Fight .. FormatPoints(Comms_Last_Fight))
+		_set_text_if_changed(self.label_month_comms, L.Stats_Current_Month .. FormatPoints(data.numbers.comms_current_month))
+		_set_text_if_changed(self.label_day_comms, L.Stats_Current_Day .. FormatPoints(data.numbers.comms_current_day))
+		_set_text_if_changed(self.label_last_hour_comms, L.Stats_Last_Hour ..comms_last_hour)
+		_set_text_if_changed(self.label_10min_comms, L.Stats_Last_10min .. comms_last_10_minutes)
+		_set_text_if_changed(self.label_last_fight_comms, L.Stats_Last_Fight .. FormatPoints(Comms_Last_Fight))
 
-		self.label_month_frags:SetText(L.Stats_Current_Month .. FormatPoints(data.numbers.frags_current_month))
-		self.label_day_frags:SetText(L.Stats_Current_Day .. FormatPoints(data.numbers.frags_current_day))
-		self.label_last_hour_frags:SetText(L.Stats_Last_Hour .. frags_last_hour)
-		self.label_10min_frags:SetText(L.Stats_Last_10min .. frags_last_10_minutes)
-		self.label_last_fight_frags:SetText(L.Stats_Last_Fight .. FormatPoints(Frags_Last_Fight))
+		_set_text_if_changed(self.label_month_frags, L.Stats_Current_Month .. FormatPoints(data.numbers.frags_current_month))
+		_set_text_if_changed(self.label_day_frags, L.Stats_Current_Day .. FormatPoints(data.numbers.frags_current_day))
+		_set_text_if_changed(self.label_last_hour_frags, L.Stats_Last_Hour .. frags_last_hour)
+		_set_text_if_changed(self.label_10min_frags, L.Stats_Last_10min .. frags_last_10_minutes)
+		_set_text_if_changed(self.label_last_fight_frags, L.Stats_Last_Fight .. FormatPoints(Frags_Last_Fight))
 	end
 	OverviewSettingsPanel:UpdateChatData()
 
 	-- Resize the icons each iteration
-	self.freep_tree_icon:SetSize(15, 15)
-	self.freep_gary_icon:SetSize(15, 15)
-	self.freep_drake_icon:SetSize(15, 15)
-	self.creep_tree_icon:SetSize(15, 15)
-	self.creep_gary_icon:SetSize(15, 15)
-	self.creep_drake_icon:SetSize(15, 15)
-	self.creep_crown_icon:SetSize(15, 15)
-	self.creep_carrock_icon:SetSize(15, 15)
-	self.freep_crown_icon:SetSize(15, 15)
-	self.freep_carrock_icon:SetSize(15, 15)
-	self.freep_outnumbered_icon:SetSize(15, 15)
-	self.creep_outnumbered_icon:SetSize(15, 15)
+	_set_icon_size(self.freep_tree_icon)
+	_set_icon_size(self.freep_gary_icon)
+	_set_icon_size(self.freep_drake_icon)
+	_set_icon_size(self.creep_tree_icon)
+	_set_icon_size(self.creep_gary_icon)
+	_set_icon_size(self.creep_drake_icon)
+	_set_icon_size(self.creep_crown_icon)
+	_set_icon_size(self.creep_carrock_icon)
+	_set_icon_size(self.freep_crown_icon)
+	_set_icon_size(self.freep_carrock_icon)
+	_set_icon_size(self.freep_outnumbered_icon)
+	_set_icon_size(self.creep_outnumbered_icon)
 
 	-- Update DOF buff timers
 	-- Tree
-	tree_buff_timer = tree_buff_timer + 1
+	if advance_timers == true then tree_buff_timer = tree_buff_timer + 1 end
 	minute_mod = math.fmod(tree_buff_timer, 3600)
 	minutes = (minute_mod - math.fmod(minute_mod, 60)) / 60
 	hours = (tree_buff_timer - math.fmod(tree_buff_timer, 3600)) / 3600
@@ -887,7 +911,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_tree_icon:SetVisible(true)
 			self.creep_tree_timer:SetVisible(true)
-			self.creep_tree_timer:SetText(text)
+			_set_text_if_changed(self.creep_tree_timer, text)
 
 			-- Disable freep side icon and text
 			self.freep_tree_icon:SetVisible(false)
@@ -900,7 +924,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_tree_icon:SetVisible(true)
 			self.freep_tree_timer:SetVisible(true)
-			self.freep_tree_timer:SetText(text)
+			_set_text_if_changed(self.freep_tree_timer, text)
 		else
 			-- Disable creep side icon and text
 			self.creep_tree_icon:SetVisible(false)
@@ -915,7 +939,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_tree_icon:SetVisible(true)
 			self.freep_tree_timer:SetVisible(true)
-			self.freep_tree_timer:SetText(text)
+			_set_text_if_changed(self.freep_tree_timer, text)
 
 			-- Disable creep side icon and text
 			self.creep_tree_icon:SetVisible(false)
@@ -928,7 +952,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_tree_icon:SetVisible(true)
 			self.creep_tree_timer:SetVisible(true)
-			self.creep_tree_timer:SetText(text)
+			_set_text_if_changed(self.creep_tree_timer, text)
 		else
 			-- Disable freep side icon and text
 			self.freep_tree_icon:SetVisible(false)
@@ -942,7 +966,7 @@ function OverviewWindow:Update()
 
 	-- Update DOF buff timers
 	-- Drake
-	drake_buff_timer = drake_buff_timer + 1
+	if advance_timers == true then drake_buff_timer = drake_buff_timer + 1 end
 	minute_mod = math.fmod(drake_buff_timer, 3600)
 	minutes = (minute_mod - math.fmod(minute_mod, 60)) / 60
 	hours = (drake_buff_timer - math.fmod(drake_buff_timer, 3600)) / 3600
@@ -958,7 +982,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_drake_icon:SetVisible(true)
 			self.creep_drake_timer:SetVisible(true)
-			self.creep_drake_timer:SetText(text)
+			_set_text_if_changed(self.creep_drake_timer, text)
 
 			-- Disable freep side icon and text
 			self.freep_drake_icon:SetVisible(false)
@@ -971,7 +995,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_drake_icon:SetVisible(true)
 			self.freep_drake_timer:SetVisible(true)
-			self.freep_drake_timer:SetText(text)
+			_set_text_if_changed(self.freep_drake_timer, text)
 		else
 			-- Disable creep side icon and text
 			self.creep_drake_icon:SetVisible(false)
@@ -986,7 +1010,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_drake_icon:SetVisible(true)
 			self.freep_drake_timer:SetVisible(true)
-			self.freep_drake_timer:SetText(text)
+			_set_text_if_changed(self.freep_drake_timer, text)
 
 			-- Disable creep side icon and text
 			self.creep_drake_icon:SetVisible(false)
@@ -999,7 +1023,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_drake_icon:SetVisible(true)
 			self.creep_drake_timer:SetVisible(true)
-			self.creep_drake_timer:SetText(text)
+			_set_text_if_changed(self.creep_drake_timer, text)
 		else
 			-- Disable freep side icon and text
 			self.freep_drake_icon:SetVisible(false)
@@ -1013,7 +1037,7 @@ function OverviewWindow:Update()
 
 	-- Update DOF buff timers
 	-- Gary
-	gary_buff_timer = gary_buff_timer + 1
+	if advance_timers == true then gary_buff_timer = gary_buff_timer + 1 end
 	minute_mod = math.fmod(gary_buff_timer, 3600)
 	minutes = (minute_mod - math.fmod(minute_mod, 60)) / 60
 	hours = (gary_buff_timer - math.fmod(gary_buff_timer, 3600)) / 3600
@@ -1029,7 +1053,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_gary_icon:SetVisible(true)
 			self.creep_gary_timer:SetVisible(true)
-			self.creep_gary_timer:SetText(text)
+			_set_text_if_changed(self.creep_gary_timer, text)
 
 			-- Disable freep side icon and text
 			self.freep_gary_icon:SetVisible(false)
@@ -1042,7 +1066,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_gary_icon:SetVisible(true)
 			self.freep_gary_timer:SetVisible(true)
-			self.freep_gary_timer:SetText(text)
+			_set_text_if_changed(self.freep_gary_timer, text)
 		else
 			-- Disable creep side icon and text
 			self.creep_gary_icon:SetVisible(false)
@@ -1057,7 +1081,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_gary_icon:SetVisible(true)
 			self.freep_gary_timer:SetVisible(true)
-			self.freep_gary_timer:SetText(text)
+			_set_text_if_changed(self.freep_gary_timer, text)
 
 			-- Disable creep side icon and text
 			self.creep_gary_icon:SetVisible(false)
@@ -1070,7 +1094,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_gary_icon:SetVisible(true)
 			self.creep_gary_timer:SetVisible(true)
-			self.creep_gary_timer:SetText(text)
+			_set_text_if_changed(self.creep_gary_timer, text)
 		else
 			-- Disable freep side icon and text
 			self.freep_gary_icon:SetVisible(false)
@@ -1084,7 +1108,7 @@ function OverviewWindow:Update()
 
 	-- Update Relic timers
 	-- Crown
-	crown_buff_timer = crown_buff_timer + 1
+	if advance_timers == true then crown_buff_timer = crown_buff_timer + 1 end
 	minute_mod = math.fmod(crown_buff_timer, 3600)
 	minutes = (minute_mod - math.fmod(minute_mod, 60)) / 60
 	hours = (crown_buff_timer - math.fmod(crown_buff_timer, 3600 )) / 3600
@@ -1100,7 +1124,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_crown_icon:SetVisible(true)
 			self.creep_crown_timer:SetVisible(true)
-			self.creep_crown_timer:SetText(text)
+			_set_text_if_changed(self.creep_crown_timer, text)
 
 			-- Disable freep side icon and text
 			self.freep_crown_icon:SetVisible(false)
@@ -1113,7 +1137,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_crown_icon:SetVisible(true)
 			self.freep_crown_timer:SetVisible(true)
-			self.freep_crown_timer:SetText(text)
+			_set_text_if_changed(self.freep_crown_timer, text)
 		else
 			-- Disable creep side icon and text
 			self.creep_crown_icon:SetVisible(false)
@@ -1128,7 +1152,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_crown_icon:SetVisible(true)
 			self.freep_crown_timer:SetVisible(true)
-			self.freep_crown_timer:SetText(text)
+			_set_text_if_changed(self.freep_crown_timer, text)
 
 			-- Disable creep side icon and text
 			self.creep_crown_icon:SetVisible(false)
@@ -1141,7 +1165,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_crown_icon:SetVisible(true)
 			self.creep_crown_timer:SetVisible(true)
-			self.creep_crown_timer:SetText(text)
+			_set_text_if_changed(self.creep_crown_timer, text)
 		else
 			-- Disable freep side icon and text
 			self.freep_crown_icon:SetVisible(false)
@@ -1155,7 +1179,7 @@ function OverviewWindow:Update()
 
 	-- Update Relic timers
 	-- Carrock
-	carrock_buff_timer = carrock_buff_timer + 1
+	if advance_timers == true then carrock_buff_timer = carrock_buff_timer + 1 end
 	minute_mod = math.fmod(carrock_buff_timer, 3600)
 	minutes = (minute_mod - math.fmod(minute_mod, 60)) / 60
 	hours = (carrock_buff_timer - math.fmod(carrock_buff_timer, 3600)) / 3600
@@ -1171,7 +1195,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_carrock_icon:SetVisible(true)
 			self.creep_carrock_timer:SetVisible(true)
-			self.creep_carrock_timer:SetText(text)
+			_set_text_if_changed(self.creep_carrock_timer, text)
 
 			-- Disable freep side icon and text
 			self.freep_carrock_icon:SetVisible(false)
@@ -1184,7 +1208,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_carrock_icon:SetVisible(true)
 			self.freep_carrock_timer:SetVisible(true)
-			self.freep_carrock_timer:SetText(text)
+			_set_text_if_changed(self.freep_carrock_timer, text)
 		else
 			-- Disable creep side icon and text
 			self.creep_carrock_icon:SetVisible(false)
@@ -1199,7 +1223,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_carrock_icon:SetVisible(true)
 			self.freep_carrock_timer:SetVisible(true)
-			self.freep_carrock_timer:SetText(text)
+			_set_text_if_changed(self.freep_carrock_timer, text)
 
 			-- Disable creep side icon and text
 			self.creep_carrock_icon:SetVisible(false)
@@ -1212,7 +1236,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_carrock_icon:SetVisible(true)
 			self.creep_carrock_timer:SetVisible(true)
-			self.creep_carrock_timer:SetText(text)
+			_set_text_if_changed(self.creep_carrock_timer, text)
 		else
 			-- Disable freep side icon and text
 			self.freep_carrock_icon:SetVisible(false)
@@ -1225,7 +1249,7 @@ function OverviewWindow:Update()
 	end
 
 	-- Update Outnumbered timers
-	outnumbered_buff_timer = outnumbered_buff_timer + 1
+	if advance_timers == true then outnumbered_buff_timer = outnumbered_buff_timer + 1 end
 	minute_mod = math.fmod(outnumbered_buff_timer, 3600)
 	minutes = (minute_mod - math.fmod(minute_mod, 60)) / 60
 	hours = (outnumbered_buff_timer - math.fmod(outnumbered_buff_timer, 3600)) / 3600
@@ -1241,7 +1265,7 @@ function OverviewWindow:Update()
 			-- Enable creep side icon and text and set the text timer
 			self.creep_outnumbered_icon:SetVisible(true)
 			self.creep_outnumbered_timer:SetVisible(true)
-			self.creep_outnumbered_timer:SetText(text)
+			_set_text_if_changed(self.creep_outnumbered_timer, text)
 
 			-- Disable freep side icon and text
 			self.freep_outnumbered_icon:SetVisible(false)
@@ -1260,7 +1284,7 @@ function OverviewWindow:Update()
 			-- Enable freep side icon and text and set the text timer
 			self.freep_outnumbered_icon:SetVisible(true)
 			self.freep_outnumbered_timer:SetVisible(true)
-			self.freep_outnumbered_timer:SetText(text)
+			_set_text_if_changed(self.freep_outnumbered_timer, text)
 
 			-- Disable creep side icon and text
 			self.creep_outnumbered_icon:SetVisible(false)
@@ -1279,7 +1303,7 @@ function OverviewWindow:Update()
 	-- Rank Progress
 	if data.numbers.points_total == Ranks[#Ranks] then
 		self.rank_icon:SetBackground(Rank_Icons[#Rank_Icons])
-		self.label_rank:SetText(L.Stats_Rank .. #Ranks)
+		_set_text_if_changed(self.label_rank, L.Stats_Rank .. #Ranks)
 		self:UpdateProgressBar(1)
 	else
 		for i = 0, #Ranks - 1 do
@@ -1288,7 +1312,7 @@ function OverviewWindow:Update()
 				local points_since_rankup = data.numbers.points_total - Ranks[i]
 				local percentage_done = points_since_rankup / rank_difference
 				self.rank_icon:SetBackground(Rank_Icons[i])
-				self.label_rank:SetText(L.Stats_Rank .. i)
+				_set_text_if_changed(self.label_rank, L.Stats_Rank .. i)
 				self:UpdateProgressBar(percentage_done)
 				break
 			end

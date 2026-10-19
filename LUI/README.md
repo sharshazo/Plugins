@@ -344,3 +344,8 @@ Las comprobaciones automatizadas no certifican ausencia total de errores ni toda
 ## Actualización del 19 de octubre de 2026
 
 El botín vuelve al 100 % del tamaño anterior. En Opciones → Botín → Diseño → Tamaño del botín (%) puedes elegir entre 75 % y 150 %. El ajuste se guarda en el perfil y mueve juntos texto, iconos, fondo y cartel. Se mantienen las cuatro filas predeterminadas y el historial compacto. Se limita la creación de ventanas de botín por actualización, se limita la coexistencia de ventanas que se desvanecen y se liberan los marcos de raid que pertenecen a vistas ocultas. Se reducen escrituras repetidas de texto, opacidad y posición.
+
+
+## Revisión 2 del 19 de octubre de 2026
+
+Marcos de party desactivados: liberan jugadores y dejan de consultar efectos. Barras de buffs/debuffs propios y del objetivo: evitan repetir colores, tamaños y texto sin cambios; mantienen renovación de efectos, temporizadores y los tres diseños con animaciones. El inventario de fabricación utiliza eventos y caché; las señales de curación evitan repintados idénticos. Se conservan los ajustes de botín (100 % inicial, rango 75–150 %), historial y vistas de raid.

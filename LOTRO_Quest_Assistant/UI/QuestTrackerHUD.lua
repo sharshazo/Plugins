@@ -656,7 +656,7 @@ function LQA.UI.QuestTrackerHUD:Constructor()
             -- aviso sin mision: se acaba de cargar lo guardado
             self.currentZone = StartZone()
         end
-        self:PopulateActive()
+        self:RequestRefresh()
     end
     LQA.Core.EventBus:Subscribe("QUEST_STATE_CHANGED", OnQuestEvent)
     LQA.Core.EventBus:Subscribe("QUEST_PROGRESS", OnQuestEvent)
@@ -688,6 +688,7 @@ function LQA.UI.QuestTrackerHUD:Constructor()
     self.deedWatcher = Turbine.UI.Control()
     self.deedWatcher.nextCheck = Turbine.Engine.GetGameTime() + 2
     self.deedWatcher.Update = function()
+        self:FlushRefresh()
         if Turbine.Engine.GetGameTime() >= self.deedWatcher.nextCheck then
             self.deedWatcher.nextCheck = Turbine.Engine.GetGameTime() + 2
             local n = 0
@@ -696,7 +697,7 @@ function LQA.UI.QuestTrackerHUD:Constructor()
             end
             if n ~= self.lastDeedCount then
                 self.lastDeedCount = n
-                self:PopulateActive()
+                self:RequestRefresh()
             end
         end
     end
@@ -713,7 +714,23 @@ function LQA.UI.QuestTrackerHUD:Constructor()
     self:PopulateActive()
 end
 
+-- Coalesce genuine quest/deed events without delaying state or persistence.
+function LQA.UI.QuestTrackerHUD:RequestRefresh()
+    if self._refresh_due_at == nil then
+        self._refresh_due_at = Turbine.Engine.GetGameTime() + 0.10
+    end
+end
+
+function LQA.UI.QuestTrackerHUD:FlushRefresh()
+    if self._refresh_due_at ~= nil and Turbine.Engine.GetGameTime() >= self._refresh_due_at
+        and self:IsVisible() then
+        self._refresh_due_at = nil
+        self:PopulateActive()
+    end
+end
+
 function LQA.UI.QuestTrackerHUD:PopulateActive()
+    self._refresh_due_at = nil
     InitQuestTypeColors()
     self.listBox:ClearItems()
 

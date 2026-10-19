@@ -305,3 +305,8 @@ Las comprobaciones automatizadas no certifican ausencia total de errores ni toda
 ## Actualización del 19 de octubre de 2026
 
 Se corrigen asociaciones de misiones con instancias, incluido «Cortar la mano derecha» (Off with His Right Hand) en Fil Gashan. El destino verificado por identificador prevalece sobre menciones incidentales a otros lugares en la narración. Los filtros distinguen instancias/raids de contenido abierto. Los títulos abren la misión de QuestSync; el anillo original enlaza al diario y tiene una capa visual opaca para evitar la transparencia. Las señales de cura destacan el nombre del destinatario, agrupan por persona y separan el nombre del jefe del de la instancia. No todas las coordenadas y posiciones deducidas de imágenes están confirmadas.
+
+
+## Revisión 2 del 19 de octubre de 2026
+
+La consulta periódica de hazañas ya no vuelve a notificar el mismo estado sin cambios. Se mantienen confirmaciones, progreso, sincronización, señales, asociaciones verificadas de instancias y acceso a misiones. Las coordenadas aproximadas siguen marcadas como tales.

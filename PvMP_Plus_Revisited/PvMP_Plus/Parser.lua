@@ -43,7 +43,7 @@ local function ParseChat(sender,args)
 			data.numbers.most_points_a_fight = { points_gained, current_date.Day, current_date.Month, current_date.Year }
 		end
 
-		OverviewWindow:Update()
+		OverviewWindow:RequestUpdate()
 
 		RequestPvMPSave()
 
@@ -76,7 +76,7 @@ local function ParseChat(sender,args)
 			data.numbers.most_comms_a_month = { data.numbers.comms_current_month, current_date.Month, current_date.Year }
 		end
 
-		OverviewWindow:Update()
+		OverviewWindow:RequestUpdate()
 
 		RequestPvMPSave()
 
@@ -117,7 +117,7 @@ local function ParseChat(sender,args)
 				data.numbers.most_frags_a_month = { data.numbers.frags_current_month, current_date.Month, current_date.Year }
 			end
 
-			OverviewWindow:Update()
+			OverviewWindow:RequestUpdate()
 
 			SecondaryWindow:NewRecentKill(victim)
 

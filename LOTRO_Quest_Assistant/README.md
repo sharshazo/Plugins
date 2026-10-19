@@ -202,4 +202,9 @@ Las comprobaciones automatizadas no certifican ausencia total de errores ni toda
 
 ## Actualización del 19 de octubre de 2026
 
-Se mantienen los nombres exactos de instancias, mazmorras y raids en inglés para LFF. Se corrige la apariencia del listado de zonas de recolección. El mapa integra los títulos de misión con QuestSync y los anillos con el diario nativo del juego. La auditoría detecta guardados y refrescos redundantes al recibir progreso idéntico; esta optimización sigue pendiente.
+Se mantienen los nombres exactos de instancias, mazmorras y raids en inglés para LFF. Se corrige la apariencia del listado de zonas de recolección. El mapa integra los títulos de misión con QuestSync y los anillos con el diario nativo del juego. El progreso idéntico ya no genera guardados ni refrescos repetidos.
+
+
+## Revisión 2 del 19 de octubre de 2026
+
+El progreso idéntico ya no solicita guardado ni publicación repetidos. Los listados agrupan refrescos cercanos y difieren la reconstrucción mientras permanecen ocultos; los cambios de datos y su guardado se conservan. Se mantienen LFF en inglés con el destino exacto, enlaces de misiones y recolección.
