@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(156,function() return {["updates"]={[1]={{20272,"","","61.2S, 10.4W"}},[13]={{20272,"","","64.4S, 9.9W"}},[11]={{20272,"","","63.5S, 7.8W"}}},["kinds"]={},["new"]={{"exp",598.31,581.67,"Haradrim Remnants","Haradrim Remnants","Haradrim Remnants","Haradrim Remnants","1879338667:20272",{{20272,"","","63.8S, 8.8W"}}}},["hide"]={}} end)

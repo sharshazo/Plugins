@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(115,function() return {["updates"]={[10]={{20212,"Folcbur's Homestead","Folcbur's Homestead","56.0S, 72.0W"}},[11]={{20212,"Entwade","Vado del Entaguas","56.0S, 65.8W"}},[24]={{20212,"Dunharrow","El Sagrario","71.2S, 71.2W"}}},["kinds"]={},["new"]={{"exp",563.54,99.74,"Bosa's Farm","Bosa's Farm","Kingstead","Tierras del Rey",":20212",{{20212,"Bosa's Farm","Bosa's Farm","54.1S, 68.4W"}}}},["hide"]={}} end)

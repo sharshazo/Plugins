@@ -53,6 +53,7 @@ F.Defs = {
     { key = "rec", icon = "recoleccion", es = "Recolecci\195\179n", en = "Gathering", on = false },
     -- v3.4: opcion (no es una capa): hazañas / exploracion / cofres ya
     -- completados. Apagado = no se ven en el mapa; encendido = gris con X.
+    { key = "ame", icon = "jefe", es = "Amenazas itinerantes", en = "Roaming threats", on = true },
     { key = "done", icon = "completadas", es = "Ver completadas", en = "Show completed", on = false, option = true },
 }
 F.ByKey = {}
@@ -62,6 +63,7 @@ end
 
 -- textos de los carteles: titulo de cada capa
 F.Title = {
+    ame = { es = "Amenaza itinerante", en = "Roaming threat" },
     exp = { es = "Exploraci\195\179n", en = "Exploration" },
     haz = { es = "Haza\195\177a (saber)", en = "Deed (lore)" },
     mob = { es = "Matar monstruos", en = "Slayer area" },
@@ -82,6 +84,7 @@ F.Title = {
 
 -- icono de cada capa en el mapa (caja 24x24, la punta abajo = el lugar)
 F.LayerIcon = {
+    ame = "jefe",
     exp = "exploracion", haz = "hazana", mob = "mobs", cof = "cofre", jef = "jefe", esb = "establo_blanco",
     esa = "establo_azul", cam = "campamento", via = "viaje", mis = "mision", npc = "npc", min = "mineria",
     pes = "pesca", fau = "fauna", his = "historia", rec = "recoleccion",

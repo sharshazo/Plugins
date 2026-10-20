@@ -46,6 +46,8 @@ import "WorldMap_Addon.worldmap_zonemaps_data"
 -- v3.2: capas del panel "Filtros del Mapa" (datos generados) y el panel
 import "WorldMap_Addon.worldmap_layers_data"
 import "WorldMap_Addon.worldmap_filters"
+-- Geographic catalogs migrate here; map data loads only on zone inspection.
+import "WorldMap_Addon.worldmap_catalog"
 -- v3.5: mapas interiores y ficha de incursiones / mazmorras
 import "WorldMap_Addon.worldmap_instances_data"
 -- v3.5: nombres en español que faltaban

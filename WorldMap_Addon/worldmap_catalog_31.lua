@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(31,function() return {["updates"]={},["kinds"]={},["new"]={{"his",269.94,438.56,"Lothlórien","Lothlórien","The Lost Pages","The Lost Pages",":20179",{{20179,"Lothlórien ","Lothlórien ","14.2S, 76.3W"}}},{"his",625.05,486.63,"Lothlórien/I.Caras Galadhon","Lothlórien/I.Caras Galadhon","The Mad Dwarf","The Mad Dwarf",":20180",{{20180,"Lothlórien/I.Caras Galadhon","Lothlórien/I.Caras Galadhon","15.3S, 68.2W"}}}},["hide"]={}} end)

@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(147,function() return {["updates"]={[41]={{20005,"Pel Enaid","Pel Enaid","66.3S, 14.0W"}},[53]={{20005,"Pel Dúven","Pel Dúven","69.4S, 18.3W"}},[52]={{20005,"Pel Chardún","Pel Chardún","69.3S, 13.8W"}},[54]={{20005,"Pel Tundalaf","Pel Tundalaf","71.0S, 15.6W"}}},["kinds"]={},["new"]={{"exp",380.94,720.03,"Turgon","Turgon","Captains","Captains",":20004",{{20004,"Turgon","Turgon","72.0S, 19.4W"}}}},["hide"]={}} end)

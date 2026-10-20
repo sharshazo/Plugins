@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(386,function() return {["updates"]={[23]={{20138,"Gríshru","Gríshru","70.4S, 47.3W"}}},["kinds"]={},["new"]={{"exp",145.44,457.32,"Hashadir","Hashadir","Belfalas","Belfalas",":20128",{{20128,"Hashadir","Hashadir","78.6S, 72.8W"}}},{"ame",768.91,392.26,"Grafeleg","Grafeleg","Threats in Upper Lebennin","Threats in Upper Lebennin",":20140",{{20140,"Grafeleg","Grafeleg","74.2S, 30.6W"}}}},["hide"]={}} end)

@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(78,function() return {["updates"]={},["kinds"]={},["new"]={{"exp",514.55,363.35,"Harwick","Harwick","Cities","Cities",":20055",{{20055,"Harwick","Harwick","39.2S, 52.3W"}}},{"exp",990.16,113.03,"Wakenflood","Wakenflood","Defences","Defences",":20056",{{20056,"Wakenflood","Wakenflood","38.2S, 50.4W"}}},{"exp",13.9,37.94,"Seething Mire","Seething Mire","Ruins","Ruins",":20062",{{20062,"Seething Mire","Seething Mire","37.9S, 54.3W"}}}},["hide"]={}} end)

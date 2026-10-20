@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(126,function() return {["updates"]={[10]={{20072,"Stone of Erech","Piedra de Erech","58.0S, 65.0W"},{20081,"Stone of Erech","Piedra de Erech","58.2S, 65.1W"}},[9]={{20083,"Morlad","Morlad","56.9S, 67.5W"}}},["kinds"]={},["new"]={{"exp",710.75,195.5,"Tingobel","Tingobel","WG Enemies","WG Enemies",":20082",{{20082,"Tingobel","Tingobel","56.2S, 64.3W"}}}},["hide"]={}} end)

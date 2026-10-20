@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(134,function() return {["updates"]={},["kinds"]={},["new"]={{"exp",482.21,284.92,"Amon Anglebed","Amon Anglebed","EG Beacons","EG Beacons",":20075",{{20075,"Amon Anglebed","Amon Anglebed","79.9S, 39.7W"}}},{"exp",561.86,341.76,"Grey-eye","Ojogrís","Five Sisters","Five Sisters","1879323060:20080",{{20080,"Grey-eye","Ojogrís","80.9S, 38.3W"}}}},["hide"]={}} end)

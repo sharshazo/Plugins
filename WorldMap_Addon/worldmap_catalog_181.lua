@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(181,function() return {["updates"]={},["kinds"]={},["new"]={{"his",533.96,326.38,"Hall under Mtn","Hall under Mtn","The Lost Pages","The Lost Pages",":20179",{{20179,"Hall under Mtn","Hall under Mtn","14.7N, 135.2W"}}},{"his",533.96,326.38,"Erebor/H.U.Mtn: Lúki","Erebor/H.U.Mtn: Lúki","The Key & Keyhole","The Key & Keyhole",":20181",{{20181,"Erebor/H.U.Mtn: Lúki","Erebor/H.U.Mtn: Lúki","14.7N, 135.2W"}}}},["hide"]={}} end)

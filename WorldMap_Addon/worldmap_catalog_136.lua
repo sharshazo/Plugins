@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(136,function() return {["updates"]={},["kinds"]={},["new"]={{"exp",687.08,187.85,"Dol Brannor","Dol Brannor","EG Beacons","EG Beacons",":20075",{{20075,"Dol Brannor","Dol Brannor","78.4S, 47.7W"}}},{"exp",1023.54,199.87,"Roamingstar","Estrellaerrante","Five Sisters","Five Sisters","1879323060:20080",{{20080,"Roamingstar","Estrellaerrante","78.6S, 42.1W"}}}},["hide"]={}} end)

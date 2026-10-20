@@ -1,5 +1,15 @@
 # Addons de LOTRO en español
 
+## Actualización del 20 de octubre de 2026
+
+- **Quest Assistant:** objetivo breve en la ventana flotante al pasar el ratón sobre una misión. Catálogo EN/ES de 14.974 misiones, cargado por partes; no añade otra ventana de guía. Cuando no se identifica la etapa activa, se indica el objetivo inicial en vez de inventar el avance.
+- **Mapa del Mundo:** puntos de interés, colecciones y amenazas integrados en sus filtros y búsqueda. Se conservan 393 entradas y sus 2.745 referencias de posición; 1.973 iconos nuevos y enriquecimiento de puntos existentes. Las coordenadas de interiores se distinguen de las entradas exteriores.
+- **Consumo:** catálogos del mapa bajo demanda, caché de seis mapas y reutilización de iconos. Quest Assistant ya no carga esos catálogos al iniciar. Se conservan los arreglos de LUI, curas, raid, efectos, botín ajustable, temporizadores, anillos y LFF en inglés.
+- **Limpieza:** retirados respaldos, cachés y notas de desarrollo; conservados código funcional, recursos, licencias y guardados personales. RAR y ZIP nuevos con Turbine incluido.
+
+[Comprobaciones y límites de esta versión](COMPROBACIONES_2026-10-20.md). No se han medido FPS ni cierres nativos dentro del juego.
+
+
 ## Revisión 3 — curas, habilidades y estabilidad (19 de octubre de 2026)
 
 - **LUI:** menos trabajo repetido al curar en party y raid; etiquetas y bordes se actualizan cuando cambian. El aviso animado de vida baja conserva su pulso durante las curas.

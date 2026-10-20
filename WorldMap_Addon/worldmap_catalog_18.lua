@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(18,function() return {["updates"]={[1]={{20054,"Echad Dúnann","Echad Dúnann","50.5S, 7.9W"}}},["kinds"]={},["new"]={{"exp",189.47,294.24,"Sirannon Gate","Sirannon Gate","Ring Goes South","Ring Goes South","1879140605:20052",{{20052,"Sirannon Gate","Sirannon Gate","50.6S, 7.6W"}}}},["hide"]={}} end)

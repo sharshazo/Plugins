@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(64,function() return {["updates"]={},["kinds"]={},["new"]={{"exp",396.16,88.68,"Fanged Lair","Fanged Lair","Pren Gwydh","Pren Gwydh",":20040",{{20040,"Fanged Lair","Fanged Lair","79.2S, 17.0W"}}},{"exp",766.87,3.13,"Galtrev Lumber-camp","Galtrev Lumber-camp","Pren Gwydh","Pren Gwydh",":20040",{{20040,"Galtrev Lumber-camp","Galtrev Lumber-camp","78.9S, 15.7W"}}}},["hide"]={}} end)

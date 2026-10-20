@@ -293,33 +293,24 @@ function QuestInfoTooltip:ShowFor(ndx, quest, displayName)
     else
         self.lblGroup:SetVisible(false)
     end
-    -- resumen y objetivo (lineas limpias del DAT profesional)
-    local clean = QuestLocResolver.GetCleanObjectiveLines(ndx, quest, 2)
-    if clean[1] then
-        self.lblBody:SetText(Truncate(clean[1], 220))
+    -- One concise objective in the existing hover card; no separate guide/details block.
+    local progress = QuestStateManager and QuestStateManager.GetQuestProgress and QuestStateManager.GetQuestProgress(ndx)
+    local guidance = _G.QuestGuidance and QuestGuidance.Summary(ndx, quest, nil, progress)
+    local fallback = not guidance and QuestLocResolver.GetCleanObjectiveLines(ndx, quest, 1)
+    local objective = guidance and guidance.action or (fallback and fallback[1])
+    self.lblObjHead:SetVisible(false)
+    self.lblObj:SetVisible(false)
+    if objective and objective ~= "" then
+        local es = not _G.LanguageSettings or LanguageSettings.IsSpanish()
+        local display = guidance and objective or Truncate(objective, 220)
+        self.lblBody:SetText((es and "Objetivo: " or "Objective: ") .. display)
         self.lblBody:SetPosition(PAD, y)
         self.lblBody:SetWidth(inner)
-        local h = AutoFitLabelHeight(self.lblBody, 16, BODY_MAX_H)
+        local h = AutoFitLabelHeight(self.lblBody, 16, 144)
         self.lblBody:SetVisible(true)
         y = y + h + 8
     else
         self.lblBody:SetVisible(false)
-    end
-    if clean[2] and clean[2] ~= clean[1] then
-        self.lblObjHead:SetText("OBJETIVO")
-        self.lblObjHead:SetPosition(PAD, y)
-        self.lblObjHead:SetSize(inner, 14)
-        self.lblObjHead:SetVisible(true)
-        y = y + 16
-        self.lblObj:SetText(Truncate(clean[2], 160))
-        self.lblObj:SetPosition(PAD, y)
-        self.lblObj:SetWidth(inner)
-        local h = AutoFitLabelHeight(self.lblObj, 16, 120)
-        self.lblObj:SetVisible(true)
-        y = y + h + 8
-    else
-        self.lblObjHead:SetVisible(false)
-        self.lblObj:SetVisible(false)
     end
     -- progreso guardado "N/M" (solo si la mision esta activa y lo trae)
     local cur, total

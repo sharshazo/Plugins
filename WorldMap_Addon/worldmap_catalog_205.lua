@@ -1,0 +1,2 @@
+-- Migrated points; map-local factory permits bounded decoded caches.
+WorldMapAddon.Catalog.Register(205,function() return {["updates"]={},["kinds"]={},["new"]={{"cof",680.67,524.91,"Rare Chests of Cirith Ungol","Rare Chests of Cirith Ungol","Rare Chests of Cirith Ungol","Rare Chests of Cirith Ungol",":2339",{{2339,"","","31.6N, 14.7E"}}},{"cof",584.8,236.45,"Rare Chests of Cirith Ungol","Rare Chests of Cirith Ungol","Rare Chests of Cirith Ungol","Rare Chests of Cirith Ungol",":2339",{{2339,"","","34.0N, 13.9E"}}}},["hide"]={["t:681:525"]=true,["t:585:236"]=true}} end)

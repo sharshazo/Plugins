@@ -70,14 +70,14 @@ import "LOTRO_Quest_Assistant.Data.QuestLocCoords"
 import "LOTRO_Quest_Assistant.Data.QuestStagesCoords"
 import "LOTRO_Quest_Assistant.Data.QuestMapVerified"
 import "LOTRO_Quest_Assistant.Data.ZoneMapIndex"
-import "LOTRO_Quest_Assistant.Data.ChestsDB"
-import "LOTRO_Quest_Assistant.Data.ThreatsDB"
-import "LOTRO_Quest_Assistant.Data.LostLoreDB"
+-- ChestsDB: catalog now owned by WorldMap_Addon; not loaded by Quest Assistant.
+-- ThreatsDB: catalog now owned by WorldMap_Addon; not loaded by Quest Assistant.
+-- LostLoreDB: catalog now owned by WorldMap_Addon; not loaded by Quest Assistant.
 -- FarmingDB.lua NO se importa: la pestaña "Granjeo" que la usaba se saco de
 -- ChestsWindow.lua (solo 8/34 entradas traen coordenada, se sentia vacia
 -- igual que "Cartas"/"Puntos de Clase"). Archivo generado se deja en disco
 -- sin usar, mismo criterio que QuestLocES.lua.
-import "LOTRO_Quest_Assistant.Data.WarbandMapBounds"
+-- WarbandMapBounds: catalog now owned by WorldMap_Addon; not loaded by Quest Assistant.
 
 -- GatherSync: REACTIVADO con reparacion puntual (2026-08-23). Con reinicio
 -- completo real, GatherSync desactivado = anda bien, GatherSync activo = se
@@ -136,6 +136,8 @@ _G.QuestNameES_Missing = nil
 
 -- 3. Load Core Managers
 import "LOTRO_Quest_Assistant.Core.QuestLocResolver"
+import "LOTRO_Quest_Assistant.Core.QuestGuidance"
+import "LOTRO_Quest_Assistant.Data.QuestGuideNotes"
 import "LOTRO_Quest_Assistant.Core.NarratorBridge"
 import "LOTRO_Quest_Assistant.Core.NarratorMute"
 -- (2026-10-16) interruptor del libro de mision automatico (boton en el Tracker)
@@ -337,21 +339,17 @@ end
 Turbine.Shell.AddCommand("questsync;qs", QuestSyncCommand)
 Turbine.Shell.WriteLine("Usa /questsync para abrir la ventana principal.")
 
--- /cofres se deja como alias de /questsync (sesion 35): Puntos de Interes
--- ahora es una seccion desplegable DENTRO de la ventana unica, ya no una
--- ventana aparte, pero el comando viejo se mantiene para no romper el habito
--- del usuario.
+-- Keep the existing chest commands, now routed to the geographic catalog's owner.
 ChestsCommand = Turbine.ShellCommand()
 function ChestsCommand:Execute(command, arguments)
-    if _G.MainWindow:IsVisible() then
-        _G.MainWindow:SetVisible(false)
-    else
-        _G.MainWindow:SetVisible(true)
-        _G.MainWindow:SelectTab("puntos")
-    end
+    local C = _G.WorldMapAddon and WorldMapAddon.Catalog
+    if C and C.Open and C.Open() then return end
+    Turbine.Shell.WriteLine(LanguageSettings.IsSpanish() and "Carga Mapa del Mundo para consultar los cofres y colecciones."
+        or "Load World Map to browse chests and collections.")
 end
+
 Turbine.Shell.AddCommand("cofres;qcofres", ChestsCommand)
-Turbine.Shell.WriteLine("Usa /cofres para abrir la ventana principal en la pestaña Puntos de Interes.")
+Turbine.Shell.WriteLine("Usa /cofres para abrir el Mapa del Mundo.")
 
 -- GatherSync: /recoleccion abre/cierra la ventana de mapa de puntos.
 GatherWindowCommand = Turbine.ShellCommand()

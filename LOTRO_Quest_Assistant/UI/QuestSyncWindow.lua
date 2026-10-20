@@ -238,11 +238,9 @@ end
 -- usaban "left_header_titles" ("Titulos"), decision deliberada de una
 -- sesion anterior; el usuario la reemplaza ahora por el mismo texto
 -- "Mapas" en las 4.
+-- Geographic catalogs live in World Map; QuestSync keeps its mission UI.
 local TABS = {
     { key = "misiones", label = "QuestSync", labelEN = "QuestSync", leftHeader = "left_header_maps" },
-    { key = "puntos", label = "Puntos de Interes", labelEN = "Points of Interest", db = "ChestsDB", icon = POI_ICON, leftHeader = "left_header_maps" },
-    { key = "tropas", label = "Tropas y Amenazas", labelEN = "Threats & Troops", db = "ThreatsDB", icon = THREAT_ICON, leftHeader = "left_header_maps" },
-    { key = "lostlore", label = "Colecciones", labelEN = "Collections", db = "LostLoreDB", resolveIcon = LostLoreIconFor, leftHeader = "left_header_maps" },
 }
 
 -- Paleta "tinta sobre pergamino" (ver MEMMain.lua: seriesLabel/memoirLabel
@@ -1490,6 +1488,13 @@ end
 -- Cambia de categoria (ver TABS/self.categoryIndex). Repuebla la lista y
 -- limpia el panel de detalle.
 function QuestSyncWindow:SelectTab(key)
+    -- Preserve external callers of the former tabs while routing them to their new owner.
+    if key == "puntos" or key == "tropas" or key == "lostlore" then
+        local C = _G.WorldMapAddon and WorldMapAddon.Catalog
+        if C and C.Open then C.Open(true) end
+        return
+    end
+    key = "misiones"
     -- SFX de "cambio de pestaña" RETIRADO (pedido explicito del usuario,
     -- 2026-09-03) -- ver la nota grande en NarratorBridge.lua.
     for i, tab in ipairs(TABS) do

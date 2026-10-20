@@ -380,6 +380,10 @@ local function LayerTip(p, es)
             lines[#lines + 1] = line
         end
     end
+    local C = WorldMapAddon.Catalog
+    if C and C.Details and p.catalog then
+        for _, line in ipairs(C.Details(p, es, true)) do lines[#lines + 1] = line end
+    end
     return title, lines
 end
 
@@ -856,15 +860,7 @@ function ZV:_buildPools()
     -- v3.2: iconos de las capas del panel "Filtros del Mapa" (van debajo de
     -- los de siempre). Uno por icono del mapa que mas tiene; la imagen se
     -- pone al mostrarlo (cada uno puede ser de otra capa).
-    local LD = WorldMapAddon.LayersData
-    local needL = 0
-    if type(LD) == "table" then
-        for _, list in pairs(LD) do
-            if #list > needL then
-                needL = #list
-            end
-        end
-    end
+    -- Map layer controls are allocated on demand in _fillIcons.
     -- v3.3: auras "activa" (hazaña con progreso, mision activa): pocas,
     -- se reparten entre los iconos que las necesitan; debajo de todo
     self.auraPool = {}
@@ -918,8 +914,8 @@ function ZV:_buildPools()
         end
         return item
     end
-    for i = 1, needL do
-        self.layerPool[i] = makePin(i)
+    self._ensureLayerPool = function(view, required)
+        for i = #view.layerPool + 1, required do view.layerPool[i] = makePin(i) end
     end
     -- v3.15: puntos de recoleccion (Quest Assistant), encima de las capas
     -- y debajo de las misiones
@@ -1498,11 +1494,28 @@ function ZV:_clearIcons()
     end
 end
 
+-- Release oversized native pools after leaving dense areas; keep a small spare margin.
+function ZV:_trimLayerPool(used)
+    local keep = math.max(32, used + 16)
+    for i = #self.layerPool, keep + 1, -1 do
+        local item = self.layerPool[i]
+        self:_hideItem(item)
+        local c = item.icon
+        c.MouseEnter = nil; c.MouseLeave = nil; c.MouseDown = nil
+        c.MouseMove = nil; c.MouseUp = nil; c.MouseClick = nil
+        c:SetParent(nil)
+        self.layerPool[i] = nil
+    end
+end
+
 function ZV:_fillIcons()
     self:_clearIcons()
     if ZD == nil or self.mapId == false then
         return
     end
+    local C = WorldMapAddon.Catalog
+    local LD = WorldMapAddon.LayersData
+    local llist = C and C.GetLayers and C.GetLayers(self.mapId) or (type(LD) == "table" and LD[self.mapId] or nil)
     local list = ZD.Pois ~= nil and ZD.Pois[self.mapId] or nil
     -- v3.2: los que quedan debajo del cartel del titulo de ESTE mapa
     local HO = WorldMapAddon.LayersHideOld
@@ -1539,8 +1552,7 @@ function ZV:_fillIcons()
         end
     end
     -- v3.2: capas (exploracion, hazanas, NPC, ...) marcadas en el panel
-    local LD = WorldMapAddon.LayersData
-    local llist = type(LD) == "table" and LD[self.mapId] or nil
+    local usedLayers = 0
     if llist ~= nil then
         local i = 0
         for _, p in ipairs(llist) do
@@ -1550,6 +1562,7 @@ function ZV:_fillIcons()
                 on = false
             end
             if on then
+                self:_ensureLayerPool(i + 1)
                 local item = self.layerPool[i + 1]
                 if item == nil then
                     break
@@ -1560,6 +1573,8 @@ function ZV:_fillIcons()
             end
         end
     end
+    for _, item in ipairs(self.layerPool) do if item.vis then usedLayers = usedLayers + 1 end end
+    self:_trimLayerPool(usedLayers)
     local links = ZD.Links ~= nil and ZD.Links[self.mapId] or nil
     if links ~= nil then
         local i = 0
@@ -3199,6 +3214,14 @@ function ZV:_openDeedCard(item)
     if info == nil or #info.deeds == 0 then
         return false
     end
+    local C = WorldMapAddon.Catalog
+    if p.catalog and C and C.Details then
+        if Opt("lore", true) == false then info.lore = "" end
+        local details = C.Details(p, es, false)
+        if #details > 0 then
+            info.lore = table.concat(details, "\n") .. (info.lore ~= "" and ("\n" .. info.lore) or "")
+        end
+    end
     if self.card == nil then
         self:_buildCard()
     end
@@ -3314,7 +3337,7 @@ function ZV:_openDeedCard(item)
         c.others:SetVisible(false)
     end
     -- saber del lugar (o de la hazaña)
-    if info.lore ~= "" and Opt("lore", true) ~= false then
+    if info.lore ~= "" and (p.catalog ~= nil or Opt("lore", true) ~= false) then
         local h = TipLines(info.lore, inner) * CARD_LINE_H + 2
         c.lore:SetText(info.lore)
         c.lore:SetPosition(CARD_PAD, y)
@@ -3977,7 +4000,7 @@ local function FindIndex()
         return ZF.index
     end
     local idx = {}
-    local function add(mid, p, kind, layer, deed)
+    local function add(mid, p, kind, layer, deed, catalog)
         local ens, ess = Split(p[4]), Split(p[5])
         local sens, sess = Split(p[6]), Split(p[7])
         for i, en in ipairs(ens) do
@@ -3986,7 +4009,7 @@ local function FindIndex()
                 es = NameES(en)
             end
             local sen, ses = "", ""
-            if deed then
+            if deed or catalog then
                 sen = sens[i] or sens[1] or ""
                 ses = sess[i] or sess[1] or ""
                 if ses == "" then
@@ -3996,7 +4019,7 @@ local function FindIndex()
             if (en ~= "" or es ~= "") and en ~= "TBD" then
                 idx[#idx + 1] = {
                     mid = mid, x = p[2], y = p[3], en = en, es = es, sen = sen, ses = ses,
-                    kind = kind, layer = layer, deed = deed,
+                    kind = kind, layer = layer, deed = deed, catalog = catalog,
                     key = FindFold(en .. "\n" .. es), skey = FindFold(sen .. "\n" .. ses),
                 }
             end
@@ -4026,6 +4049,12 @@ local function FindIndex()
                     add(mid, p, p[1], true, deed)
                 end
             end
+        end
+    end
+    local C = WorldMapAddon.Catalog
+    if C and C.SearchRecords then
+        for _, r in ipairs(C.SearchRecords()) do
+            add(r[1], { r[2], r[3], r[4], r[5], r[6], r[7], r[8] }, r[2], true, false, true)
         end
     end
     ZF.index = idx
@@ -4062,7 +4091,7 @@ function ZF.Search(query, max)
     local first, second, seen = {}, {}, {}
     for _, e in ipairs(FindIndex()) do
         local byName = e.key:find(q, 1, true) ~= nil
-        local byDeed = not byName and e.deed and e.skey:find(q, 1, true) ~= nil
+        local byDeed = not byName and (e.deed or e.catalog) and e.skey:find(q, 1, true) ~= nil
         if byName or byDeed then
             local dk = tostring(e.mid) .. "\n" .. e.key .. "\n" .. e.skey
             if not seen[dk] then
